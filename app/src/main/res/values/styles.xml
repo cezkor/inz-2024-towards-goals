@@ -1,6 +1,12 @@
 <resources>
 
-    <style name="Widget.Theme.TowardsGoalsApp.MyView" parent="">
+    <style name="Widget.Theme.TowardsGoalsApp.MainActivityView" parent="">
+        <item name="android:background">@color/gray_600</item>
+    </style>
+    <style name="Widget.Theme.TowardsGoalsApp.InnerView" parent="">
         <item name="android:background">@color/gray_400</item>
+    </style>
+    <style name="Widget.Style.TowardsGoalsApp.TextView" parent="">
+        <item name="android:textColor">@color/gray_800</item>
     </style>
 </resources>

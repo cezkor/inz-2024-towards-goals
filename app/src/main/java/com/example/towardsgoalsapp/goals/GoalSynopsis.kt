@@ -11,6 +11,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.main.MainActivity
 
 class GoalSynopsisViewModel: ViewModel() {
 
@@ -25,9 +26,7 @@ class GoalSynopsisViewModel: ViewModel() {
 
 }
 
-class GoalSynopsis(pageNum: Int): Fragment() {
-
-    private val pageNumber: Int = pageNum
+class GoalSynopsis: Fragment() {
 
     private lateinit var pageViewModel: GoalSynopsisViewModel
 
@@ -49,7 +48,8 @@ class GoalSynopsis(pageNum: Int): Fragment() {
 
         pageViewModel.mutablePageNumber.observe(viewLifecycleOwner, pageNumObserver)
 
-        pageViewModel.mutablePageNumber.value = pageNumber
+        pageViewModel.mutablePageNumber.value = requireArguments().getInt(MainActivity.POSITION_ID)
+
     }
 
     override fun onCreateView(
@@ -62,6 +62,10 @@ class GoalSynopsis(pageNum: Int): Fragment() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        // to do
+    }
 
 
 

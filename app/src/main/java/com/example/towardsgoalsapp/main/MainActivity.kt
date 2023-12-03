@@ -8,18 +8,21 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.goals.AddGoalSuggestion
 import com.example.towardsgoalsapp.goals.GoalSynopsis
 
 class MainActivity : FragmentActivity() {
 
-    private lateinit var goalPageNum: TextView
+    companion object {
+        const val POSITION_ID = "pos_id"
+    }
+
     private lateinit var goalPager: ViewPager2
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        goalPageNum = findViewById(R.id.goalPageNumber)
         goalPager = findViewById(R.id.goalPager)
 
         goalPager.adapter = GoalPagesAdapter(this)
@@ -28,13 +31,24 @@ class MainActivity : FragmentActivity() {
 
     private inner class GoalPagesAdapter(fragmentActivity: FragmentActivity) : FragmentStateAdapter(fragmentActivity) {
 
-        override fun getItemCount(): Int {
-            return Constants.MAX_GOALS_AMOUNT
-        }
+        val pagerIsPagePopulationWithGoalArray: Array<Boolean> = Array(Constants.MAX_GOALS_AMOUNT) { false }
+
+        // to do: read from database which pages are populated with goals
+        // and ofc read the goal data, task data, habit data etc.
+        override fun getItemCount(): Int = Constants.MAX_GOALS_AMOUNT
 
         override fun createFragment(position: Int): Fragment {
-            return GoalSynopsis(position)
+            return if (pagerIsPagePopulationWithGoalArray[position]) {
+                val fragment = GoalSynopsis()
+                val bundle = Bundle()
+                bundle.putInt(POSITION_ID, position)
+                fragment.arguments = bundle
+                fragment
+            } else {
+                AddGoalSuggestion()
+            }
         }
+
 
     }
 }
