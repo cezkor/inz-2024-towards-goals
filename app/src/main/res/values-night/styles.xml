@@ -9,4 +9,22 @@
     <style name="Widget.Style.TowardsGoalsApp.TextView" parent="">
         <item name="android:textColor">@color/white</item>
     </style>
+    <style name="Widget.Style.TowardsGoalsApp.TitleTextView" parent="">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+
+    <style name="Widget.Style.TowardsGoalsApp.TabTextAppearance" parent="">
+        <item name="android:textColor">@color/bland_darker_purple</item>
+    </style>
+
+    <style name="Widget.Style.TowardsGoalsApp.TabLayout" parent="">
+
+        <item name="tabSelectedTextColor">@color/bland_more_purple</item>
+        <item name="tabTextColor">@color/bland_darker_purple</item>
+        <item name="tabIndicatorColor">@color/bland_darker_purple</item>
+        <item name="tabIconTint">@color/transparent</item>
+
+    </style>
+
 </resources>

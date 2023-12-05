@@ -6,15 +6,32 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.main.MainActivity
+
 class AddGoalSuggestion(): Fragment() {
+
+    companion object {
+        const val LOG_TAG = "AddGoalSugg"
+    }
+
+    private lateinit var pageViewModel: GoalSynopsisViewModel
+
+    private var pageNumber: Int = Constants.IGNORE_PAGE_AS_INT
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        pageViewModel = ViewModelProvider(requireActivity())[GoalSynopsisViewModel::class.java]
+
+        pageNumber = requireArguments().getInt(MainActivity.PAGE_NUMBER)
+
         val plusButton: ImageButton = view.findViewById(R.id.addGoalPlusButton)
         plusButton.setOnClickListener {
-            // to do
+            // todo: run goal-editing activity, update viewmodel with data if needed
+
         }
 
     }

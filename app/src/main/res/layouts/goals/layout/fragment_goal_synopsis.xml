@@ -4,17 +4,83 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    style="@style/Widget.Theme.TowardsGoalsApp.InnerView">
+    >
 
-    <TextView
-        android:id="@+id/goalTextview"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-
-        android:layout_marginTop="32dp"
-        android:layout_marginBottom="32dp"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/goalSynopsisTitle"
+            style="@style/Widget.Style.TowardsGoalsApp.TitleTextView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="10"
+            android:text="@string/default_title" />
+
+        <TextView
+            android:id="@+id/goalSynopsisDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="90"
+            android:maxLines="6"
+            android:text="@string/default_description" />
+
+        <ProgressBar
+            android:id="@+id/goalSynopsisProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0" />
+
+        <com.google.android.material.tabs.TabLayout
+            style="@style/Widget.Style.TowardsGoalsApp.TabLayout"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_weight="2"
+            android:forceDarkAllowed="true"
+            app:tabGravity="fill"
+            app:tabIndicatorFullWidth="true"
+            app:tabMaxWidth="0dp"
+            android:id="@+id/goalSynopsisTabs">
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/goalSynopsisTaskTab"
+                android:text="@string/tasks_name" />
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/goalSynopsisHabitTab"
+                android:text="@string/habits_name" />
+
+        </com.google.android.material.tabs.TabLayout>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="815"
+            android:id="@+id/goalSynopsisListContainer"/>
+
+        <Button
+            android:id="@+id/expandGoalButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:text="@string/more_button_text"
+            android:theme="@style/Widget.Theme.TowardsGoalsApp.UsualButton.Colored"
+            android:visibility="visible" />
+
+    </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -9,4 +9,20 @@
     <color name="gray_600">#FF757575</color>
     <color name="gray_800">#FF424242</color>
     <color name="transparent">#00000000</color>
+
+    <color name="neon_pink">#FFe600ac</color>
+    <color name="neon_magenta">#FFc200b6</color>
+    <color name="neon_purple">#FF7000a5</color>
+    <color name="neon_strong_purple">#ffad00e6</color>
+
+    <color name="bland_pink">#fff599dd</color>
+    <color name="bland_magenta">#d44ccb</color>
+    <color name="bland_purple">#ffd4b2e4</color>
+    <color name="bland_darker_purple">#ffa966c9</color>
+    <color name="bland_more_purple">#ffbd32eb</color>
+    
+    <color name="progress_red">#fffb4b4b</color>
+    <color name="progress_yellow">#ffffcd82</color>
+    <color name="progress_green">#ff99cc28</color>
+
 </resources>

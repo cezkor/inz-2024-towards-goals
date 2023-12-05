@@ -4,11 +4,10 @@
 
     </style>
 
-    <style name="NoDim" parent="android:Theme">
-        <item name="android:backgroundDimEnabled">false</item>
-        <item name="background">@android:color/transparent</item>
-        <item name="android:background">@android:color/transparent</item>
+    <style name="Widget.Theme.TowardsGoalsApp.UsualButton.Colored" parent="Widget.AppCompat.Button.Colored">
+        <item name="android:textColor">@color/white</item>
+        <item name="colorButtonNormal">@color/neon_purple</item>
     </style>
-
+    
     <style name="Theme.TowardsGoalsApp" parent="Base.Theme.TowardsGoalsApp" />
 </resources>

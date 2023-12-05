@@ -10,4 +10,10 @@
         <item name="background">@android:color/transparent</item>
         <item name="android:background">@android:color/transparent</item>
     </style>
+
+    <style name="Widget.Theme.TowardsGoalsApp.UsualButton.Colored" parent="Widget.AppCompat.Button.Colored">
+        <item name="android:textColor">@color/neon_purple</item>
+        <item name="colorButtonNormal">@color/bland_purple</item>
+    </style>
+
 </resources>
