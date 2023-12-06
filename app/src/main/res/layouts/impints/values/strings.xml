@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="separator" translatable="false">:</string>
+    <string name="impints_name">Implementation intention</string>
+    <string name="impints_name_plural">Implementation intentions</string>
+    <string name="impints_if_label">If</string>
+    <string name="impints_if_then_label">Then</string>
+    <string name="impints_when_label">When</string>
+    <string name="impints_when_then_label">Then</string>
+</resources>

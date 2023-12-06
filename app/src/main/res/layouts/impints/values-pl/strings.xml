@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="impints_name">Intencja wdrożenia</string>
+    <string name="impints_name_plural">Intencje wdrożeniowe</string>
+    <string name="impints_if_label">Jeżeli</string>
+    <string name="impints_if_then_label">To</string>
+    <string name="impints_when_label">Gdy</string>
+    <string name="impints_when_then_label">Wtedy</string>
+</resources>

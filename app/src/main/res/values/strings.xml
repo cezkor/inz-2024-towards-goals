@@ -1,6 +1,8 @@
 <resources>
-    <string name="app_name" translatable="false">TowardsGoalsApp</string>
+    <string name="app_name" translatable="false">Towards Goals</string>
 
     <string name="default_description">Some description. Some description. Some descriptiondescriptiondescription. Some description.</string>
     <string name="default_title">A title</string>
+    <string name="add_end_name">Add</string>
+    <string name="edit_end_name">End editing</string>
 </resources>

@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="habits_name">Nawyki</string>
+    <string name="habits_name">Nawyk</string>
+    <string name="habits_name_plural">Nawyki</string>
 </resources>

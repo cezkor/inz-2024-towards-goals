@@ -3,5 +3,7 @@
 
     <string name="default_description">Jakiś opis. Jakiś opis. Jakiś opisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopis. Jakiś opis.</string>
     <string name="default_title">Tytuł</string>
-
+    <string name="add_end_name">Dodaj</string>
+    <string name="edit_end_name">Zakończ edycję</string>
 </resources>
+

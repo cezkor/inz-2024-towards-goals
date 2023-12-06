@@ -1,23 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="8dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="8dp"
+    android:orientation="vertical"
+    app:layout_constraintBottom_toBottomOf="parent"
+    app:layout_constraintEnd_toEndOf="parent"
+    app:layout_constraintStart_toStartOf="parent"
+    app:layout_constraintTop_toTopOf="parent"
     >
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:orientation="vertical"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:id="@+id/goalSynopsisTitle"
@@ -57,13 +53,13 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/goalSynopsisTaskTab"
-                android:text="@string/tasks_name" />
+                android:text="@string/tasks_name_plural" />
 
             <com.google.android.material.tabs.TabItem
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/goalSynopsisHabitTab"
-                android:text="@string/habits_name" />
+                android:text="@string/habits_name_plural" />
 
         </com.google.android.material.tabs.TabLayout>
 
@@ -71,7 +67,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="815"
-            android:id="@+id/goalSynopsisListContainer"/>
+            android:id="@+id/goalSynopsisScrollView">
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/goalSynopsisFragmentContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </ScrollView>
 
         <Button
             android:id="@+id/expandGoalButton"
@@ -79,8 +81,6 @@
             android:layout_height="wrap_content"
             android:layout_weight="0"
             android:text="@string/more_button_text"
-            android:theme="@style/Widget.Theme.TowardsGoalsApp.UsualButton.Colored"
-            android:visibility="visible" />
+            android:theme="@style/Widget.Theme.TowardsGoalsApp.UsualButton.Colored" />
 
-    </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

@@ -23,6 +23,7 @@ android {
         srcDir("src/main/res/layouts/main")
         srcDir("src/main/res/layouts/tasks")
         srcDir("src/main/res/layouts/stats")
+        srcDir("src/main/res/layouts/impints")
         srcDir("src/main/res/layouts")
         srcDir("src/main/res")
     }
@@ -41,6 +42,7 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    buildToolsVersion = "33.0.1"
 }
 
 dependencies {

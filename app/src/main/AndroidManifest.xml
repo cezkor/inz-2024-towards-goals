@@ -13,8 +13,19 @@
         android:theme="@style/Theme.TowardsGoalsApp"
         tools:targetApi="31">
         <activity
+            android:name=".goals.AddOrEditGoal"
+            android:exported="false" />
+        <activity
+            android:name=".goals.GoalDetails"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+            </intent-filter>
+        </activity>
+        <activity
             android:name=".main.MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:label="">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
