@@ -15,6 +15,14 @@ class AddGoalSuggestion(): Fragment() {
 
     companion object {
         const val LOG_TAG = "AddGoalSugg"
+
+        fun newInstance(position: Int): Fragment {
+            return AddGoalSuggestion().apply {
+                arguments = Bundle().apply {
+                    putInt(MainActivity.PAGE_NUMBER, position)
+                }
+            }
+        }
     }
 
     private lateinit var pageViewModel: GoalSynopsisViewModel

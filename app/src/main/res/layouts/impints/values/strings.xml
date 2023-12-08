@@ -3,8 +3,9 @@
     <string name="separator" translatable="false">:</string>
     <string name="impints_name">Implementation intention</string>
     <string name="impints_name_plural">Implementation intentions</string>
-    <string name="impints_if_label">If</string>
-    <string name="impints_if_then_label">Then</string>
-    <string name="impints_when_label">When</string>
-    <string name="impints_when_then_label">Then</string>
+    <string name="impints_if_label">If:</string>
+    <string name="impints_if_then_label">Then:</string>
+    <string name="impints_trigger_label">a trigger/an event</string>
+    <string name="impints_reaction_label">a reaction or behaviour</string>
+
 </resources>

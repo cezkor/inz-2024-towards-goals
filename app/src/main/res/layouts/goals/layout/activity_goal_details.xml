@@ -61,17 +61,13 @@
 
         </com.google.android.material.tabs.TabLayout>
 
-        <ScrollView
-            android:id="@+id/goalScrollView"
+        <FrameLayout
+            android:id="@+id/goalFrameLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="815" >
 
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/goalDetailsFragmentContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </ScrollView>
+        </FrameLayout>
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

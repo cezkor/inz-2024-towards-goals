@@ -3,7 +3,6 @@ package com.example.towardsgoalsapp.main
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
-import android.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -18,6 +17,8 @@ import com.example.towardsgoalsapp.goals.AddGoalSuggestion
 import com.example.towardsgoalsapp.goals.GoalData
 import com.example.towardsgoalsapp.goals.GoalSynopsis
 import com.example.towardsgoalsapp.goals.GoalSynopsisViewModel
+import com.example.towardsgoalsapp.habits.HabitData
+import com.example.towardsgoalsapp.tasks.TaskData
 
 class MainActivity : AppCompatActivity() {
 
@@ -57,14 +58,26 @@ class MainActivity : AppCompatActivity() {
 
         sharedViewModelForAllPages =
             ViewModelProvider(this)[GoalSynopsisViewModel::class.java]
+        Log.i(LOG_TAG, "created viewmodel: $sharedViewModelForAllPages")
 
         // update viewmodel with data
 
 //        sharedViewModelForAllPages.
-//        arrayOfGoalDataStates[3].value =
+//        arrayOfGoalDataStates[0].value =
 //            GoalSynopsisViewModel.MutableGoalDataStates.INITIALIZED_POPULATED
+//        sharedViewModelForAllPages.arrayOfGoalData.size
 //        sharedViewModelForAllPages.
-//        arrayOfGoalData[3].value= GoalData(100, "no", "des", 0.5)
+//        arrayOfGoalData[0] =
+//            MutableLiveData(GoalData(100, "no", "des", 0.5))
+//        sharedViewModelForAllPages
+//            .habitDataArraysPerGoal[100] =
+//            List(Constants.MAX_GOALS_AMOUNT*4)
+//            { MutableLiveData<HabitData>() }.toCollection(ArrayList())
+//        sharedViewModelForAllPages.gidToPosition[100] = 0
+//        sharedViewModelForAllPages
+//            .taskDataArraysPerGoal[100] =
+//            List(Constants.MAX_GOALS_AMOUNT*3)
+//            { MutableLiveData<TaskData>() }.toCollection(ArrayList())
 
         goalPager = findViewById(R.id.goalPager)
 
@@ -121,8 +134,6 @@ class MainActivity : AppCompatActivity() {
         goalDataStateArray: Array<MutableLiveData<GoalSynopsisViewModel.MutableGoalDataStates>>
     ) : FragmentStateAdapter(fragmentActivity) {
 
-        private val LOG_TAG = "GoalPagesAdapter"
-
         private var goalDataStates: Array<MutableLiveData<GoalSynopsisViewModel.MutableGoalDataStates>>
         = goalDataStateArray
 
@@ -132,16 +143,12 @@ class MainActivity : AppCompatActivity() {
 
         override fun createFragment(position: Int): Fragment {
             val fragment: Fragment = when (goalDataStates[position].value) {
-                in statesForPopulatingWithGoalSynopsis -> GoalSynopsis()
-                in statesForPopulatingWithGoalSuggestion-> AddGoalSuggestion()
+                in statesForPopulatingWithGoalSynopsis -> GoalSynopsis.newInstance(position)
+                in statesForPopulatingWithGoalSuggestion-> AddGoalSuggestion.newInstance(position)
                 else -> Fragment()
             }
 
             Log.i(LOG_TAG, "created fragment $fragment, page number $position")
-
-            val bundle = Bundle()
-            bundle.putInt(PAGE_NUMBER, position)
-            fragment.arguments = bundle
 
             return fragment
         }

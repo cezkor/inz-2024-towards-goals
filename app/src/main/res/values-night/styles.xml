@@ -27,4 +27,14 @@
 
     </style>
 
+    <style name="Widget.Style.TowardsGoalsApp.ImpIntEditTextAppearance" parent="@style/TextAppearance.MaterialComponents.Body2">
+        <item name="android:textColorHint">@color/black</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="Widget.Style.TowardsGoalsApp.ImpIntTextAppearance" parent="@style/TextAppearance.MaterialComponents.Body2">
+        <item name="android:textColor">@color/impint_text_at_night_color</item>
+        <item name="android:textColorHint">@color/impint_text_at_night_color</item>
+    </style>
+
 </resources>

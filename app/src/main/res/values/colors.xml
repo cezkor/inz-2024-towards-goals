@@ -25,4 +25,8 @@
     <color name="progress_yellow">#ffffcd82</color>
     <color name="progress_green">#ff99cc28</color>
 
+    <color name="if_color">#88ff8243</color>
+    <color name="then_color">#888470ff</color>
+    <color name="impint_text_at_night_color">#FFe0e0e0</color>
+
 </resources>

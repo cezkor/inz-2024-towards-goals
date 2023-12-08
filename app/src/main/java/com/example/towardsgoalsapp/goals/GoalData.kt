@@ -1,8 +1,10 @@
 package com.example.towardsgoalsapp.goals
 
+import com.example.towardsgoalsapp.Constants
+
 data class GoalData(
-    val goalId: Long,
-    val goalName: String,
-    val goalDescription: String,
-    val progress: Double
+    val goalId: Long = Constants.IGNORE_ID_AS_LONG,
+    val goalName: String = Constants.EMPTY_STRING,
+    val goalDescription: String = Constants.EMPTY_STRING,
+    val progress: Double = .0
     )

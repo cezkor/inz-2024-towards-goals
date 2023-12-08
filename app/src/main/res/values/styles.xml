@@ -24,4 +24,13 @@
 
     </style>
 
+    <style name="Widget.Style.TowardsGoalsApp.ImpIntEditTextAppearance" parent="@style/TextAppearance.MaterialComponents.Body2">
+        <item name="android:textColorHint">@color/gray_800</item>
+        <item name="android:colorControlActivated">@color/black</item>
+    </style>
+
+    <style name="Widget.Style.TowardsGoalsApp.ImpIntTextAppearance" parent="@style/TextAppearance.MaterialComponents.Body2">
+        <!--   leave everything as it is in Body2   -->
+    </style>
+
 </resources>

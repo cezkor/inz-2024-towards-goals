@@ -25,8 +25,8 @@
 
         <TextView
             android:id="@+id/goalSynopsisDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="fill_parent"
+            android:layout_height="0dp"
             android:layout_weight="90"
             android:maxLines="6"
             android:text="@string/default_description" />
@@ -63,17 +63,14 @@
 
         </com.google.android.material.tabs.TabLayout>
 
-        <ScrollView
+        <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="0dp"
             android:layout_weight="815"
-            android:id="@+id/goalSynopsisScrollView">
+            android:id="@+id/goalSynopsisFrameLayout">
 
-            <androidx.fragment.app.FragmentContainerView
-                android:id="@+id/goalSynopsisFragmentContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-        </ScrollView>
+
+        </FrameLayout>
 
         <Button
             android:id="@+id/expandGoalButton"

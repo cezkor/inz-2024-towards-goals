@@ -2,8 +2,8 @@
 <resources>
     <string name="impints_name">Intencja wdrożenia</string>
     <string name="impints_name_plural">Intencje wdrożeniowe</string>
-    <string name="impints_if_label">Jeżeli</string>
-    <string name="impints_if_then_label">To</string>
-    <string name="impints_when_label">Gdy</string>
-    <string name="impints_when_then_label">Wtedy</string>
+    <string name="impints_if_label">Jeżeli:</string>
+    <string name="impints_if_then_label">To wtedy:</string>
+    <string name="impints_trigger_label">wydarzenie lub sytuacja</string>
+    <string name="impints_reaction_label">reakcja</string>
 </resources>

@@ -2,4 +2,5 @@
 <resources>
     <string name="tasks_name">Task</string>
     <string name="tasks_name_plural">Tasks</string>
+    <string name="tasks_subtasks_beginning_text">Subtasks: %d</string>
 </resources>
