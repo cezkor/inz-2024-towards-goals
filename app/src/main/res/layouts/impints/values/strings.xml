@@ -7,5 +7,7 @@
     <string name="impints_if_then_label">Then:</string>
     <string name="impints_trigger_label">a trigger/an event</string>
     <string name="impints_reaction_label">a reaction or behaviour</string>
+    <string name="impints_no_impints">There are no implementation intentions</string>
+    <string name="impint_menu_add_empty_imp_int">Add a new implementation intention</string>
 
 </resources>

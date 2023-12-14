@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    >
+
+    <item
+        android:id="@+id/habitDoneWellItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/habits_make_done_well" />
+
+    <item
+        android:id="@+id/habitDoneNotWellItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/habits_make_done_not_well" />
+
+    <item
+        android:id="@+id/addImpIntItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/impint_menu_add_empty_imp_int" />
+
+    <item
+        android:id="@+id/editItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/enable_edit" />
+    <item
+        android:id="@+id/deleteHabitItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/menu_delete"
+        />
+</menu>

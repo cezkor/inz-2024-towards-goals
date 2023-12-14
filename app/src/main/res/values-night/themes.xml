@@ -1,8 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.TowardsGoalsApp" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <item name="toolbarStyle">@style/Widget.Style.TowardsGoalsApp.ToolbarStyle</item>
+        <item name="android:itemTextAppearance">@style/Widget.Style.TowardsGoalsApp.MenuItem</item>
     </style>
 
     <style name="NoDim" parent="android:Theme">

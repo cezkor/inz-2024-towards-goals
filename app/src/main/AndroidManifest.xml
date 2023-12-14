@@ -6,17 +6,35 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
+
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
         android:theme="@style/Theme.TowardsGoalsApp"
         tools:targetApi="31">
         <activity
-            android:name=".goals.AddOrEditGoal"
-            android:exported="false" />
+            android:name=".tasks.TaskOngoing"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".goals.GoalDetails"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".tasks.TaskDetails"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".habits.HabitDetails"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

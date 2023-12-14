@@ -10,18 +10,17 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
 import com.example.towardsgoalsapp.habits.HabitData
 import com.example.towardsgoalsapp.habits.HabitItemList
 import com.example.towardsgoalsapp.main.MainActivity
+import com.example.towardsgoalsapp.main.OneTextFragment
 import com.example.towardsgoalsapp.tasks.TaskData
 import com.example.towardsgoalsapp.tasks.TaskItemList
 import com.google.android.material.tabs.TabLayout
@@ -54,12 +53,49 @@ class GoalSynopsisViewModel: ViewModel() {
 
     val lastTabIndexes: Array<MutableLiveData<Int>> =
         Array(Constants.MAX_GOALS_AMOUNT) { MutableLiveData(Constants.IGNORE_ID_AS_INT) }
+    fun getEverything() {
 
+        for (i in setOf(0,1,2,3,4,5,6)) {
+            arrayOfGoalDataStates[i].value = MutableGoalDataStates.INITIALIZED_EMPTY
+        }
+
+        arrayOfGoalData[3].value = GoalData(
+            100, "a goal", "super description!", 0.1
+        )
+        taskDataArraysPerGoal[100] = java.util.ArrayList(
+            List(25) { MutableLiveData<TaskData>() }.toCollection(ArrayList())
+        )
+        for (i in 0..<25) taskDataArraysPerGoal[100]?.get(i).apply {
+            this?.run { this.value = TaskData(
+                (100+i).toLong(), "task $i", "descr",
+                0.0, -1, false, 1000
+            ) }
+        }
+        habitDataArraysPerGoal[100] = java.util.ArrayList(
+            List(5) { MutableLiveData<HabitData>() }.toCollection(ArrayList())
+        )
+        for (i in 0..<5) habitDataArraysPerGoal[100]?.get(i).apply {
+            this?.run { this.value = HabitData((200+i).toLong(), "habit $i") }
+        }
+
+        arrayOfGoalDataStates[3].value = MutableGoalDataStates.INITIALIZED_POPULATED
+
+    }
+
+    fun updateOneGoal() {}
+
+    fun addOneGoal(
+        newName: String?,
+        newDescription: String?
+    ) {
+        // add new goal via repository to database
+        // get it to view model
+    }
 }
 
 class GoalSynopsis: Fragment() {
 
-    private lateinit var goalDetailsOpener: ActivityResultLauncher<Long>
+    private lateinit var goalDetailsOpener: ActivityResultLauncher<Pair<Long, Boolean>>
 
     companion object {
         const val LOG_TAG = "GoalSynopsis"
@@ -78,10 +114,10 @@ class GoalSynopsis: Fragment() {
                 GoalSynopsisViewModel.MutableGoalDataStates.POPULATED
             )
 
-        const val TASKS_TAB_ID = 0
-        const val HABITS_TAB_ID = 1
+        private const val TASKS_TAB_ID = 0
+        private const val HABITS_TAB_ID = 1
 
-        const val LAST_PAGE_BY_ID = "lpbid"
+        private const val LAST_PAGE_BY_ID = "lpbid"
     }
 
     private lateinit var pageViewModel: GoalSynopsisViewModel
@@ -91,6 +127,9 @@ class GoalSynopsis: Fragment() {
 
     private lateinit var tasksFragment: TaskItemList
     private lateinit var habitsFragment: HabitItemList
+
+    private lateinit var noTasksFragment: OneTextFragment
+    private lateinit var noHabitsFragment: OneTextFragment
 
     private val fragmentContainerId = R.id.goalSynopsisFrameLayout
 
@@ -150,7 +189,7 @@ class GoalSynopsis: Fragment() {
         }
 
         fun readyTheMoreButton() {
-            goalDetailsOpener = registerForActivityResult(MainActivityRefreshIntentContract()){
+            goalDetailsOpener = registerForActivityResult(GoalRefreshRequesterContract()){
 
                 if (it == Constants.IGNORE_ID_AS_LONG) return@registerForActivityResult
                 // get goal from given id
@@ -161,7 +200,7 @@ class GoalSynopsis: Fragment() {
             goalDetailsButton.setOnClickListener {
                 Log.i(LOG_TAG, "launching intent for goalid $goalId")
                 if (goalId != Constants.IGNORE_ID_AS_LONG)
-                    goalDetailsOpener.launch(goalId)
+                    goalDetailsOpener.launch(Pair(goalId, true))
             }
         }
 
@@ -172,10 +211,18 @@ class GoalSynopsis: Fragment() {
                 habitsFragment = HabitItemList.newInstance(goalId, classNumber)
             } else { Log.i(LOG_TAG, "class number is null"); return }
 
+            noHabitsFragment = OneTextFragment.newInstance(
+                resources.getString(R.string.habits_no_habits)
+            )
+            noTasksFragment = OneTextFragment.newInstance(
+                resources.getString(R.string.tasks_no_tasks)
+            )
+
             tabs.addOnTabSelectedListener(TabsListener(
                 tabs.getTabAt(HABITS_TAB_ID), tabs.getTabAt(TASKS_TAB_ID),
                 childFragmentManager, fragmentContainerId,
-                habitsFragment , tasksFragment, pageViewModel.lastTabIndexes[pageNumber]
+                habitsFragment , tasksFragment, pageViewModel.lastTabIndexes[pageNumber],
+                noHabitsFragment, noTasksFragment, SizeGetter()
             ))
 
             // set tab to show
@@ -216,6 +263,21 @@ class GoalSynopsis: Fragment() {
         return inflater.inflate(R.layout.fragment_goal_synopsis, container, true)
     }
 
+    private inner class SizeGetter {
+        private fun isGoalDataValid(): Boolean {
+            return goalId != Constants.IGNORE_ID_AS_LONG
+            && pageViewModel.arrayOfGoalDataStates[pageNumber].value in acceptedGoalDataStates
+        }
+
+        fun getSizeOfHabitList() : Int = if (isGoalDataValid())
+            pageViewModel.habitDataArraysPerGoal[goalId]?.size ?: 0
+            else 0
+
+        fun getSizeOfTaskList() : Int = if (isGoalDataValid())
+            pageViewModel.taskDataArraysPerGoal[goalId]?.size ?: 0
+            else 0
+    }
+
     private inner class TabsListener(
         private val habitsTab: TabLayout.Tab?,
         private val tasksTab: TabLayout.Tab?,
@@ -223,18 +285,25 @@ class GoalSynopsis: Fragment() {
         private val replacedViewId: Int,
         private val habitsFragment: HabitItemList,
         private val tasksFragment: Fragment,
-        private val lastTabIndex: MutableLiveData<Int>
+        private val lastTabIndex: MutableLiveData<Int>,
+        private val noTasksFragment: OneTextFragment,
+        private val noHabitsFragment: OneTextFragment,
+        private val sizeGetter: SizeGetter
     ) : TabLayout.OnTabSelectedListener {
 
         override fun onTabSelected(tab: TabLayout.Tab?) {
             val fragment: Fragment? = when (tab) {
                 habitsTab -> {
                     lastTabIndex.value = HABITS_TAB_ID
-                    habitsFragment
+                    if (sizeGetter.getSizeOfHabitList() > 0)
+                        habitsFragment
+                    else noHabitsFragment
                 }
                 tasksTab -> {
                     lastTabIndex.value = TASKS_TAB_ID
-                    tasksFragment
+                    if (sizeGetter.getSizeOfTaskList() > 0)
+                        tasksFragment
+                    else noTasksFragment
                 }
                 else -> null
             }

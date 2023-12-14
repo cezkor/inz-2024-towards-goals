@@ -2,4 +2,9 @@
 <resources>
     <string name="habits_name">Nawyk</string>
     <string name="habits_name_plural">Nawyki</string>
+    <string name="habits_no_habits">Nie ma nawyków</string>
+    <string name="habits_add_habit">Dodaj nawyk</string>
+    <string name="habits_make_done_well">Oznacz jako utrzymany</string>
+    <string name="habits_make_done_not_well">Oznacz jako nieutrzymany</string>
+    <string name="habits_does_not_apply">Nie dotyczy</string>
 </resources>

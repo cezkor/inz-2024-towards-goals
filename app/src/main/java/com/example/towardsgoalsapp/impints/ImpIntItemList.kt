@@ -57,13 +57,13 @@ class IntImpItemList : Fragment() {
 
         @JvmStatic
         fun newInstance(
-            gid: Long,
+            oid: Long,
             ownerType: OwnerType,
             inheritFromClass: Int,
             impIntsAreReadOnly: Boolean
         ) = IntImpItemList().apply {
                 arguments = Bundle().apply {
-                    putLong(OWNER_ID_OF_IMPINTS, gid)
+                    putLong(OWNER_ID_OF_IMPINTS, oid)
                     putString(OWNER_TYPE_OF_IMPINTS, ownerType.typeString)
                     putInt(INHERIT_FROM_CLASS_NUMBER, inheritFromClass)
                     putBoolean(READ_ONLY_IMPINTS, impIntsAreReadOnly)

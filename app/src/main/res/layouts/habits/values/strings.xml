@@ -2,4 +2,9 @@
 <resources>
     <string name="habits_name">Habit</string>
     <string name="habits_name_plural">Habits</string>
+    <string name="habits_no_habits">There are no habits</string>
+    <string name="habits_add_habit">Add habit</string>
+    <string name="habits_make_done_well">Make done well</string>
+    <string name="habits_make_done_not_well">Make not done well</string>
+    <string name="habits_does_not_apply">Does not apply</string>
 </resources>

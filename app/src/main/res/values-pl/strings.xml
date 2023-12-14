@@ -5,5 +5,10 @@
     <string name="default_title">Tytuł</string>
     <string name="add_end_name">Dodaj</string>
     <string name="edit_end_name">Zakończ edycję</string>
+    <string name="name_and_description">Opis i nazwa</string>
+    <string name="enable_edit">Umożliwij edycję</string>
+    <string name="abandoning_aoe">Wciśnij Zawróć jeżeli jesteś pewien że chcesz anulować (DANE MOGĄ NIE BYĆ ZAPISANE!)</string>
+    <string name="next">Dalej</string>
+    <string name="end">Zakończ</string>
 </resources>
 

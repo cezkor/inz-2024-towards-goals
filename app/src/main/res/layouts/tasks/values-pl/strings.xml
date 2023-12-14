@@ -3,4 +3,15 @@
     <string name="tasks_name">Zadanie</string>
     <string name="tasks_name_plural">Zadania</string>
     <string name="tasks_subtasks_beginning_text">Podzadania: %d</string>
+    <string name="tasks_no_tasks">Nie ma zadań</string>
+    <string name="tasks_doing_task">Robiąc: %s</string>
+    <string name="tasks_add_task">Dodaj zadanie</string>
+    <string name="tasks_add_subtask">Dodaj podzadanie</string>
+    <string name="tasks_subtasks_not_allowed">Nie możesz tutaj utworzyć podzadań</string>
+    <string name="tasks_make_task_done">Oznacz jako zrobione</string>
+    <string name="tasks_abandon_task">Wciśnij Zawróć jeżeli jesteś pewien że nie chcesz wykonywać tego zadania</string>
+    <string name="tasks_keep_doing_task">Kontynuuj to zadanie! Albo oznacz je jako zrobione/nie zrobione…</string>
+    <string name="tasks_abandon_second_query">Wciśnij Zawróć jeżeli chcesz pozostawić domyślne wartości tego formularza; zaznaczyć należy, iż zadanie to w tym momencie zostanie już zapisane</string>
+    <string name="tasks_done">Zrobione</string>
+    <string name="tasks_failed">Nieudane</string>
 </resources>

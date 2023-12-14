@@ -1,8 +1,13 @@
 <resources>
     <string name="app_name" translatable="false">Towards Goals</string>
 
+    <string name="name_and_description">Name and description</string>
     <string name="default_description">Some description. Some description. Some descriptiondescriptiondescription. Some description.</string>
     <string name="default_title">A title</string>
     <string name="add_end_name">Add</string>
     <string name="edit_end_name">End editing</string>
+    <string name="enable_edit">Enable editing</string>
+    <string name="abandoning_aoe">Tap Back again if you are sure you want to cancel (DATA MAY NOT BE SAVED!)</string>
+    <string name="next">Next</string>
+    <string name="end">End</string>
 </resources>

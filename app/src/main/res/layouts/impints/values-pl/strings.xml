@@ -6,4 +6,6 @@
     <string name="impints_if_then_label">To wtedy:</string>
     <string name="impints_trigger_label">wydarzenie lub sytuacja</string>
     <string name="impints_reaction_label">reakcja</string>
+    <string name="impints_no_impints">Nie ma intencji wdrożeniowych</string>
+    <string name="impint_menu_add_empty_imp_int">Dodaj intencje wdrożenia</string>
 </resources>

@@ -48,6 +48,8 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    private var lastPage = Constants.IGNORE_PAGE_AS_INT
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -61,23 +63,6 @@ class MainActivity : AppCompatActivity() {
         Log.i(LOG_TAG, "created viewmodel: $sharedViewModelForAllPages")
 
         // update viewmodel with data
-
-//        sharedViewModelForAllPages.
-//        arrayOfGoalDataStates[0].value =
-//            GoalSynopsisViewModel.MutableGoalDataStates.INITIALIZED_POPULATED
-//        sharedViewModelForAllPages.arrayOfGoalData.size
-//        sharedViewModelForAllPages.
-//        arrayOfGoalData[0] =
-//            MutableLiveData(GoalData(100, "no", "des", 0.5))
-//        sharedViewModelForAllPages
-//            .habitDataArraysPerGoal[100] =
-//            List(Constants.MAX_GOALS_AMOUNT*4)
-//            { MutableLiveData<HabitData>() }.toCollection(ArrayList())
-//        sharedViewModelForAllPages.gidToPosition[100] = 0
-//        sharedViewModelForAllPages
-//            .taskDataArraysPerGoal[100] =
-//            List(Constants.MAX_GOALS_AMOUNT*3)
-//            { MutableLiveData<TaskData>() }.toCollection(ArrayList())
 
         goalPager = findViewById(R.id.goalPager)
 
@@ -127,11 +112,23 @@ class MainActivity : AppCompatActivity() {
             pageNum += 1
         }
 
+        sharedViewModelForAllPages.getEverything()
+
+        savedInstanceState?.run {
+            val i: Int = this.getInt(PAGE_NUMBER)
+            if ( (i > 0) and (i < Constants.MAX_GOALS_AMOUNT) ) { goalPager.currentItem = i }
+        }
+
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt(PAGE_NUMBER, goalPager.currentItem)
+        super.onSaveInstanceState(outState)
     }
 
     private inner class GoalPagesAdapter(
         fragmentActivity: FragmentActivity,
-        goalDataStateArray: Array<MutableLiveData<GoalSynopsisViewModel.MutableGoalDataStates>>
+        goalDataStateArray: Array<MutableLiveData<GoalSynopsisViewModel.MutableGoalDataStates>>,
     ) : FragmentStateAdapter(fragmentActivity) {
 
         private var goalDataStates: Array<MutableLiveData<GoalSynopsisViewModel.MutableGoalDataStates>>

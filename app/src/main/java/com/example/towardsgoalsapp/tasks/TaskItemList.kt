@@ -14,7 +14,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.goals.GoalDetails
 import com.example.towardsgoalsapp.goals.GoalSynopsisViewModel
+import com.example.towardsgoalsapp.goals.GoalViewModel
 
 class TaskItemListViewModel(val taskDataList: ArrayList<MutableLiveData<TaskData>>): ViewModel() {
 
@@ -52,8 +54,19 @@ class TaskItemList : Fragment() {
         return when (clazz) {
             GoalSynopsisViewModel::class.java -> {
                 val inheritedViewModel: GoalSynopsisViewModel =
-                    ViewModelProvider(requireActivity())[GoalSynopsisViewModel::class.java]
+                    ViewModelProvider(requireActivity())[clazz]
                 inheritedViewModel.taskDataArraysPerGoal[goalId]
+            }
+            GoalViewModel::class.java -> {
+                val inheritedViewModel: GoalViewModel =
+                    ViewModelProvider(requireActivity())[clazz]
+                inheritedViewModel.arrayOfMutableTaskData
+            }
+            TaskViewModel::class.java, TaskDetailsViewModel::class.java,
+                TaskOngoing::class.java -> {
+                val inheritedViewModel: TaskViewModel =
+                    ViewModelProvider(requireActivity())[TaskViewModel::class.java]
+                inheritedViewModel.arrayOfMutableSubtasksTaskData
             }
             else -> null
         }

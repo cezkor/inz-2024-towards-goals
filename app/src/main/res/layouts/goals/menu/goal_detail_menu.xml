@@ -1,15 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
     >
 
     <item
         android:id="@+id/editGoalItem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:title="@string/menu_edit_title_and_description" />
+        android:title="@string/enable_edit" />
+    <item
+        android:id="@+id/addTaskGoalItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/tasks_add_task" />
+    <item
+        android:id="@+id/addHabitGoalItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/habits_add_habit" />
     <item
         android:id="@+id/deleteGoalItem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:title="@string/menu_delete" />
+        android:title="@string/menu_delete"
+        />
 </menu>

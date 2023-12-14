@@ -33,4 +33,23 @@
         <!--   leave everything as it is in Body2   -->
     </style>
 
+    <style name="Widget.Style.TowardsGoalsApp.ToolbarStyle" parent="@style/Widget.Material3.Toolbar">
+        <item name="titleTextColor">@color/white</item>
+        <item name="navigationIconTint">@color/white</item>
+    </style>
+
+    <style name="Widget.Style.TowardsGoalsApp.MenuItem" parent="Widget.AppCompat.TextView.SpinnerItem">
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="Widget.Style.TowardsGoalsApp.DoneButton" parent="">
+        <item name="backgroundTint">@color/progress_green</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="Widget.Style.TowardsGoalsApp.FailedButton" parent="">
+        <item name="backgroundTint">@color/progress_red</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
 </resources>

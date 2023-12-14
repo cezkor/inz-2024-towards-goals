@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+
+    >
+
+    <item
+        android:id="@+id/taskDoneItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/tasks_make_task_done" />
+
+    <item
+        android:id="@+id/addSubtaskItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/tasks_add_subtask" />
+
+    <item
+        android:id="@+id/addImpIntItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/impint_menu_add_empty_imp_int" />
+
+    <item
+        android:id="@+id/editItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/enable_edit" />
+    <item
+        android:id="@+id/deleteTaskItem"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/menu_delete"
+        />
+</menu>

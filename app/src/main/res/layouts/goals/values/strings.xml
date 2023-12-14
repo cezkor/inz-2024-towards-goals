@@ -2,7 +2,7 @@
 <resources>
     <string name="add_goal_suggestion_text">Click to add a goal</string>
     <string name="more_button_text">More…</string>
-
     <string name="menu_edit_title_and_description">Edit description or title</string>
     <string name="menu_delete">Delete</string>
+    <string name="goals_adding_goal">Adding a goal</string>
 </resources>

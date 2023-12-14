@@ -7,31 +7,31 @@
     >
 
     <androidx.appcompat.widget.Toolbar
-        android:id="@+id/goalToolbar"
+        android:id="@+id/habitToolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         android:elevation="4dp"
         android:theme="@style/ThemeOverlay.AppCompat.ActionBar"
-        app:layout_constraintBottom_toTopOf="@+id/goalLinearLayout"
+        app:layout_constraintBottom_toTopOf="@+id/habitLinearLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
 
     <LinearLayout
-        android:id="@+id/goalLinearLayout"
+        android:id="@+id/habitLinearLayout"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="vertical"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/goalToolbar">
+        app:layout_constraintTop_toBottomOf="@+id/habitToolbar">
 
 
         <com.google.android.material.tabs.TabLayout
-            android:id="@+id/goalTabs"
+            android:id="@+id/habitTabs"
             style="@style/Widget.Style.TowardsGoalsApp.TabLayout"
             android:layout_width="match_parent"
             android:layout_height="48dp"
@@ -41,28 +41,13 @@
             app:tabIndicatorFullWidth="true"
             app:tabMaxWidth="0dp">
 
-            <com.google.android.material.tabs.TabItem
-                android:id="@+id/goalTaskTab"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/tasks_name_plural" />
-
-            <com.google.android.material.tabs.TabItem
-                android:id="@+id/goalHabitTab"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/habits_name_plural" />
-
-            <com.google.android.material.tabs.TabItem
-                android:id="@+id/goalStatsTab"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/stats_name" />
+            <!--     tabs will be defined in code, as i'm using viewpager
+            to show what they would be representing  -->
 
         </com.google.android.material.tabs.TabLayout>
 
         <androidx.viewpager2.widget.ViewPager2
-            android:id="@+id/goalDetailsViewPager"
+            android:id="@+id/habitDetailsViewPager"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="815" >

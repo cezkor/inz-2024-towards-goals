@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
 import com.example.towardsgoalsapp.goals.GoalSynopsisViewModel
+import com.example.towardsgoalsapp.goals.GoalViewModel
 
 class HabitItemListViewModel(val habitDataList: ArrayList<MutableLiveData<HabitData>>): ViewModel() {
     fun updateOneDataAt() {}
@@ -53,6 +54,11 @@ class HabitItemList : Fragment() {
                 val inheritedViewModel: GoalSynopsisViewModel =
                     ViewModelProvider(requireActivity())[GoalSynopsisViewModel::class.java]
                 inheritedViewModel.habitDataArraysPerGoal[goalId]
+            }
+            GoalViewModel::class.java -> {
+                val inheritedViewModel: GoalViewModel =
+                    ViewModelProvider(requireActivity())[GoalViewModel::class.java]
+                inheritedViewModel.arrayOfMutableHabitData
             }
             else -> null
         }
