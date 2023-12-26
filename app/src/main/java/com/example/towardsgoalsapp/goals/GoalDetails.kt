@@ -13,30 +13,29 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.towardsgoalsapp.Constants
-import com.example.towardsgoalsapp.DoubleTapOnBack
+import com.example.towardsgoalsapp.etc.DoubleTapOnBack
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.habits.HabitData
+import com.example.towardsgoalsapp.habits.HabitData_OLD
 import com.example.towardsgoalsapp.habits.HabitItemList
-import com.example.towardsgoalsapp.main.OneTextFragment
-import com.example.towardsgoalsapp.main.TextsFragment
-import com.example.towardsgoalsapp.main.TextsViewModel
-import com.example.towardsgoalsapp.tasks.TaskData
+import com.example.towardsgoalsapp.etc.OneTextFragment
+import com.example.towardsgoalsapp.etc.TextsFragment
+import com.example.towardsgoalsapp.etc.TextsViewModel
+import com.example.towardsgoalsapp.tasks.TaskData_OLD
 import com.example.towardsgoalsapp.tasks.TaskItemList
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 
 class GoalViewModel(private val goalId: Long): TextsViewModel() {
 
-    val mutableGoalData = MutableLiveData<GoalData>()
+    val mutableGoalData = MutableLiveData<GoalData_OLD>()
 
-    val arrayOfMutableHabitData: ArrayList<MutableLiveData<HabitData>> =
+    val arrayOfMutableHabitData: ArrayList<MutableLiveData<HabitData_OLD>> =
         java.util.ArrayList()
 
-    val arrayOfMutableTaskData: ArrayList<MutableLiveData<TaskData>> =
+    val arrayOfMutableTaskData: ArrayList<MutableLiveData<TaskData_OLD>> =
         java.util.ArrayList()
 
     private fun calculateProgress(): Double {return .0} // to do when database code is ready
@@ -49,7 +48,7 @@ class GoalViewModel(private val goalId: Long): TextsViewModel() {
         // update in database
 
         val old = mutableGoalData.value
-        mutableGoalData.value = GoalData(
+        mutableGoalData.value = GoalData_OLD(
             old?.goalId ?: Constants.IGNORE_ID_AS_LONG,
             newName?: old?.goalName ?: Constants.EMPTY_STRING,
             newDescription?: old?.goalDescription ?: Constants.EMPTY_STRING,
@@ -235,7 +234,7 @@ class GoalDetails : AppCompatActivity() {
 
             onBackPressedDispatcher.addCallback(
                 DoubleTapOnBack(this, getString(R.string.abandoning_aoe)) {
-                    setResult(Activity.RESULT_CANCELED)
+                    setResult(RESULT_CANCELED)
                     onBackPressed()
                 }
             )

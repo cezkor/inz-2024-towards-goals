@@ -1,0 +1,139 @@
+import kotlin.Boolean;
+
+CREATE TABLE HabitData (
+    habitId INTEGER PRIMARY KEY AUTOINCREMENT,
+    habitEditUnfinished INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    habitName TEXT NOT NULL DEFAULT "",
+    habitDescription TEXT NOT NULL DEFAULT "",
+    habitTargetCount INTEGER DEFAULT 1 NOT NULL,
+    habitTargetPeriod INTEGER DEFAULT 1 NOT NULL,
+    goalId INTEGER NOT NULL ,
+    habitDoneWellCount INTEGER DEFAULT 0 NOT NULL,
+    habitDoneNotWellCount INTEGER DEFAULT 0 NOT NULL,
+    habitTotalCount INTEGER DEFAULT 0 NOT NULL,
+    habitTargetCompleted INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    FOREIGN KEY (goalId) REFERENCES GoalData (goalId)
+);
+
+CREATE TABLE UnfinishedHabitData (
+    habitId INTEGER PRIMARY KEY NOT NULL,
+    habitName TEXT NOT NULL DEFAULT "",
+    habitDescription TEXT NOT NULL DEFAULT "",
+    habitTargetCount INTEGER DEFAULT 1 NOT NULL,
+    habitTargetPeriod INTEGER DEFAULT 1 NOT NULL,
+    goalId INTEGER NOT NULL,
+    habitDoneWellCount INTEGER DEFAULT 0 NOT NULL,
+    habitDoneNotWellCount INTEGER DEFAULT 0 NOT NULL,
+    habitTotalCount INTEGER DEFAULT 0 NOT NULL,
+    habitTargetCompleted INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    FOREIGN KEY (goalId) REFERENCES GoalData (goalId)
+);
+
+CREATE TRIGGER deleteNowFinishedHabit
+AFTER UPDATE ON HabitData
+WHEN new.habitEditUnfinished = 0
+BEGIN
+	DELETE FROM UnfinishedHabitData WHERE habitId = new.habitId;
+END;
+
+CREATE TRIGGER checkIfMatchedTarget
+AFTER UPDATE ON HabitData
+WHEN ( (new.habitTargetPeriod <= new.habitTotalCount)
+        AND new.habitTargetCompleted != 1 )
+BEGIN
+    UPDATE HabitData
+    SET habitTargetCompleted = (
+        WITH T(targetPercentage, resultPercentage) AS ( SELECT
+            CASE
+                WHEN new.habitTargetPeriod != 0 THEN
+                    (CAST(new.habitTargetCount AS REAL)) / new.habitTargetPeriod
+                ELSE 0.0
+            END AS targetPercentage,
+            CASE
+                WHEN new.habitTargetPeriod != 0 THEN
+                    (CAST(new.habitDoneWellCount AS REAL)) / new.habitTargetPeriod
+                ELSE 0.0
+            END AS resultPercentage
+        )
+        SELECT
+            CASE WHEN T.resultPercentage >= T.targetPercentage THEN 1 ELSE 0 END
+        FROM T
+    )
+    WHERE habitId = new.habitId;
+
+    UPDATE HabitData SET
+        habitTotalCount = 0,
+        habitDoneWellCount = 0,
+        habitDoneNotWellCount = 0
+    WHERE habitId = new.habitId;
+
+    UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = new.goalId;
+END;
+
+CREATE TRIGGER onDeleteHabit
+BEFORE DELETE ON HabitData
+BEGIN
+    UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = old.goalId;
+END;
+
+CREATE TRIGGER onUpdateHabit
+AFTER UPDATE ON HabitData WHEN old.habitTargetCompleted != new.habitTargetCompleted
+BEGIN
+    UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = old.goalId;
+END;
+
+CREATE TRIGGER onInsertHabit
+AFTER INSERT ON HabitData
+BEGIN
+    UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = new.goalId;
+END;
+
+selectAllOf:
+SELECT * FROM HabitData WHERE goalId = ? ORDER BY habitId ASC;
+
+selectGivenHabit:
+SELECT * FROM HabitData WHERE habitId = ?;
+
+selectGivenUnfinishedHabit:
+SELECT * FROM UnfinishedHabitData WHERE habitId = ?;
+
+insertOneHabit:
+INSERT INTO HabitData(habitId, habitName, habitDescription, habitTargetCount, habitTargetPeriod, goalId)
+VALUES (?,?,?,?,?,?);
+
+insertOneEditUnfinishedHabit:
+INSERT INTO UnfinishedHabitData
+VALUES (?,?,?,?,?,?,?,?,?,?);
+
+markHabitAsDoneWell:
+UPDATE HabitData
+SET habitDoneWellCount = habitDoneWellCount + 1, habitTotalCount = habitTotalCount + 1
+WHERE habitId = ?;
+
+markHabitAsNotDoneWell:
+UPDATE HabitData
+SET habitDoneNotWellCount = habitDoneNotWellCount + 1, habitTotalCount = habitTotalCount + 1
+WHERE habitId = ?;
+
+skipHabit:
+UPDATE HabitData
+SET habitTotalCount = habitTotalCount + 1
+WHERE habitId = ?;
+
+updateHabitTargets:
+UPDATE HabitData SET habitTargetCount = ?, habitTargetPeriod = ? WHERE habitId = ?;
+
+updateHabitTexts:
+UPDATE HabitData SET habitName = ?, habitDescription = ? WHERE habitId = ?;
+
+markHabitEdit:
+UPDATE HabitData SET habitEditUnfinished = ? WHERE habitId = ?;
+
+getHabitUnfinished:
+SELECT habitEditUnfinished FROM HabitData WHERE habitId = ?;
+
+deleteHabit:
+DELETE FROM HabitData WHERE habitId = ?;
+
+lastInsertRowId:
+SELECT last_insert_rowid();

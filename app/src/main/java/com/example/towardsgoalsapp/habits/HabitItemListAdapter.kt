@@ -14,7 +14,7 @@ class HabitItemListAdapter(
     private val viewModel: HabitItemListViewModel
 ) : RecyclerView.Adapter<HabitItemListAdapter.ViewHolder>() {
 
-    private val habitsMutablesList: List<MutableLiveData<HabitData>> = viewModel.habitDataList
+    private val habitsMutablesList: List<MutableLiveData<HabitData_OLD>> = viewModel.habitDataList
 
     companion object {
         const val LOG_TAG = "HILAdapter"
@@ -30,7 +30,7 @@ class HabitItemListAdapter(
 
         Log.i(LOG_TAG, "bind view called, position $position")
 
-        val habitData: HabitData? = habitsMutablesList[position].value
+        val habitData: HabitData_OLD? = habitsMutablesList[position].value
         habitData?.run { holder.bind(this) }
     }
 
@@ -40,7 +40,7 @@ class HabitItemListAdapter(
 
         private val habitNameTextView: TextView = viewOfItem.findViewById(R.id.habitNameForItem)
 
-        fun bind(habitData: HabitData) {
+        fun bind(habitData: HabitData_OLD) {
             habitNameTextView.text = habitData.habitName
         }
 

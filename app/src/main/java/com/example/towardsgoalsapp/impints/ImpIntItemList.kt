@@ -15,7 +15,7 @@ import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.OwnerType
 import com.example.towardsgoalsapp.R
 
-class ImpIntItemListViewModel(val impIntDataList: ArrayList<MutableLiveData<ImpIntData>>): ViewModel() {
+class ImpIntItemListViewModel(val impIntDataList: ArrayList<MutableLiveData<ImpIntData_OLD>>): ViewModel() {
     fun putOneDataAt(
         ifText: String,
         thenText: String,
@@ -23,7 +23,7 @@ class ImpIntItemListViewModel(val impIntDataList: ArrayList<MutableLiveData<ImpI
     ) {
         val old = impIntDataList[pos].value
         old?.run {
-            val new = ImpIntData(
+            val new = ImpIntData_OLD(
                 this.impIntId,
                 ifText,
                 thenText,
@@ -80,7 +80,7 @@ class IntImpItemList : Fragment() {
 
     private var readOnly: Boolean = false
 
-    private fun extractLiveDataArray(clazz: Class<*>?) : java.util.ArrayList<MutableLiveData<ImpIntData>>?{
+    private fun extractLiveDataArray(clazz: Class<*>?) : java.util.ArrayList<MutableLiveData<ImpIntData_OLD>>?{
         return when (clazz) {
             // to do
             else -> null

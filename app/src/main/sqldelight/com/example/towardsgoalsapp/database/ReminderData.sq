@@ -1,0 +1,32 @@
+import com.example.towardsgoalsapp.OwnerType;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import kotlin.Boolean;
+import kotlin.Int;
+
+CREATE TABLE ReminderData (
+    remId INTEGER PRIMARY KEY AUTOINCREMENT,
+    remindOn TEXT AS Instant NOT NULL,
+    ownerId INTEGER NOT NULL,
+    ownerType TEXT AS OwnerType NOT NULL,
+    UNIQUE (remId, ownerId, ownerType)
+);
+
+selectAll:
+SELECT * FROM ReminderData;
+
+selectReminderById:
+SELECT * FROM ReminderData WHERE remId = ?;
+
+selectOf:
+SELECT * FROM ReminderData WHERE ownerId = ? AND ownerType = ?;
+
+insertOne:
+INSERT INTO ReminderData
+VALUES (?,?,?,?);
+
+deleteReminder:
+DELETE FROM ReminderData WHERE remId = ?;
+
+lastInsertRowId:
+SELECT last_insert_rowid();

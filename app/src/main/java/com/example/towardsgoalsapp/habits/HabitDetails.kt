@@ -13,30 +13,27 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.towardsgoalsapp.Constants
-import com.example.towardsgoalsapp.DoubleTapOnBack
+import com.example.towardsgoalsapp.etc.DoubleTapOnBack
 import com.example.towardsgoalsapp.OwnerType
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.goals.GoalDetails
 import com.example.towardsgoalsapp.habits.HabitInfoContract.Companion.HABIT_ID_FROM_REQUESTER
-import com.example.towardsgoalsapp.impints.ImpIntData
+import com.example.towardsgoalsapp.impints.ImpIntData_OLD
 import com.example.towardsgoalsapp.impints.IntImpItemList
-import com.example.towardsgoalsapp.main.OneTextFragment
-import com.example.towardsgoalsapp.main.TextsFragment
-import com.example.towardsgoalsapp.main.TextsViewModel
+import com.example.towardsgoalsapp.etc.OneTextFragment
+import com.example.towardsgoalsapp.etc.TextsFragment
+import com.example.towardsgoalsapp.etc.TextsViewModel
 import com.example.towardsgoalsapp.reminders.ReminderSetting
-import com.example.towardsgoalsapp.tasks.TaskInfoContract.Companion.FOR_ADDING
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 
 class HabitViewModel(private val habitId: Long): TextsViewModel() {
 
-    val mutableHabitData = MutableLiveData<HabitData>()
+    val mutableHabitData = MutableLiveData<HabitData_OLD>()
 
-    val arrayOfMutableImpIntData: ArrayList<MutableLiveData<ImpIntData>> =
+    val arrayOfMutableImpIntData: ArrayList<MutableLiveData<ImpIntData_OLD>> =
         java.util.ArrayList()
 
     fun updateOneHabit() {}

@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContract
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.example.towardsgoalsapp.Constants
@@ -26,25 +27,24 @@ class AddGoalSuggestion(): Fragment() {
         }
     }
 
-    private lateinit var pageViewModel: GoalSynopsisViewModel
+    private lateinit var pageViewModel: GoalSynopsisesViewModel
 
     private var pageNumber: Int = Constants.IGNORE_PAGE_AS_INT
 
-    private lateinit var goalAdder: ActivityResultLauncher<Triple<Boolean, String, String>>
+    private lateinit var goalAdder: ActivityResultLauncher<Pair<Long, Boolean>>
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        pageViewModel = ViewModelProvider(requireActivity())[GoalSynopsisViewModel::class.java]
+        pageViewModel = ViewModelProvider(requireActivity())[GoalSynopsisesViewModel::class.java]
 
         pageNumber = requireArguments().getInt(MainActivity.PAGE_NUMBER)
 
-        goalAdder = registerForActivityResult(GoalTextsContract()) {
-            if (it.third) {
+        goalAdder = registerForActivityResult(GoalRefreshRequesterContract()) {
 
-                // update database, update pageViewModel
-            }
+
+
         }
 
         val plusButton: ImageButton = view.findViewById(R.id.addGoalPlusButton)

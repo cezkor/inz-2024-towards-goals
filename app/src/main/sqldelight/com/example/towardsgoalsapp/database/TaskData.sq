@@ -1,0 +1,201 @@
+import kotlin.Boolean;
+import kotlin.Int;
+
+CREATE TABLE TaskData (
+    taskId INTEGER PRIMARY KEY AUTOINCREMENT,
+    taskEditUnfinished INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    taskName TEXT NOT NULL DEFAULT "",
+    taskDescription TEXT NOT NULL DEFAULT "",
+    taskProgress REAL DEFAULT 0 NOT NULL,
+    taskOwnerId INTEGER,
+    goalId INTEGER NOT NULL,
+    taskDepth INTEGER AS Int DEFAULT 1 NOT NULL,
+    -- application controls whether it should allow to nest tasks at given depth !!!
+    subtasksCount INTEGER DEFAULT 0 NOT NULL,
+    taskDone INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    taskFailed INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    FOREIGN KEY (taskOwnerId) REFERENCES TaskData (taskId),
+    FOREIGN KEY (goalId) REFERENCES GoalData (goalId),
+    CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 AND taskFailed != 1 )
+);
+
+CREATE TABLE __TaskRecalcTable (
+
+  _taskId INTEGER NOT NULL PRIMARY KEY REFERENCES TaskData (taskId),
+  _taskOwnerId INTEGER REFERENCES TaskData (taskId),
+  _needsRecalc INTEGER NOT NULL DEFAULT 0
+
+);
+
+CREATE TABLE UnfinishedTaskData (
+    taskId INTEGER PRIMARY KEY NOT NULL,
+    taskName TEXT NOT NULL DEFAULT "",
+    taskDescription TEXT NOT NULL DEFAULT "",
+    taskProgress REAL DEFAULT 0 NOT NULL,
+    taskOwnerId INTEGER,
+    goalId INTEGER NOT NULL,
+    taskDepth INTEGER AS Int DEFAULT 1 NOT NULL,
+    subtasksCount INTEGER DEFAULT 0 NOT NULL,
+    taskDone INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    taskFailed INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    FOREIGN KEY (taskOwnerId) REFERENCES TaskData (taskId),
+    FOREIGN KEY (goalId) REFERENCES GoalData (goalId),
+    CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 AND taskFailed != 1 )
+);
+
+CREATE INDEX taskDataGoalIdIdx ON TaskData(goalId);
+CREATE INDEX unfTaskDataGoalIdIdx ON UnfinishedTaskData(goalId);
+CREATE INDEX taskDataOwnerIdx ON TaskData(taskOwnerId);
+CREATE INDEX unfTaskDataOwnerIdx ON UnfinishedTaskData(taskOwnerId);
+
+CREATE TRIGGER deleteNowFinishedTask
+AFTER UPDATE ON TaskData
+WHEN new.taskEditUnfinished = 0
+BEGIN
+	DELETE FROM UnfinishedTaskData WHERE taskId = new.taskId;
+END;
+
+CREATE TRIGGER onDeleteTask
+BEFORE DELETE ON TaskData
+BEGIN
+	DELETE FROM UnfinishedTaskData WHERE taskOwnerId = old.taskId;
+	DELETE FROM TaskData WHERE taskOwnerId = old.taskId;
+END;
+
+CREATE TRIGGER recalcProgressOfTask
+AFTER UPDATE ON __TaskRecalcTable WHEN new._needsRecalc == 1
+BEGIN
+    UPDATE TaskData
+    SET taskProgress = (
+
+        SELECT CASE WHEN (subtasksCount = 0) THEN CAST((taskDone - taskFailed) AS REAL)
+               ELSE (
+               SELECT CAST(SUM(taskProgress) AS REAL)/COUNT(taskId)
+               FROM TaskData
+               WHERE taskOwnerId = new._taskId
+               )
+               END
+
+    )
+    WHERE taskId = new._taskId;
+
+    UPDATE __TaskRecalcTable SET _needsRecalc = 0 WHERE _taskId = new._taskId;
+    UPDATE __TaskRecalcTable SET _needsRecalc = 1 -- update progress of parent
+    WHERE _taskId = new._taskOwnerId; -- for null owner it will stop calling trigger
+END;
+
+CREATE TRIGGER onUpdatedProgressForTasksWithSubtasks
+AFTER UPDATE ON TaskData WHEN old.taskProgress != new.taskProgress
+AND old.taskDone != 1 AND new.taskDone != 1 AND new.subtasksCount > 0
+BEGIN
+    UPDATE TaskData
+    SET taskDone = 1, taskFailed = 0 WHERE taskId = new.taskId AND taskProgress = 1.0;
+END;
+
+CREATE TRIGGER recalcCountsAndProgressOnInsert
+AFTER INSERT ON TaskData
+-- recursively update task owners
+BEGIN
+
+    INSERT INTO __TaskRecalcTable(_taskId, _taskOwnerId)
+    VALUES (new.taskId, new.taskOwnerId);
+
+    UPDATE TaskData
+    SET subtasksCount = subtasksCount + 1
+    WHERE taskId IN (
+        WITH RECURSIVE TasksOver(taskId, taskOwnerId) AS (
+            SELECT taskId, taskOwnerId
+            FROM TaskData
+            WHERE taskId = new.taskOwnerId
+             UNION
+            SELECT td.taskId, td.taskOwnerId
+            FROM TaskData td
+            JOIN TasksOver ts
+            ON td.taskId = ts.taskOwnerId
+        ) SELECT taskId FROM TasksOver
+    );
+
+    UPDATE __TaskRecalcTable SET _needsRecalc = 1 WHERE _taskId = new.taskOwnerId;
+
+    UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = new.goalId;
+END;
+
+CREATE TRIGGER recalcProgressOnUpdate
+AFTER UPDATE ON TaskData WHEN old.taskDone != new.taskDone
+AND old.subtasksCount = 0 AND new.subtasksCount = 0 -- will update parents of task without children
+BEGIN
+
+    UPDATE TaskData SET taskProgress = 1 WHERE taskId = new.taskId;
+
+    UPDATE __TaskRecalcTable SET _needsRecalc = 1 WHERE _taskId = new.taskOwnerId;
+
+    UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = new.goalId;
+
+END;
+
+CREATE TRIGGER recalcCountsAndProgressOnDelete
+AFTER DELETE ON TaskData
+BEGIN
+    UPDATE TaskData
+    SET subtasksCount = subtasksCount - old.subtasksCount
+        WHERE taskId IN (
+            WITH RECURSIVE TasksOver(taskId, taskOwnerId) AS (
+                SELECT taskId, taskOwnerId
+                FROM TaskData
+                WHERE taskId = old.taskOwnerId
+                 UNION
+                SELECT td.taskId, td.taskOwnerId
+                FROM TaskData td
+                JOIN TasksOver ts
+                ON td.taskId = ts.taskOwnerId
+            ) SELECT taskId FROM TasksOver
+        );
+
+    DELETE FROM __TaskRecalcTable WHERE _taskId = old.taskId;
+
+    UPDATE __TaskRecalcTable SET _needsRecalc = 1 WHERE _taskId = old.taskOwnerId;
+
+    UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = old.goalId;
+END;
+
+
+selectAllOfGoal:
+SELECT * FROM TaskData WHERE goalId = ? ORDER BY taskId ASC;
+
+selectAllOfOwnerTask:
+SELECT * FROM TaskData WHERE taskOwnerId = ? ORDER BY taskId ASC;
+
+selectGivenTask:
+SELECT * FROM TaskData WHERE taskId = ?;
+
+selectGivenUnfinishedTask:
+SELECT * FROM UnfinishedTaskData WHERE taskId = ?;
+
+insertOneTask:
+INSERT INTO TaskData(taskId, taskName, taskDescription, taskOwnerId, goalId, taskDepth)
+VALUES (?,?,?,?,?,?);
+
+insertOneEditUnfinishedTask:
+INSERT INTO UnfinishedTaskData
+VALUES (?,?,?,?,?,?,?,?,?,?);
+
+markTaskDoneWell:
+UPDATE TaskData SET taskDone = 1, taskFailed = 0 WHERE taskId = ? AND subtasksCount = 0;
+
+markTaskFailed:
+UPDATE TaskData SET taskDone = 1, taskFailed = 1 WHERE taskId = ? AND subtasksCount = 0;
+
+updateTaskTexts:
+UPDATE TaskData SET taskName = ?, taskDescription = ? WHERE taskId = ?;
+
+markTaskEdit:
+UPDATE TaskData SET taskEditUnfinished = ? WHERE taskId = ?;
+
+deleteTask:
+DELETE FROM TaskData WHERE taskId = ?;
+
+getTaskUnfinished:
+SELECT taskEditUnfinished FROM TaskData WHERE taskId = ?;
+
+lastInsertRowId:
+SELECT last_insert_rowid();

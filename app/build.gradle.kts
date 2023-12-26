@@ -1,16 +1,19 @@
+import org.jetbrains.kotlin.util.parseSpaceSeparatedArgs
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("app.cash.sqldelight") version "2.0.1"
 }
 
 android {
     namespace = "com.example.towardsgoalsapp"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.example.towardsgoalsapp"
         minSdk = 29
-        targetSdk = 33
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -35,22 +38,42 @@ android {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+
+
     }
     kotlinOptions {
         jvmTarget = "1.8"
+
     }
     buildToolsVersion = "33.0.1"
     buildFeatures {
         viewBinding = true
     }
+
+
+}
+
+sqldelight {
+    databases {
+        create("TGDatabase") {
+            packageName.set("com.example.towardsgoalsapp.database")
+            srcDirs.from("src/main/sqldelight")
+
+        }
+    }
+
 }
 
 dependencies {
 
+    implementation("app.cash.sqldelight:android-driver:2.0.1")
+    implementation("app.cash.sqldelight:primitive-adapters:2.0.1")
+    implementation("app.cash.sqldelight:coroutines-extensions:2.0.1")
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.gridlayout:gridlayout:1.0.0")
@@ -60,7 +83,12 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.0")
     implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.6.1")
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
+    testImplementation("app.cash.sqldelight:sqlite-driver:2.0.1")
     testImplementation("junit:junit:4.13.2")
+    testImplementation("com.google.truth:truth:1.2.0")
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
+
+

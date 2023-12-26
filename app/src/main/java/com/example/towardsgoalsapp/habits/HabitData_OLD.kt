@@ -2,7 +2,7 @@ package com.example.towardsgoalsapp.habits
 
 import com.example.towardsgoalsapp.Constants
 
-data class HabitData(
+data class HabitData_OLD(
 
     val habitId: Long = Constants.IGNORE_ID_AS_LONG,
     val habitName: String = Constants.EMPTY_STRING,

@@ -2,7 +2,7 @@ package com.example.towardsgoalsapp.tasks
 
 import com.example.towardsgoalsapp.Constants
 
-data class TaskData(
+data class TaskData_OLD(
     val taskId: Long = Constants.IGNORE_ID_AS_LONG,
     val taskName: String = Constants.EMPTY_STRING,
     val taskDescription: String = Constants.EMPTY_STRING,

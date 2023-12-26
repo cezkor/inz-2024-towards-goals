@@ -10,11 +10,10 @@ import android.view.Menu
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContract
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import com.example.towardsgoalsapp.Constants
-import com.example.towardsgoalsapp.DoubleTapOnBack
+import com.example.towardsgoalsapp.etc.DoubleTapOnBack
 import com.example.towardsgoalsapp.R
 import com.example.towardsgoalsapp.tasks.TaskDoingContract.Companion.REFRESH_FOR_REQUESTER
 
@@ -151,7 +150,7 @@ class TaskOngoing : AppCompatActivity() {
             val firstQFragment = TaskQuestionFirst()
             val firstQBackCallback
             = DoubleTapOnBack(this, getString(R.string.tasks_abandon_task)) {
-                this@TaskOngoing.setResult(Activity.RESULT_CANCELED)
+                this@TaskOngoing.setResult(RESULT_CANCELED)
             }
             val taskDoingFragment = TaskDoing()
             val taskDoingBackCallback = object: OnBackPressedCallback(false) {

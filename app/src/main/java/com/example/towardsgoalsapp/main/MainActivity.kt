@@ -14,11 +14,8 @@ import androidx.viewpager2.widget.ViewPager2
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
 import com.example.towardsgoalsapp.goals.AddGoalSuggestion
-import com.example.towardsgoalsapp.goals.GoalData
 import com.example.towardsgoalsapp.goals.GoalSynopsis
-import com.example.towardsgoalsapp.goals.GoalSynopsisViewModel
-import com.example.towardsgoalsapp.habits.HabitData
-import com.example.towardsgoalsapp.tasks.TaskData
+import com.example.towardsgoalsapp.goals.GoalSynopsisesViewModel
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,26 +26,24 @@ class MainActivity : AppCompatActivity() {
 
         private val statesForPopulatingWithGoalSynopsis =
             setOf(
-                GoalSynopsisViewModel.MutableGoalDataStates.INITIALIZED_POPULATED,
-                GoalSynopsisViewModel.MutableGoalDataStates.POPULATED,
-                GoalSynopsisViewModel.MutableGoalDataStates.REFRESHED,
+                GoalSynopsisesViewModel.MutableGoalDataStates.INITIALIZED_POPULATED,
+                GoalSynopsisesViewModel.MutableGoalDataStates.POPULATED,
+                GoalSynopsisesViewModel.MutableGoalDataStates.REFRESHED,
             )
         private val statesForPopulatingWithGoalSuggestion =
             setOf(
-                GoalSynopsisViewModel.MutableGoalDataStates.INITIALIZED_EMPTY,
-                GoalSynopsisViewModel.MutableGoalDataStates.EMPTIED
+                GoalSynopsisesViewModel.MutableGoalDataStates.INITIALIZED_EMPTY,
+                GoalSynopsisesViewModel.MutableGoalDataStates.EMPTIED
             )
     }
 
-    private lateinit var sharedViewModelForAllPages: GoalSynopsisViewModel
+    private lateinit var sharedViewModelForAllPages: GoalSynopsisesViewModel
     private lateinit var goalPager: ViewPager2
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.title_only_menu, menu)
         return true
     }
-
-    private var lastPage = Constants.IGNORE_PAGE_AS_INT
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
 
         sharedViewModelForAllPages =
-            ViewModelProvider(this)[GoalSynopsisViewModel::class.java]
+            ViewModelProvider(this)[GoalSynopsisesViewModel::class.java]
         Log.i(LOG_TAG, "created viewmodel: $sharedViewModelForAllPages")
 
         // update viewmodel with data
@@ -77,17 +72,17 @@ class MainActivity : AppCompatActivity() {
             Log.i(LOG_TAG, "Creating observer for page $pageNum")
 
             val currentPageNum = pageNum
-            val observer = Observer<GoalSynopsisViewModel.MutableGoalDataStates> {
+            val observer = Observer<GoalSynopsisesViewModel.MutableGoalDataStates> {
                 when (it) {
-                    GoalSynopsisViewModel.MutableGoalDataStates.INITIALIZED_POPULATED,
-                    GoalSynopsisViewModel.MutableGoalDataStates.INITIALIZED_EMPTY -> {
+                    GoalSynopsisesViewModel.MutableGoalDataStates.INITIALIZED_POPULATED,
+                    GoalSynopsisesViewModel.MutableGoalDataStates.INITIALIZED_EMPTY -> {
                         goalPager.adapter = GoalPagesAdapter(
                             this,
                             sharedViewModelForAllPages.arrayOfGoalDataStates
                         )
                     }
-                    GoalSynopsisViewModel.MutableGoalDataStates.NOT_READY -> { /* ignore */ }
-                    GoalSynopsisViewModel.MutableGoalDataStates.REFRESHED -> {
+                    GoalSynopsisesViewModel.MutableGoalDataStates.NOT_READY -> { /* ignore */ }
+                    GoalSynopsisesViewModel.MutableGoalDataStates.REFRESHED -> {
                         // goal synopsis will refresh itself as it is observing Mutable of GoalData
                         goalPager.setCurrentItem(currentPageNum, false)
                     }
@@ -128,14 +123,12 @@ class MainActivity : AppCompatActivity() {
 
     private inner class GoalPagesAdapter(
         fragmentActivity: FragmentActivity,
-        goalDataStateArray: Array<MutableLiveData<GoalSynopsisViewModel.MutableGoalDataStates>>,
+        goalDataStateArray: Array<MutableLiveData<GoalSynopsisesViewModel.MutableGoalDataStates>>,
     ) : FragmentStateAdapter(fragmentActivity) {
 
-        private var goalDataStates: Array<MutableLiveData<GoalSynopsisViewModel.MutableGoalDataStates>>
+        private var goalDataStates: Array<MutableLiveData<GoalSynopsisesViewModel.MutableGoalDataStates>>
         = goalDataStateArray
 
-        // todo: read from database which pages are populated with goals
-        // and ofc read the goal data, task data, habit data etc.
         override fun getItemCount(): Int = Constants.MAX_GOALS_AMOUNT
 
         override fun createFragment(position: Int): Fragment {

@@ -14,7 +14,7 @@ class TaskItemListAdapter(
     private val viewModel: TaskItemListViewModel
 ) : RecyclerView.Adapter<TaskItemListAdapter.ViewHolder>() {
 
-    private val tasksMutablesList: List<MutableLiveData<TaskData>>
+    private val tasksMutablesList: List<MutableLiveData<TaskData_OLD>>
         = viewModel.taskDataList
 
     companion object {
@@ -31,7 +31,7 @@ class TaskItemListAdapter(
 
         Log.i(LOG_TAG, "bind view called, position $position")
 
-        val habitData: TaskData? = tasksMutablesList[position].value
+        val habitData: TaskData_OLD? = tasksMutablesList[position].value
         habitData?.run { holder.bind(this) }
     }
 
@@ -43,7 +43,7 @@ class TaskItemListAdapter(
         private val taskSubtasksCountView: TextView = viewOfItem.findViewById(R.id.taskSubtasksTextview)
 
 
-        fun bind(taskData: TaskData) {
+        fun bind(taskData: TaskData_OLD) {
             taskNameTextView.text = taskData.taskName
             taskSubtasksCountView.text =
                 viewOfItem.context

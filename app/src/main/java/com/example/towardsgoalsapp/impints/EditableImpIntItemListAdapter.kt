@@ -14,7 +14,7 @@ class EditableImpIntItemListAdapter(
     private val viewModel: ImpIntItemListViewModel
 ) : RecyclerView.Adapter<EditableImpIntItemListAdapter.ViewHolder>() {
 
-    private val mutableImpIntsList: List<MutableLiveData<ImpIntData>> =
+    private val mutableImpIntsList: List<MutableLiveData<ImpIntData_OLD>> =
         viewModel.impIntDataList
     companion object {
         const val LOG_TAG = "EIIIAdapter"
@@ -30,7 +30,7 @@ class EditableImpIntItemListAdapter(
 
         Log.i(LOG_TAG, "bind view called, position $position")
 
-        val impIntData: ImpIntData? = mutableImpIntsList[position].value
+        val impIntData: ImpIntData_OLD? = mutableImpIntsList[position].value
         impIntData?.run { holder.bind(this) }
     }
 
@@ -57,7 +57,7 @@ class EditableImpIntItemListAdapter(
         private val ifTextEditor: EditText = viewOfItem.findViewById(R.id.ifEditText)
         private val thenTextEditor: EditText = viewOfItem.findViewById(R.id.thenEditText)
 
-        fun bind(impIntData: ImpIntData) {
+        fun bind(impIntData: ImpIntData_OLD) {
             ifTextEditor.text.replace(0, 0, impIntData.ifText)
             thenTextEditor.text.replace(0, 0, impIntData.thenText)
         }

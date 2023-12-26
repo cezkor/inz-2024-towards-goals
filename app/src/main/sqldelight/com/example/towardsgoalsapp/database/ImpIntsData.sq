@@ -1,0 +1,60 @@
+import com.example.towardsgoalsapp.OwnerType;
+import kotlin.Boolean;
+import kotlin.Int;
+
+CREATE TABLE ImpIntData (
+    impIntId INTEGER PRIMARY KEY AUTOINCREMENT,
+    impIntEditUnfinished INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    impIntIfText TEXT NOT NULL DEFAULT "",
+    impIntThenText TEXT NOT NULL DEFAULT "",
+    ownerId INTEGER NOT NULL,
+    ownerType TEXT AS OwnerType NOT NULL
+    -- IT IS IMPLICIT THAT THESE TWO ABOVE ARE FOREIGN KEY !!!
+);
+
+CREATE TABLE UnfinishedImpIntData (
+    impIntId INTEGER PRIMARY KEY NOT NULL,
+    impIntIfText TEXT NOT NULL DEFAULT "",
+    impIntThenText TEXT NOT NULL DEFAULT "",
+    ownerId INTEGER NOT NULL,
+    ownerType TEXT AS OwnerType NOT NULL
+);
+
+CREATE TRIGGER deleteNowFinishedImpInt
+AFTER UPDATE ON ImpIntData
+WHEN new.impIntEditUnfinished = 0
+BEGIN
+	DELETE FROM UnfinishedImpIntData WHERE impIntId = new.impIntId;
+END;
+
+selectAllOf:
+SELECT * FROM ImpIntData WHERE ownerId = ? AND ownerType = ? ORDER BY impIntId ASC;
+
+selectGivenImpInt:
+SELECT * FROM ImpIntData WHERE impIntId = ?;
+
+selectGivenUnfinishedImpInt:
+SELECT * FROM UnfinishedImpIntData WHERE impIntId = ?;
+
+insertOneImpInt:
+INSERT INTO ImpIntData(impIntId, impIntIfText, impIntThenText, ownerId, ownerType)
+VALUES (?,?,?,?,?);
+
+insertOneEditUnfinishedImpInt:
+INSERT INTO UnfinishedImpIntData
+VALUES (?,?,?,?,?);
+
+updateImpIntTexts:
+UPDATE ImpIntData SET impIntIfText = ?, impIntThenText = ? WHERE impIntId = ?;
+
+markImpIntEdit:
+UPDATE ImpIntData  SET impIntEditUnfinished = ? WHERE impIntId = ?;
+
+deleteImpInt:
+DELETE FROM ImpIntData WHERE impIntId = ?;
+
+getImpIntUnfinished:
+SELECT impIntEditUnfinished FROM ImpIntData WHERE impIntId = ?;
+
+lastInsertRowId:
+SELECT last_insert_rowid();

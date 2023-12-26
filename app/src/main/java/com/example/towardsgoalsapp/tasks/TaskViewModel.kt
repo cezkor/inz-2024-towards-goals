@@ -1,18 +1,17 @@
 package com.example.towardsgoalsapp.tasks
 
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import com.example.towardsgoalsapp.impints.ImpIntData
-import com.example.towardsgoalsapp.main.TextsViewModel
+import com.example.towardsgoalsapp.impints.ImpIntData_OLD
+import com.example.towardsgoalsapp.etc.TextsViewModel
 
 open class TaskViewModel(private val taskId: Long): TextsViewModel() {
 
-    val mutableTaskData = MutableLiveData<TaskData>()
+    val mutableTaskData = MutableLiveData<TaskData_OLD>()
 
-    val arrayOfMutableSubtasksTaskData: ArrayList<MutableLiveData<TaskData>> =
+    val arrayOfMutableSubtasksTaskData: ArrayList<MutableLiveData<TaskData_OLD>> =
         java.util.ArrayList()
 
-    val arrayOfMutableImpIntData: ArrayList<MutableLiveData<ImpIntData>> =
+    val arrayOfMutableImpIntData: ArrayList<MutableLiveData<ImpIntData_OLD>> =
         java.util.ArrayList()
 
     private fun calculateProgress(): Double {return .0} // to do when database code is ready

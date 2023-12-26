@@ -14,11 +14,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.goals.GoalDetails
-import com.example.towardsgoalsapp.goals.GoalSynopsisViewModel
+import com.example.towardsgoalsapp.goals.GoalSynopsisesViewModel
 import com.example.towardsgoalsapp.goals.GoalViewModel
 
-class TaskItemListViewModel(val taskDataList: ArrayList<MutableLiveData<TaskData>>): ViewModel() {
+class TaskItemListViewModel(val taskDataList: ArrayList<MutableLiveData<TaskData_OLD>>): ViewModel() {
 
     fun updateOneDataAt() {}
 
@@ -50,10 +49,10 @@ class TaskItemList : Fragment() {
 
     private lateinit var viewModel: TaskItemListViewModel
 
-    private fun extractLiveDataArray(clazz: Class<*>?) : java.util.ArrayList<MutableLiveData<TaskData>>?{
+    private fun extractLiveDataArray(clazz: Class<*>?) : java.util.ArrayList<MutableLiveData<TaskData_OLD>>?{
         return when (clazz) {
-            GoalSynopsisViewModel::class.java -> {
-                val inheritedViewModel: GoalSynopsisViewModel =
+            GoalSynopsisesViewModel::class.java -> {
+                val inheritedViewModel: GoalSynopsisesViewModel =
                     ViewModelProvider(requireActivity())[clazz]
                 inheritedViewModel.taskDataArraysPerGoal[goalId]
             }

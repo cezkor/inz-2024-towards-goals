@@ -1,4 +1,4 @@
-package com.example.towardsgoalsapp.main
+package com.example.towardsgoalsapp.etc
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,13 +9,9 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.Constants.Companion.EMPTY_STRING
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.goals.GoalViewModel
-import com.example.towardsgoalsapp.habits.HabitViewModel
-import com.example.towardsgoalsapp.tasks.TaskViewModel
 
 abstract class TextsViewModel : ViewModel() {
 

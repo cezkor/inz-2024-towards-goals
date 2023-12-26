@@ -14,7 +14,7 @@ class ReadOnlyImpIntItemListAdapter(
     viewModel: ImpIntItemListViewModel
 ) : RecyclerView.Adapter<ReadOnlyImpIntItemListAdapter.ViewHolder>() {
 
-    private val mutableImpIntsList: List<MutableLiveData<ImpIntData>> =
+    private val mutableImpIntsList: List<MutableLiveData<ImpIntData_OLD>> =
         viewModel.impIntDataList
 
     companion object {
@@ -31,7 +31,7 @@ class ReadOnlyImpIntItemListAdapter(
 
         Log.i(LOG_TAG, "bind view called, position $position")
 
-        val impIntData: ImpIntData? = mutableImpIntsList[position].value
+        val impIntData: ImpIntData_OLD? = mutableImpIntsList[position].value
         impIntData?.run { holder.bind(this) }
     }
 
@@ -42,7 +42,7 @@ class ReadOnlyImpIntItemListAdapter(
         private val ifTextView: TextView = viewOfItem.findViewById(R.id.ifTextView)
         private val thenTextView: TextView = viewOfItem.findViewById(R.id.thenTextView)
 
-        fun bind(impIntData: ImpIntData) {
+        fun bind(impIntData: ImpIntData_OLD) {
             ifTextView.text = impIntData.ifText
             thenTextView.text = impIntData.thenText
         }

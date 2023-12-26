@@ -2,21 +2,13 @@ package com.example.towardsgoalsapp.reminders
 
 import android.os.Bundle
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.MutableLiveData
-import android.util.Log
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.DividerItemDecoration
-import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.OwnerType
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.goals.GoalSynopsisViewModel
-import com.example.towardsgoalsapp.goals.GoalViewModel
+import com.example.towardsgoalsapp.database.TGDatabase
 
 class ReminderViewModel(ownerType: OwnerType, ownerId: Long): ViewModel() {
 

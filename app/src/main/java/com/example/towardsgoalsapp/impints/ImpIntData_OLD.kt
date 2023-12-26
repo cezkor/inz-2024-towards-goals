@@ -3,7 +3,7 @@ package com.example.towardsgoalsapp.impints
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.OwnerType
 
-data class ImpIntData(
+data class ImpIntData_OLD(
 
     val impIntId: Long = Constants.IGNORE_ID_AS_LONG,
     val ifText: String = Constants.EMPTY_STRING,

@@ -1,16 +1,12 @@
-package com.example.towardsgoalsapp.main
+package com.example.towardsgoalsapp.etc
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.ViewModelProvider
-import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.main.MainActivity
 
 class OneTextFragment(): Fragment() {
 
@@ -18,7 +14,7 @@ class OneTextFragment(): Fragment() {
         const val LOG_TAG = "OTF"
         const val TEXT_FOR_FRAG = "tff"
 
-        fun newInstance(text: String): OneTextFragment{
+        fun newInstance(text: String): OneTextFragment {
             return OneTextFragment().apply {
                 arguments = Bundle().apply {
                     putString(TEXT_FOR_FRAG, text)

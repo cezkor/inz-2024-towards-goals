@@ -14,12 +14,12 @@ import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.towardsgoalsapp.Constants
-import com.example.towardsgoalsapp.DoubleTapOnBack
+import com.example.towardsgoalsapp.etc.DoubleTapOnBack
 import com.example.towardsgoalsapp.OwnerType
 import com.example.towardsgoalsapp.R
 import com.example.towardsgoalsapp.impints.IntImpItemList
-import com.example.towardsgoalsapp.main.OneTextFragment
-import com.example.towardsgoalsapp.main.TextsFragment
+import com.example.towardsgoalsapp.etc.OneTextFragment
+import com.example.towardsgoalsapp.etc.TextsFragment
 import com.example.towardsgoalsapp.reminders.ReminderSetting
 import com.example.towardsgoalsapp.tasks.TaskInfoContract.Companion.TASK_ID_FROM_REQUESTER
 import com.google.android.material.tabs.TabLayout

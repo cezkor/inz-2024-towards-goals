@@ -1,4 +1,4 @@
-package com.example.towardsgoalsapp
+package com.example.towardsgoalsapp.etc
 
 import android.content.Context
 import android.provider.Settings.Global.getString

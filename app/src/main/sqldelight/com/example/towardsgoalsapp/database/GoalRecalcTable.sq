@@ -1,0 +1,46 @@
+CREATE TABLE __GoalRecalcTable (
+
+    _goalId INTEGER PRIMARY KEY NOT NULL REFERENCES GoalData(goalId),
+    _needsRecalc INTEGER NOT NULL DEFAULT 0
+
+);
+
+CREATE TRIGGER goalRecalcProgress
+AFTER UPDATE ON __GoalRecalcTable
+WHEN new._needsRecalc != 0
+BEGIN
+    UPDATE GoalData
+    SET goalProgress = (
+        SELECT
+            CASE
+                WHEN (tg.totalCount + hg.totalCount) = 0 THEN 0.0
+                ELSE CAST((tg.taskTotalDoneCount + hg.sumOfCompleted) AS REAL) / (tg.totalCount + hg.totalCount)
+            END
+        FROM
+            (SELECT
+                COALESCE(
+                    (SELECT SUM(subtasksCount) FROM TaskData WHERE taskOwnerId IS NULL AND goalId = new._goalId AND subtasksCount > 0), 0
+                )
+                +
+                COALESCE(
+                    (SELECT COUNT(taskId) FROM TaskData WHERE taskOwnerId IS NULL AND goalId = new._goalId AND subtasksCount = 0), 0
+                ) AS totalCount,
+                COALESCE(
+                    (SELECT SUM(taskProgress) FROM TaskData WHERE taskOwnerId IS NULL AND goalId = new._goalId AND subtasksCount > 0), 0
+                )
+                +
+                COALESCE(
+                    (SELECT COUNT(taskId) FROM TaskData WHERE taskOwnerId IS NULL AND goalId = new._goalId AND subtasksCount = 0 AND taskDone = 1 AND taskFailed = 0), 0
+                ) AS taskTotalDoneCount
+            ) AS tg,
+            (SELECT
+                COALESCE(SUM(habitTargetCompleted), 0) AS sumOfCompleted,
+                COALESCE(COUNT(habitId), 0) AS totalCount
+            FROM HabitData WHERE goalId = new._goalId
+            ) AS hg
+    )
+    WHERE goalId = new._goalId;
+
+    UPDATE __GoalRecalcTable SET _needsRecalc = 0 WHERE _goalId = new._goalId;
+END;
+

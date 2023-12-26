@@ -17,15 +17,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.habits.HabitData
+import com.example.towardsgoalsapp.habits.HabitData_OLD
 import com.example.towardsgoalsapp.habits.HabitItemList
 import com.example.towardsgoalsapp.main.MainActivity
-import com.example.towardsgoalsapp.main.OneTextFragment
-import com.example.towardsgoalsapp.tasks.TaskData
+import com.example.towardsgoalsapp.etc.OneTextFragment
+import com.example.towardsgoalsapp.tasks.TaskData_OLD
 import com.example.towardsgoalsapp.tasks.TaskItemList
 import com.google.android.material.tabs.TabLayout
 
-class GoalSynopsisViewModel: ViewModel() {
+class GoalSynopsisesViewModel: ViewModel() {
 
     // meanings of enum entries in order:
     // not ready to show
@@ -37,13 +37,13 @@ class GoalSynopsisViewModel: ViewModel() {
         NOT_READY, INITIALIZED_POPULATED, INITIALIZED_EMPTY , REFRESHED, POPULATED, EMPTIED
     }
 
-    val arrayOfGoalData: ArrayList<MutableLiveData<GoalData?>> =
-        List(Constants.MAX_GOALS_AMOUNT) { MutableLiveData<GoalData?>() }.toCollection(ArrayList())
+    val arrayOfGoalData: ArrayList<MutableLiveData<GoalData_OLD?>> =
+        List(Constants.MAX_GOALS_AMOUNT) { MutableLiveData<GoalData_OLD?>() }.toCollection(ArrayList())
 
-    val habitDataArraysPerGoal: HashMap<Long,ArrayList<MutableLiveData<HabitData>>> =
+    val habitDataArraysPerGoal: HashMap<Long,ArrayList<MutableLiveData<HabitData_OLD>>> =
         HashMap(Constants.MAX_GOALS_AMOUNT)
 
-    val taskDataArraysPerGoal: HashMap<Long,ArrayList<MutableLiveData<TaskData>>> =
+    val taskDataArraysPerGoal: HashMap<Long,ArrayList<MutableLiveData<TaskData_OLD>>> =
         HashMap(Constants.MAX_GOALS_AMOUNT)
 
     val arrayOfGoalDataStates: Array<MutableLiveData<MutableGoalDataStates>> =
@@ -59,23 +59,23 @@ class GoalSynopsisViewModel: ViewModel() {
             arrayOfGoalDataStates[i].value = MutableGoalDataStates.INITIALIZED_EMPTY
         }
 
-        arrayOfGoalData[3].value = GoalData(
+        arrayOfGoalData[3].value = GoalData_OLD(
             100, "a goal", "super description!", 0.1
         )
         taskDataArraysPerGoal[100] = java.util.ArrayList(
-            List(25) { MutableLiveData<TaskData>() }.toCollection(ArrayList())
+            List(25) { MutableLiveData<TaskData_OLD>() }.toCollection(ArrayList())
         )
         for (i in 0..<25) taskDataArraysPerGoal[100]?.get(i).apply {
-            this?.run { this.value = TaskData(
+            this?.run { this.value = TaskData_OLD(
                 (100+i).toLong(), "task $i", "descr",
                 0.0, -1, false, 1000
             ) }
         }
         habitDataArraysPerGoal[100] = java.util.ArrayList(
-            List(5) { MutableLiveData<HabitData>() }.toCollection(ArrayList())
+            List(5) { MutableLiveData<HabitData_OLD>() }.toCollection(ArrayList())
         )
         for (i in 0..<5) habitDataArraysPerGoal[100]?.get(i).apply {
-            this?.run { this.value = HabitData((200+i).toLong(), "habit $i") }
+            this?.run { this.value = HabitData_OLD((200+i).toLong(), "habit $i") }
         }
 
         arrayOfGoalDataStates[3].value = MutableGoalDataStates.INITIALIZED_POPULATED
@@ -110,8 +110,8 @@ class GoalSynopsis: Fragment() {
 
         private val acceptedGoalDataStates =
             setOf(
-                GoalSynopsisViewModel.MutableGoalDataStates.INITIALIZED_POPULATED,
-                GoalSynopsisViewModel.MutableGoalDataStates.POPULATED
+                GoalSynopsisesViewModel.MutableGoalDataStates.INITIALIZED_POPULATED,
+                GoalSynopsisesViewModel.MutableGoalDataStates.POPULATED
             )
 
         private const val TASKS_TAB_ID = 0
@@ -120,7 +120,7 @@ class GoalSynopsis: Fragment() {
         private const val LAST_PAGE_BY_ID = "lpbid"
     }
 
-    private lateinit var pageViewModel: GoalSynopsisViewModel
+    private lateinit var pageViewModel: GoalSynopsisesViewModel
 
     private var pageNumber: Int = Constants.IGNORE_PAGE_AS_INT
     private var goalId: Long  = Constants.IGNORE_ID_AS_LONG
@@ -146,11 +146,11 @@ class GoalSynopsis: Fragment() {
 
         val goalDetailsButton: Button = view.findViewById(R.id.expandGoalButton)
 
-        pageViewModel = ViewModelProvider(requireActivity())[GoalSynopsisViewModel::class.java]
+        pageViewModel = ViewModelProvider(requireActivity())[GoalSynopsisesViewModel::class.java]
 
         var lastPageTabId: Int? = TASKS_TAB_ID
 
-        fun updateUI(data: GoalData) {
+        fun updateUI(data: GoalData_OLD) {
             synopsisTitle.text = data.goalName
             synopsisDescription.text = data.goalDescription
             synopsisProgress.progress = (100 * data.progress).toInt()
@@ -175,7 +175,7 @@ class GoalSynopsis: Fragment() {
         }
 
         fun tieToPageViewModel(){
-            val updater = Observer<GoalData?> {
+            val updater = Observer<GoalData_OLD?> {
 
                 if (pageViewModel.arrayOfGoalDataStates[pageNumber].value in acceptedGoalDataStates)
                     it?.run { updateUI(this) }
@@ -205,7 +205,7 @@ class GoalSynopsis: Fragment() {
         }
 
         fun setupListsFragments() {
-            val classNumber: Int? = Constants.viewModelClassToNumber[GoalSynopsisViewModel::class.java]
+            val classNumber: Int? = Constants.viewModelClassToNumber[GoalSynopsisesViewModel::class.java]
             if (classNumber != null) {
                 tasksFragment = TaskItemList.newInstance(goalId, classNumber)
                 habitsFragment = HabitItemList.newInstance(goalId, classNumber)

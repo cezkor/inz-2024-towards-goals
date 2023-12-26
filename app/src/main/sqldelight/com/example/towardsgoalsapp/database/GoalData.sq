@@ -1,0 +1,74 @@
+import kotlin.Boolean;
+import kotlin.Int;
+
+CREATE TABLE GoalData (
+    goalId INTEGER PRIMARY KEY AUTOINCREMENT,
+    goalEditUnfinished INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    goalName TEXT NOT NULL DEFAULT "",
+    goalDescription TEXT NOT NULL DEFAULT "",
+    goalProgress REAL NOT NULL DEFAULT 0,
+    pageNumber INTEGER AS Int NOT NULL UNIQUE
+);
+
+CREATE TABLE UnfinishedGoalData (
+    goalId INTEGER PRIMARY KEY NOT NULL,
+    goalName TEXT NOT NULL DEFAULT "",
+    goalDescription TEXT NOT NULL DEFAULT "",
+    goalProgress REAL NOT NULL DEFAULT 0,
+    pageNumber INTEGER AS Int NOT NULL UNIQUE
+);
+
+CREATE TRIGGER deleteNowFinishedGoal
+AFTER UPDATE ON GoalData
+WHEN new.goalEditUnfinished = 0
+BEGIN
+	DELETE FROM UnfinishedGoalData WHERE goalId = new.goalId;
+END;
+
+CREATE TRIGGER onInsertGoal
+AFTER INSERT ON GoalData
+BEGIN
+	INSERT INTO __GoalRecalcTable VALUES (new.goalId, 0);
+END;
+
+CREATE TRIGGER onDeleteGoal
+BEFORE DELETE ON GoalData
+BEGIN
+    DELETE FROM TaskData WHERE goalId = old.goalId;
+    DELETE FROM HabitData WHERE goalId = old.goalId;
+    DELETE FROM TaskStatsData WHERE goalId = old.goalId;
+    DELETE FROM HabitStatsData WHERE goalId = old.goalId;
+    DELETE FROM __GoalRecalcTable WHERE _goalId = old.goalId;
+END;
+
+selectAll:
+SELECT * FROM GoalData ORDER BY pageNumber ASC;
+
+selectGivenGoal:
+SELECT * FROM GoalData WHERE goalId = ?;
+
+selectGivenUnfinishedGoal:
+SELECT * FROM UnfinishedGoalData WHERE goalId = ?;
+
+insertOneGoal:
+INSERT INTO GoalData(goalId, goalName, goalDescription, pageNumber)
+VALUES (?,?,?,?);
+
+insertOneEditUnfinishedGoal:
+INSERT INTO UnfinishedGoalData
+VALUES (?,?,?,?,?);
+
+updateGoalTexts:
+UPDATE GoalData SET goalName = ?, goalDescription = ? WHERE goalId = ?;
+
+markGoalEdit:
+UPDATE GoalData SET goalEditUnfinished = ? WHERE goalId = ?;
+
+getGoalUnfinished:
+SELECT goalEditUnfinished FROM GoalData WHERE goalId = ?;
+
+deleteGoal:
+DELETE FROM GoalData WHERE goalId = ?;
+
+lastInsertRowId:
+SELECT last_insert_rowid();
