@@ -12,7 +12,7 @@ CREATE TABLE HabitData (
     habitDoneNotWellCount INTEGER DEFAULT 0 NOT NULL,
     habitTotalCount INTEGER DEFAULT 0 NOT NULL,
     habitTargetCompleted INTEGER AS Boolean DEFAULT 0 NOT NULL,
-    FOREIGN KEY (goalId) REFERENCES GoalData (goalId)
+    FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE
 );
 
 CREATE TABLE UnfinishedHabitData (
@@ -26,7 +26,7 @@ CREATE TABLE UnfinishedHabitData (
     habitDoneNotWellCount INTEGER DEFAULT 0 NOT NULL,
     habitTotalCount INTEGER DEFAULT 0 NOT NULL,
     habitTargetCompleted INTEGER AS Boolean DEFAULT 0 NOT NULL,
-    FOREIGN KEY (goalId) REFERENCES GoalData (goalId)
+    FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE
 );
 
 CREATE TRIGGER deleteNowFinishedHabit

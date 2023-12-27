@@ -19,6 +19,7 @@ class ReminderRepositoryTests {
 
     private val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY).apply {
         TGDatabase.Schema.create(this)
+        this.execute(null, "PRAGMA foreign_keys = ON;", 0)
     }
 
     private val db: TGDatabase = DatabaseObjectFactory.newDatabaseObject(driver)
@@ -65,7 +66,7 @@ class ReminderRepositoryTests {
             assertThat(remList.size).isEqualTo(1)
             assertThat(remList[0].remId).isEqualTo(remId2)
 
-            val rem2OrNull = repo.getOneById(remId1)
+            val rem2OrNull = repo.getOneById(remId2)
             assertThat(rem2OrNull).isNotNull()
             remList[0] = rem2OrNull!!
             assertThat(remList.size).isEqualTo(1)

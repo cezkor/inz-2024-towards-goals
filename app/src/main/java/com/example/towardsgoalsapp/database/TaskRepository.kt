@@ -28,7 +28,7 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
                         goalId: Long, taskOwnerId: Long?, taskDepth: Int) : Pair<Long, Boolean> {
         return withContext(Dispatchers.IO) {
 
-            if (taskDepth + 1 >= Constants.MAX_TASK_DEPTH)
+            if (taskDepth >= Constants.MAX_TASK_DEPTH)
                 return@withContext Pair<Long, Boolean>(Constants.IGNORE_ID_AS_LONG, true)
 
             db.taskDataQueries.insertOneTask(
@@ -98,8 +98,18 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
 
     suspend fun markTaskCompletion(id: Long, taskFailed: Boolean) {
         return withContext(Dispatchers.IO) {
-            if (taskFailed) db.taskDataQueries.markTaskFailed(id)
-            else db.taskDataQueries.markTaskDoneWell(id)
+            db.taskDataQueries.transaction {
+                if (taskFailed) db.taskDataQueries.markTaskFailed(id)
+                else db.taskDataQueries.markTaskDoneWell(id)
+
+                // since i am unable to use recursive triggers, i have to resort tu
+                // manually triggering recalculation of progress
+                // of all parents of a given task
+                val ids = db.taskDataQueries.__getIdsOfAllOwnersOfTask(id).executeAsList()
+                for ( idObj in ids ) {
+                    db.taskDataQueries.__triggerProgressRecalcForTask(idObj)
+                }
+            }
         }
     }
 
@@ -137,7 +147,13 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
 
     override suspend fun deleteById(id: Long) {
         return withContext(Dispatchers.IO) {
-            db.taskDataQueries.deleteTask(id)
+            db.taskDataQueries.transaction {
+                val ids = db.taskDataQueries.__getIdsOfAllOwnersOfTask(id).executeAsList()
+                db.taskDataQueries.deleteTask(id)
+                for ( idObj in ids ) {
+                    db.taskDataQueries.__triggerProgressRecalcForTask(idObj)
+                }
+            }
         }
     }
 }

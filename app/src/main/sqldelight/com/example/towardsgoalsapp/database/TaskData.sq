@@ -14,16 +14,24 @@ CREATE TABLE TaskData (
     subtasksCount INTEGER DEFAULT 0 NOT NULL,
     taskDone INTEGER AS Boolean DEFAULT 0 NOT NULL,
     taskFailed INTEGER AS Boolean DEFAULT 0 NOT NULL,
-    FOREIGN KEY (taskOwnerId) REFERENCES TaskData (taskId),
-    FOREIGN KEY (goalId) REFERENCES GoalData (goalId),
-    CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 AND taskFailed != 1 )
+    FOREIGN KEY (taskOwnerId) REFERENCES TaskData (taskId) ON DELETE CASCADE,
+    FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE,
+    CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 OR taskFailed != 1 )
 );
 
 CREATE TABLE __TaskRecalcTable (
 
   _taskId INTEGER NOT NULL PRIMARY KEY REFERENCES TaskData (taskId),
-  _taskOwnerId INTEGER REFERENCES TaskData (taskId),
   _needsRecalc INTEGER NOT NULL DEFAULT 0
+
+);
+
+CREATE TABLE __TaskAndItsAllTaskOwners (
+
+    _taskId INTEGER NOT NULL REFERENCES TaskData(taskId),
+    _taskOwnerId INTEGER NOT NULL REFERENCES TaskData(taskId),
+    _depth INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (_taskId, _taskOwnerId)
 
 );
 
@@ -38,9 +46,9 @@ CREATE TABLE UnfinishedTaskData (
     subtasksCount INTEGER DEFAULT 0 NOT NULL,
     taskDone INTEGER AS Boolean DEFAULT 0 NOT NULL,
     taskFailed INTEGER AS Boolean DEFAULT 0 NOT NULL,
-    FOREIGN KEY (taskOwnerId) REFERENCES TaskData (taskId),
-    FOREIGN KEY (goalId) REFERENCES GoalData (goalId),
-    CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 AND taskFailed != 1 )
+    FOREIGN KEY (taskOwnerId) REFERENCES TaskData (taskId) ON DELETE CASCADE,
+    FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE,
+    CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 OR taskFailed != 1 )
 );
 
 CREATE INDEX taskDataGoalIdIdx ON TaskData(goalId);
@@ -55,16 +63,10 @@ BEGIN
 	DELETE FROM UnfinishedTaskData WHERE taskId = new.taskId;
 END;
 
-CREATE TRIGGER onDeleteTask
-BEFORE DELETE ON TaskData
+CREATE TRIGGER startRecalcProgressOfTask
+AFTER UPDATE OF _needsRecalc ON __TaskRecalcTable WHEN new._needsRecalc = 1
 BEGIN
-	DELETE FROM UnfinishedTaskData WHERE taskOwnerId = old.taskId;
-	DELETE FROM TaskData WHERE taskOwnerId = old.taskId;
-END;
 
-CREATE TRIGGER recalcProgressOfTask
-AFTER UPDATE ON __TaskRecalcTable WHEN new._needsRecalc == 1
-BEGIN
     UPDATE TaskData
     SET taskProgress = (
 
@@ -80,8 +82,6 @@ BEGIN
     WHERE taskId = new._taskId;
 
     UPDATE __TaskRecalcTable SET _needsRecalc = 0 WHERE _taskId = new._taskId;
-    UPDATE __TaskRecalcTable SET _needsRecalc = 1 -- update progress of parent
-    WHERE _taskId = new._taskOwnerId; -- for null owner it will stop calling trigger
 END;
 
 CREATE TRIGGER onUpdatedProgressForTasksWithSubtasks
@@ -97,8 +97,8 @@ AFTER INSERT ON TaskData
 -- recursively update task owners
 BEGIN
 
-    INSERT INTO __TaskRecalcTable(_taskId, _taskOwnerId)
-    VALUES (new.taskId, new.taskOwnerId);
+    INSERT INTO __TaskRecalcTable(_taskId)
+    VALUES (new.taskId);
 
     UPDATE TaskData
     SET subtasksCount = subtasksCount + 1
@@ -115,19 +115,25 @@ BEGIN
         ) SELECT taskId FROM TasksOver
     );
 
-    UPDATE __TaskRecalcTable SET _needsRecalc = 1 WHERE _taskId = new.taskOwnerId;
+    INSERT INTO __TaskAndItsAllTaskOwners (_taskId, _taskOwnerId, _depth)
+    WITH RECURSIVE TasksOver(taskId, taskOwnerId, depth) AS (
+          SELECT taskId, taskOwnerId, taskDepth
+          FROM TaskData
+          WHERE taskId = new.taskId
+           UNION
+          SELECT tdd.taskId, tdd.taskOwnerId, tdd.taskDepth
+          FROM TaskData tdd
+          JOIN TasksOver ts
+          ON tdd.taskId = ts.taskOwnerId
+    ) SELECT new.taskId, ts.taskId, ts.depth
+    FROM TasksOver ts;
 
     UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = new.goalId;
 END;
 
 CREATE TRIGGER recalcProgressOnUpdate
-AFTER UPDATE ON TaskData WHEN old.taskDone != new.taskDone
-AND old.subtasksCount = 0 AND new.subtasksCount = 0 -- will update parents of task without children
+AFTER UPDATE OF taskProgress ON TaskData WHEN new.taskOwnerId IS NULL
 BEGIN
-
-    UPDATE TaskData SET taskProgress = 1 WHERE taskId = new.taskId;
-
-    UPDATE __TaskRecalcTable SET _needsRecalc = 1 WHERE _taskId = new.taskOwnerId;
 
     UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = new.goalId;
 
@@ -137,7 +143,7 @@ CREATE TRIGGER recalcCountsAndProgressOnDelete
 AFTER DELETE ON TaskData
 BEGIN
     UPDATE TaskData
-    SET subtasksCount = subtasksCount - old.subtasksCount
+    SET subtasksCount = subtasksCount - old.subtasksCount - 1
         WHERE taskId IN (
             WITH RECURSIVE TasksOver(taskId, taskOwnerId) AS (
                 SELECT taskId, taskOwnerId
@@ -149,11 +155,11 @@ BEGIN
                 JOIN TasksOver ts
                 ON td.taskId = ts.taskOwnerId
             ) SELECT taskId FROM TasksOver
-        );
+        ) AND subtasksCount > 0;
 
     DELETE FROM __TaskRecalcTable WHERE _taskId = old.taskId;
 
-    UPDATE __TaskRecalcTable SET _needsRecalc = 1 WHERE _taskId = old.taskOwnerId;
+    DELETE FROM __TaskAndItsAllTaskOwners WHERE _taskId = old.taskId;
 
     UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = old.goalId;
 END;
@@ -196,6 +202,12 @@ DELETE FROM TaskData WHERE taskId = ?;
 
 getTaskUnfinished:
 SELECT taskEditUnfinished FROM TaskData WHERE taskId = ?;
+
+__getIdsOfAllOwnersOfTask:
+SELECT _taskOwnerId FROM __TaskAndItsAllTaskOwners WHERE _taskId = ? ORDER BY _depth DESC;
+
+__triggerProgressRecalcForTask:
+UPDATE __TaskRecalcTable SET _needsRecalc = 1 WHERE _taskId = ?;
 
 lastInsertRowId:
 SELECT last_insert_rowid();

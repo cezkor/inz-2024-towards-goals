@@ -17,6 +17,7 @@ class TaskRepositoryTests {
 
     private val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY).apply {
         TGDatabase.Schema.create(this)
+        this.execute(null, "PRAGMA foreign_keys = ON;", 0)
     }
 
     private val db: TGDatabase = DatabaseObjectFactory.newDatabaseObject(driver)
@@ -91,9 +92,9 @@ class TaskRepositoryTests {
             val hab2OrNull = mainRepo.getOneById(taskId2)
             assertThat(hab2OrNull).isNotNull()
             assertThat(hab2OrNull!!.goalId).isEqualTo(ownerGoalId)
-            assertThat(hab2OrNull.taskId).isEqualTo(taskId1)
-            assertThat(hab2OrNull.taskName).isEqualTo("task 1")
-            assertThat(hab2OrNull.taskDescription).isEqualTo("descr 1")
+            assertThat(hab2OrNull.taskId).isEqualTo(taskId2)
+            assertThat(hab2OrNull.taskName).isEqualTo("task 2")
+            assertThat(hab2OrNull.taskDescription).isEqualTo("descr 2")
             assertThat(hab2OrNull.taskEditUnfinished).isEqualTo(false)
             assertThat(hab2OrNull.taskOwnerId).isNull()
             assertThat(hab2OrNull.subtasksCount).isEqualTo(0L)
@@ -248,7 +249,7 @@ class TaskRepositoryTests {
         assertThat(taskList[0].taskId).isEqualTo(taskId1)
 
         val editedTask = TaskData(
-            Constants.IGNORE_ID_AS_LONG,
+            taskList[0].taskId,
             false,
             "edited task name 1",
             "edited task descr 1",
@@ -283,7 +284,7 @@ class TaskRepositoryTests {
         val hopefullyFinishedTask = mainRepo.getOneById(taskId1)
         assertThat(hopefullyFinishedTask).isNotNull()
         assertThat(hopefullyFinishedTask!!).isInstanceOf(TaskData::class.java)
-        assertThat(hopefullyFinishedTask.taskEditUnfinished).isEqualTo(true)
+        assertThat(hopefullyFinishedTask.taskEditUnfinished).isEqualTo(false)
         assertThat(hopefullyFinishedTask.taskName).isEqualTo("task 1")
         assertThat(hopefullyFinishedTask.taskDescription).isEqualTo("descr 1")
         assertThat(hopefullyFinishedTask.taskFailed).isEqualTo(taskList[0].taskFailed)
@@ -351,6 +352,10 @@ class TaskRepositoryTests {
         )
         assertThat(ssTaskPair2.second).isEqualTo(false)
 
+        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        assertThat(taskList.map{ it.taskProgress }).containsExactly(
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+        )
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal).isNotNull()
         assertThat(goal!!.goalProgress).isEqualTo(0.0)
@@ -368,35 +373,68 @@ class TaskRepositoryTests {
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal).isNotNull()
         assertThat(goal!!.goalProgress).isEqualTo(0.0)
+        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        assertThat(taskList.map{ it.taskProgress }).containsExactly(
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+        )
         mainRepo.markTaskCompletion(hTaskPair1.first, false)
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal).isNotNull()
         assertThat(goal!!.goalProgress).isEqualTo(0.0)
+        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        assertThat(taskList.map{ it.taskProgress }).containsExactly(
+            0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+        )
+
 
         mainRepo.markTaskCompletion(hTaskPair2.first, false)
+        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        assertThat(taskList.map{ it.taskProgress }).containsExactly(
+            0.0, 1.0, 0.0, 0.0, 0.0, 0.0
+        )
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal).isNotNull()
         assertThat(goal!!.goalProgress).isEqualTo(0.5)
 
         mainRepo.markTaskCompletion(ssTaskPair2.first, false)
+        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        assertThat(taskList.map{ it.taskProgress }).containsExactly(
+            0.25, 1.0, 0.5, 0.0, 0.0, 1.0
+        )
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal).isNotNull()
-        assertThat(goal!!.goalProgress).isEqualTo(5.0/8.0)
+        assertThat(goal!!.goalProgress).isEqualTo((0.25 + 1.0)/2)
 
-        mainRepo.markTaskCompletion(ssTaskPair2.first, false)
+        mainRepo.markTaskCompletion(sTaskPair2.first, false)
+        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        assertThat(taskList.map{ it.taskProgress }).containsExactly(
+            0.75, 1.0, 0.5, 1.0, 0.0, 1.0
+        )
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal).isNotNull()
-        assertThat(goal!!.goalProgress).isEqualTo(0.75)
-        val hopefullyCompletedTask = mainRepo.getOneById(sTaskPair1.first)
-        assertThat(hopefullyCompletedTask).isNotNull()
-        assertThat(hopefullyCompletedTask!!.taskProgress).isEqualTo(1.0)
-        assertThat(hopefullyCompletedTask.taskDone).isEqualTo(true)
-        assertThat(hopefullyCompletedTask.taskFailed).isEqualTo(false)
-        val hopefullyHalfTask = mainRepo.getOneById(hTaskPair1.first)
+        assertThat(goal!!.goalProgress).isEqualTo((0.75 + 1.0)/2)
+        val hopefullyHalfTask = mainRepo.getOneById(sTaskPair1.first)
         assertThat(hopefullyHalfTask).isNotNull()
         assertThat(hopefullyHalfTask!!.taskProgress).isEqualTo(0.5)
-        assertThat(hopefullyCompletedTask.taskDone).isEqualTo(false)
+        assertThat(hopefullyHalfTask.taskDone).isEqualTo(false)
+        assertThat(hopefullyHalfTask.taskFailed).isEqualTo(false)
+
+        assertThat(taskList[4].taskId).isEqualTo(ssTaskPair1.first)
+        assertThat(taskList[4].taskProgress).isEqualTo(0.0)
+        mainRepo.deleteById(ssTaskPair1.first)
+        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        assertThat(taskList.map{ it.taskProgress }).containsExactly(
+            1.0, 1.0, 1.0, 1.0, 1.0
+        )
+        val hopefullyCompletedTask = mainRepo.getOneById(hTaskPair1.first)
+        assertThat(hopefullyCompletedTask).isNotNull()
+        assertThat(hopefullyCompletedTask!!.taskDone).isEqualTo(true)
         assertThat(hopefullyCompletedTask.taskFailed).isEqualTo(false)
+
+        val hopefullyNowCompletedTask = mainRepo.getOneById(sTaskPair1.first)
+        assertThat(hopefullyNowCompletedTask).isNotNull()
+        assertThat(hopefullyNowCompletedTask!!.taskDone).isEqualTo(true)
+        assertThat(hopefullyNowCompletedTask.taskFailed).isEqualTo(false)
 
         mainRepo.deleteById(hTaskPair1.first)
         mainRepo.deleteById(hTaskPair2.first)

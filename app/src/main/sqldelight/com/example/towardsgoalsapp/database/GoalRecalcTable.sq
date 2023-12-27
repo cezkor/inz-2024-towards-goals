@@ -14,24 +14,23 @@ BEGIN
         SELECT
             CASE
                 WHEN (tg.totalCount + hg.totalCount) = 0 THEN 0.0
-                ELSE CAST((tg.taskTotalDoneCount + hg.sumOfCompleted) AS REAL) / (tg.totalCount + hg.totalCount)
+                ELSE CAST((tg.sumOfCompleted + hg.sumOfCompleted) AS REAL) / (tg.totalCount + hg.totalCount)
             END
         FROM
             (SELECT
-                COALESCE(
-                    (SELECT SUM(subtasksCount) FROM TaskData WHERE taskOwnerId IS NULL AND goalId = new._goalId AND subtasksCount > 0), 0
-                )
-                +
-                COALESCE(
-                    (SELECT COUNT(taskId) FROM TaskData WHERE taskOwnerId IS NULL AND goalId = new._goalId AND subtasksCount = 0), 0
-                ) AS totalCount,
+                (SELECT COUNT(taskId) FROM TaskData WHERE taskOwnerId IS NULL AND goalId = new._goalId) AS totalCount,
                 COALESCE(
                     (SELECT SUM(taskProgress) FROM TaskData WHERE taskOwnerId IS NULL AND goalId = new._goalId AND subtasksCount > 0), 0
                 )
                 +
                 COALESCE(
-                    (SELECT COUNT(taskId) FROM TaskData WHERE taskOwnerId IS NULL AND goalId = new._goalId AND subtasksCount = 0 AND taskDone = 1 AND taskFailed = 0), 0
-                ) AS taskTotalDoneCount
+                    (SELECT CAST(COUNT(taskId) AS REAL)
+                    FROM TaskData
+                    WHERE taskOwnerId IS NULL
+                    AND goalId = new._goalId AND subtasksCount = 0
+                    AND taskDone = 1 AND taskFailed = 0),
+                    0
+                ) AS sumOfCompleted
             ) AS tg,
             (SELECT
                 COALESCE(SUM(habitTargetCompleted), 0) AS sumOfCompleted,

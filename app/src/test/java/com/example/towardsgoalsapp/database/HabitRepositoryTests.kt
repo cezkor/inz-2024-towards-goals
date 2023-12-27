@@ -17,6 +17,7 @@ class HabitRepositoryTests {
 
     private val driver = JdbcSqliteDriver(JdbcSqliteDriver.IN_MEMORY).apply {
         TGDatabase.Schema.create(this)
+        this.execute(null, "PRAGMA foreign_keys = ON;", 0)
     }
 
     private val db: TGDatabase = DatabaseObjectFactory.newDatabaseObject(driver)

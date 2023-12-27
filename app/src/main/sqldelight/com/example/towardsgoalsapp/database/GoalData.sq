@@ -34,10 +34,6 @@ END;
 CREATE TRIGGER onDeleteGoal
 BEFORE DELETE ON GoalData
 BEGIN
-    DELETE FROM TaskData WHERE goalId = old.goalId;
-    DELETE FROM HabitData WHERE goalId = old.goalId;
-    DELETE FROM TaskStatsData WHERE goalId = old.goalId;
-    DELETE FROM HabitStatsData WHERE goalId = old.goalId;
     DELETE FROM __GoalRecalcTable WHERE _goalId = old.goalId;
 END;
 
