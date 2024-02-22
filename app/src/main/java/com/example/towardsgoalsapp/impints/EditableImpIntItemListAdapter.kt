@@ -5,16 +5,19 @@ import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
+import android.widget.ImageButton
 import androidx.lifecycle.MutableLiveData
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.database.*
 
 
 class EditableImpIntItemListAdapter(
     private val viewModel: ImpIntItemListViewModel
 ) : RecyclerView.Adapter<EditableImpIntItemListAdapter.ViewHolder>() {
 
-    private val mutableImpIntsList: List<MutableLiveData<ImpIntData_OLD>> =
+    private val mutableImpIntsList: List<MutableLiveData<ImpIntData>> =
         viewModel.impIntDataList
     companion object {
         const val LOG_TAG = "EIIIAdapter"
@@ -30,36 +33,58 @@ class EditableImpIntItemListAdapter(
 
         Log.i(LOG_TAG, "bind view called, position $position")
 
-        val impIntData: ImpIntData_OLD? = mutableImpIntsList[position].value
-        impIntData?.run { holder.bind(this) }
+        val impIntData: ImpIntData? = mutableImpIntsList[position].value
+        impIntData?.run { holder.bind(this, position) }
     }
 
-    override fun onViewRecycled(holder: ViewHolder) {
-        val position = holder.bindingAdapterPosition
-        val editedIfText = holder.itemView.findViewById<EditText>(R.id.ifEditText)
-            .text.toString()
-        val editedThenText = holder.itemView.findViewById<EditText>(R.id.thenEditText)
-            .text.toString()
-
-        viewModel.putOneDataAt(
-            editedIfText,
-            editedThenText,
-            position
-        )
-
-        super.onViewRecycled(holder)
-    }
-
-    override fun getItemCount(): Int = mutableImpIntsList.size
+    override fun getItemCount(): Int
+        = mutableImpIntsList.filter { p -> p.value != null }.size
 
     inner class ViewHolder(viewOfItem: View) : RecyclerView.ViewHolder(viewOfItem) {
 
-        private val ifTextEditor: EditText = viewOfItem.findViewById(R.id.ifEditText)
-        private val thenTextEditor: EditText = viewOfItem.findViewById(R.id.thenEditText)
+        private val ifTextEditor: EditText = viewOfItem.findViewById(R.id.triggerEditText)
+        private val thenTextEditor: EditText = viewOfItem.findViewById(R.id.reactionEditText)
+        private val deleteButton: ImageButton = viewOfItem.findViewById(R.id.deleteImpIntItem)
 
-        fun bind(impIntData: ImpIntData_OLD) {
-            ifTextEditor.text.replace(0, 0, impIntData.ifText)
-            thenTextEditor.text.replace(0, 0, impIntData.thenText)
+        fun bind(impIntData: ImpIntData, position: Int) {
+
+            ifTextEditor.setText(impIntData.impIntIfText)
+            thenTextEditor.setText(impIntData.impIntThenText)
+
+            fun saveText() {
+                val editedIfText = ifTextEditor.text.toString()
+                val editedThenText = thenTextEditor.text.toString()
+                viewModel.putOneImpIntAt(
+                    editedIfText,
+                    editedThenText,
+                    position
+                )
+            }
+
+            ifTextEditor.setOnFocusChangeListener { v, hasFocus ->
+                if (! hasFocus) saveText()
+            }
+            thenTextEditor.setOnFocusChangeListener { v, hasFocus ->
+                if (! hasFocus) saveText()
+            }
+            ifTextEditor.setOnEditorActionListener { v, actionId, event ->
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    saveText()
+                    return@setOnEditorActionListener true
+                }
+                return@setOnEditorActionListener false
+            }
+            thenTextEditor.setOnEditorActionListener { v, actionId, event ->
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    saveText()
+                    return@setOnEditorActionListener true
+                }
+                return@setOnEditorActionListener false
+            }
+
+            deleteButton.setOnClickListener{
+                viewModel.deleteImpInt(impIntData.impIntId)
+            }
         }
 
     }

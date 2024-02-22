@@ -1,18 +1,11 @@
-package com.example.towardsgoalsapp.database
+package com.example.towardsgoalsapp.database.repositories
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.map
-import app.cash.sqldelight.coroutines.asFlow
-import app.cash.sqldelight.coroutines.mapToList
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.OwnerType
-import com.example.towardsgoalsapp.database.TaskData
-import com.example.towardsgoalsapp.database.HabitData
+import com.example.towardsgoalsapp.database.ReminderData
 import com.example.towardsgoalsapp.database.TGDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.lang.IllegalStateException
 import java.time.Instant
 
 object FromOldestToNewestComparator: Comparator<ReminderData> {
@@ -33,13 +26,14 @@ class ReminderRepository(private val db: TGDatabase) : OwnedByTypedOwnerUserData
             selectAll().executeAsList().sortedWith(FromOldestToNewestComparator)
         }
     }
-    override suspend fun getAllByOwnerTypeAndId(ownerType: OwnerType, ownerId: Long): ReminderData? {
+    override suspend fun getAllByOwnerTypeAndId(ownerType: OwnerType, ownerId: Long, allowUnfinished: Boolean): ReminderData? {
         return withContext(Dispatchers.IO) {
             db.reminderDataQueries.selectOf(ownerId, ownerType).executeAsOneOrNull()
         }
     }
 
-    override suspend fun getOneById(id: Long): ReminderData? {
+    override suspend fun getOneById(id: Long, allowUnfinished: Boolean): ReminderData? {
+        // status of finished is unused
         return withContext(Dispatchers.IO) {
             db.reminderDataQueries.selectReminderById(id).executeAsOneOrNull()
         }

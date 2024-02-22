@@ -8,13 +8,14 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.lifecycle.MutableLiveData
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.database.*
 
 
 class ReadOnlyImpIntItemListAdapter(
     viewModel: ImpIntItemListViewModel
 ) : RecyclerView.Adapter<ReadOnlyImpIntItemListAdapter.ViewHolder>() {
 
-    private val mutableImpIntsList: List<MutableLiveData<ImpIntData_OLD>> =
+    private val mutableImpIntsList: List<MutableLiveData<ImpIntData>> =
         viewModel.impIntDataList
 
     companion object {
@@ -31,20 +32,21 @@ class ReadOnlyImpIntItemListAdapter(
 
         Log.i(LOG_TAG, "bind view called, position $position")
 
-        val impIntData: ImpIntData_OLD? = mutableImpIntsList[position].value
+        val impIntData: ImpIntData? = mutableImpIntsList[position].value
         impIntData?.run { holder.bind(this) }
     }
 
-    override fun getItemCount(): Int = mutableImpIntsList.size
+    override fun getItemCount(): Int
+        = mutableImpIntsList.filter { p -> p.value != null }.size
 
     inner class ViewHolder(viewOfItem: View) : RecyclerView.ViewHolder(viewOfItem) {
 
-        private val ifTextView: TextView = viewOfItem.findViewById(R.id.ifTextView)
-        private val thenTextView: TextView = viewOfItem.findViewById(R.id.thenTextView)
+        private val ifTextView: TextView = viewOfItem.findViewById(R.id.triggerTextView)
+        private val thenTextView: TextView = viewOfItem.findViewById(R.id.reactionTextView)
 
-        fun bind(impIntData: ImpIntData_OLD) {
-            ifTextView.text = impIntData.ifText
-            thenTextView.text = impIntData.thenText
+        fun bind(impIntData: ImpIntData) {
+            ifTextView.text = impIntData.impIntIfText
+            thenTextView.text = impIntData.impIntThenText
         }
 
     }

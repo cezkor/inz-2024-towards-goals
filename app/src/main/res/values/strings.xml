@@ -10,4 +10,8 @@
     <string name="abandoning_aoe">Tap Back again if you are sure you want to cancel (DATA MAY NOT BE SAVED!)</string>
     <string name="next">Next</string>
     <string name="end">End</string>
+    <string name="cancel">Cancel</string>
+    <string name="edit_save_did_not_fail">This edit is now saved.</string>
+    <string name="edit_save_did_fail">Failed to save this edit.</string>
+    <string name="adding">"Adding: %s"</string>
 </resources>

@@ -14,7 +14,7 @@
         android:theme="@style/Theme.TowardsGoalsApp"
         tools:targetApi="31">
         <activity
-            android:name=".tasks.TaskOngoing"
+            android:name=".tasks.ongoing.TaskOngoing"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />

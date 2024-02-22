@@ -10,5 +10,9 @@
     <string name="abandoning_aoe">Wciśnij Zawróć jeżeli jesteś pewien że chcesz anulować (DANE MOGĄ NIE BYĆ ZAPISANE!)</string>
     <string name="next">Dalej</string>
     <string name="end">Zakończ</string>
+    <string name="cancel">Anuluj</string>
+    <string name="edit_save_did_not_fail">Ta edycja została zapisana.</string>
+    <string name="edit_save_did_fail">Nie udało się zapisać tej edycji.</string>
+    <string name="adding">"Dodawanie: %s"</string>
 </resources>
 

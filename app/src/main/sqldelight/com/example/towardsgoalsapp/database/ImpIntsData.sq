@@ -9,7 +9,7 @@ CREATE TABLE ImpIntData (
     impIntThenText TEXT NOT NULL DEFAULT "",
     ownerId INTEGER NOT NULL,
     ownerType TEXT AS OwnerType NOT NULL
-    -- IT IS IMPLICIT THAT THESE TWO ABOVE ARE FOREIGN KEY !!!
+    -- IT IS IMPLICIT THAT THESE TWO ABOVE REPRESENT FOREIGN KEY !!!
 );
 
 CREATE TABLE UnfinishedImpIntData (
@@ -27,8 +27,15 @@ BEGIN
 	DELETE FROM UnfinishedImpIntData WHERE impIntId = new.impIntId;
 END;
 
-selectAllOf:
-SELECT * FROM ImpIntData WHERE ownerId = ? AND ownerType = ? ORDER BY impIntId ASC;
+selectAllFinishedImpIntsOf:
+SELECT * FROM ImpIntData WHERE ownerId = ? AND ownerType = ? AND impIntEditUnfinished = 0 ORDER BY impIntId ASC;
+
+selectAllUnfinishedImpIntsOf:
+SELECT *
+FROM UnfinishedImpIntData uiid
+JOIN ImpIntData iid ON uiid.impIntId = iid.impIntId
+WHERE uiid.ownerId = ? AND uiid.ownerType = ?
+ORDER BY iid.impIntId ASC;
 
 selectGivenImpInt:
 SELECT * FROM ImpIntData WHERE impIntId = ?;
@@ -41,11 +48,14 @@ INSERT INTO ImpIntData(impIntId, impIntIfText, impIntThenText, ownerId, ownerTyp
 VALUES (?,?,?,?,?);
 
 insertOneEditUnfinishedImpInt:
-INSERT INTO UnfinishedImpIntData
+INSERT OR REPLACE INTO UnfinishedImpIntData
 VALUES (?,?,?,?,?);
 
 updateImpIntTexts:
 UPDATE ImpIntData SET impIntIfText = ?, impIntThenText = ? WHERE impIntId = ?;
+
+updateUnfinishedImpIntTexts:
+UPDATE UnfinishedImpIntData SET impIntIfText = ?, impIntThenText = ? WHERE impIntId = ?;
 
 markImpIntEdit:
 UPDATE ImpIntData  SET impIntEditUnfinished = ? WHERE impIntId = ?;

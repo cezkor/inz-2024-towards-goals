@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.fragment.app.Fragment
@@ -31,7 +32,7 @@ class AddGoalSuggestion(): Fragment() {
 
     private var pageNumber: Int = Constants.IGNORE_PAGE_AS_INT
 
-    private lateinit var goalAdder: ActivityResultLauncher<Pair<Long, Boolean>>
+    private lateinit var goalAdder: GoalRefreshRequesterResultLauncher
 
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -42,15 +43,19 @@ class AddGoalSuggestion(): Fragment() {
         pageNumber = requireArguments().getInt(MainActivity.PAGE_NUMBER)
 
         goalAdder = registerForActivityResult(GoalRefreshRequesterContract()) {
-
-
-
+            if (it == Constants.IGNORE_ID_AS_LONG) return@registerForActivityResult
+            // if returned an id -> an goal of such id was probably created
+            // -> tell VM to get it
+            pageViewModel.getOrUpdateOneGoal(it)
         }
 
         val plusButton: ImageButton = view.findViewById(R.id.addGoalPlusButton)
         plusButton.setOnClickListener {
-
+            goalAdder.launch(Triple(Constants.IGNORE_ID_AS_LONG, true, pageNumber))
         }
+
+        val textView: TextView = view.findViewById(R.id.addGoalTextView)
+        textView.text = getString(R.string.add_goal_suggestion_text, pageNumber + 1)
 
     }
 
@@ -59,7 +64,7 @@ class AddGoalSuggestion(): Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_goal_add_suggestion, container, true)
+        return inflater.inflate(R.layout.fragment_goal_add_suggestion, container, false)
     }
 
 }

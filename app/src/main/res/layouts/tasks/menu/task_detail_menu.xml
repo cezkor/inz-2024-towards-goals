@@ -5,10 +5,10 @@
     >
 
     <item
-        android:id="@+id/taskDoneItem"
+        android:id="@+id/doTaskItem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:title="@string/tasks_make_task_done" />
+        android:title="@string/tasks_do_task" />
 
     <item
         android:id="@+id/addSubtaskItem"
@@ -23,7 +23,7 @@
         android:title="@string/impint_menu_add_empty_imp_int" />
 
     <item
-        android:id="@+id/editItem"
+        android:id="@+id/editTaskItem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:title="@string/enable_edit" />

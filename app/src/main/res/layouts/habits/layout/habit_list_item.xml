@@ -5,24 +5,13 @@
     android:layout_height="32dp" >
 
     <ImageButton
-        android:id="@+id/habitDidButton"
-        android:layout_width="wrap_content"
+        android:scaleType="fitCenter"
+        android:id="@+id/habitMarkButton"
+        android:background="#00000000"
+        android:minWidth="7dp"
+        android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="5" />
-
-    <ImageButton
-        android:id="@+id/habitDidNotButton"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="5"
-        />
-
-    <ImageButton
-        android:id="@+id/habitDescriptionButton"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="5"
-        />
+        android:layout_weight="7" />
 
 
     <Space
@@ -38,5 +27,19 @@
         android:layout_weight="60"
         android:text="@string/habits_name"
         android:gravity="center_vertical"/>
+
+    <Space
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1" />
+
+    <ImageView
+        android:scaleType="fitXY"
+        android:background="#00000000"
+        android:id="@+id/editUnfinishedImageView"
+        android:layout_width="0dp"
+        android:minWidth="5dp"
+        android:layout_height="match_parent"
+        android:layout_weight="7" />
 
 </LinearLayout>

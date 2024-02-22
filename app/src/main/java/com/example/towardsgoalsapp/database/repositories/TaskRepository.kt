@@ -1,21 +1,26 @@
-package com.example.towardsgoalsapp.database
+package com.example.towardsgoalsapp.database.repositories
 
-import android.app.ActivityManager.TaskDescription
 import androidx.lifecycle.MutableLiveData
 import com.example.towardsgoalsapp.Constants
-import com.example.towardsgoalsapp.OwnerType
+import com.example.towardsgoalsapp.database.HabitData
+import com.example.towardsgoalsapp.database.TGDatabase
+import com.example.towardsgoalsapp.database.TaskData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserData {
-    override suspend fun getAllByOwnerId(ownerId: Long): ArrayList<TaskData> {
+    override suspend fun getAllByOwnerId(ownerId: Long, allowUnfinished: Boolean): ArrayList<TaskData> {
         return withContext(Dispatchers.IO) {
-            db.taskDataQueries.selectAllOfGoal(ownerId).executeAsList()
+            val all = db.taskDataQueries.selectAllOfGoal(ownerId).executeAsList()
                 .toCollection(ArrayList())
+            val filtered =
+                if (allowUnfinished) all else all.filter { td -> !td.taskEditUnfinished }
+            filtered.toCollection(ArrayList())
         }
     }
 
-    suspend fun getAllByGoalId(goalId: Long): ArrayList<TaskData> = getAllByOwnerId(goalId)
+    suspend fun getAllByGoalId(goalId: Long, allowUnfinished: Boolean = true): ArrayList<TaskData>
+            = getAllByOwnerId(goalId, allowUnfinished)
 
     suspend fun getAllByTaskOwnerId(ownerId: Long): ArrayList<TaskData> {
         return withContext(Dispatchers.IO) {
@@ -26,10 +31,11 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
 
     suspend fun addTask(taskName: String, taskDescription: String,
                         goalId: Long, taskOwnerId: Long?, taskDepth: Int) : Pair<Long, Boolean> {
+
         return withContext(Dispatchers.IO) {
 
             if (taskDepth >= Constants.MAX_TASK_DEPTH)
-                return@withContext Pair<Long, Boolean>(Constants.IGNORE_ID_AS_LONG, true)
+                return@withContext Pair<Long, Boolean>(Constants.IGNORE_ID_AS_LONG, false)
 
             db.taskDataQueries.insertOneTask(
                 null,
@@ -42,7 +48,7 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
             return@withContext Pair<Long, Boolean>(
                 db.taskDataQueries.
                 lastInsertRowId().executeAsOneOrNull()?: Constants.IGNORE_ID_AS_LONG,
-                false
+                true
             )
         }
     }
@@ -102,7 +108,7 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
                 if (taskFailed) db.taskDataQueries.markTaskFailed(id)
                 else db.taskDataQueries.markTaskDoneWell(id)
 
-                // since i am unable to use recursive triggers, i have to resort tu
+                // since i am unable to use recursive triggers, i have to resort to
                 // manually triggering recalculation of progress
                 // of all parents of a given task
                 val ids = db.taskDataQueries.__getIdsOfAllOwnersOfTask(id).executeAsList()
@@ -119,10 +125,12 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
         }
     }
 
-    override suspend fun getOneById(id: Long): TaskData? {
+    override suspend fun getOneById(id: Long, allowUnfinished: Boolean): TaskData? {
         return withContext(Dispatchers.IO) {
-            val unfinished = db.taskDataQueries.getTaskUnfinished(id).executeAsList().last()
+            val unfinished = db.taskDataQueries.getTaskUnfinished(id).executeAsOneOrNull()
+                ?: return@withContext null
             if (unfinished) {
+                if (!allowUnfinished) return@withContext null
                 val utd = db.taskDataQueries.selectGivenUnfinishedTask(id).executeAsOneOrNull()
                 if (utd == null) null
                 else TaskData(

@@ -8,10 +8,12 @@
     <string name="tasks_add_task">Add a task</string>
     <string name="tasks_add_subtask">Add a subtask</string>
     <string name="tasks_subtasks_not_allowed">You can\'t create subtasks at this depth</string>
-    <string name="tasks_make_task_done">Make task done</string>
+    <string name="tasks_do_task">Do the task</string>
     <string name="tasks_abandon_task">Tap Back again if you are sure you don\'t want to do this task now</string>
     <string name="tasks_keep_doing_task">Keep doing task! Or make task done/not done…</string>
     <string name="tasks_abandon_second_query">Tap Back if you want to leave default values of this form; note that this task at this point will be saved</string>
     <string name="tasks_done">Done</string>
     <string name="tasks_failed">Failed</string>
+    <string name="tasks_dont_do_while_edit">You can\'t do task while you\'re editing it</string>
+    <string name="tasks_dont_do_because_has_subtasks">You can\'t do task because its completion is determined by its subtasks</string>
 </resources>

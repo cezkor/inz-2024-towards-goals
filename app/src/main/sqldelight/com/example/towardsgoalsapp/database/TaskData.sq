@@ -9,14 +9,17 @@ CREATE TABLE TaskData (
     taskProgress REAL DEFAULT 0 NOT NULL,
     taskOwnerId INTEGER,
     goalId INTEGER NOT NULL,
-    taskDepth INTEGER AS Int DEFAULT 1 NOT NULL,
+    taskDepth INTEGER AS Int DEFAULT 0 NOT NULL,
     -- application controls whether it should allow to nest tasks at given depth !!!
     subtasksCount INTEGER DEFAULT 0 NOT NULL,
     taskDone INTEGER AS Boolean DEFAULT 0 NOT NULL,
     taskFailed INTEGER AS Boolean DEFAULT 0 NOT NULL,
     FOREIGN KEY (taskOwnerId) REFERENCES TaskData (taskId) ON DELETE CASCADE,
     FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE,
-    CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 OR taskFailed != 1 )
+    CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 OR taskFailed != 1 ),
+    CONSTRAINT taskHasProperDepthAndOwner CHECK (
+       ( taskDepth <= 0 AND taskOwnerId IS NULL ) OR ( taskDepth > 0 AND taskOwnerId IS NOT NULL )
+    )
 );
 
 CREATE TABLE __TaskRecalcTable (
@@ -42,13 +45,16 @@ CREATE TABLE UnfinishedTaskData (
     taskProgress REAL DEFAULT 0 NOT NULL,
     taskOwnerId INTEGER,
     goalId INTEGER NOT NULL,
-    taskDepth INTEGER AS Int DEFAULT 1 NOT NULL,
+    taskDepth INTEGER AS Int DEFAULT 0 NOT NULL,
     subtasksCount INTEGER DEFAULT 0 NOT NULL,
     taskDone INTEGER AS Boolean DEFAULT 0 NOT NULL,
     taskFailed INTEGER AS Boolean DEFAULT 0 NOT NULL,
     FOREIGN KEY (taskOwnerId) REFERENCES TaskData (taskId) ON DELETE CASCADE,
     FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE,
-    CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 OR taskFailed != 1 )
+    CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 OR taskFailed != 1 ),
+    CONSTRAINT taskHasProperDepthAndOwner CHECK (
+       ( taskDepth <= 0 AND taskOwnerId IS NULL ) OR ( taskDepth > 0 AND taskOwnerId IS NOT NULL )
+    )
 );
 
 CREATE INDEX taskDataGoalIdIdx ON TaskData(goalId);
@@ -166,7 +172,7 @@ END;
 
 
 selectAllOfGoal:
-SELECT * FROM TaskData WHERE goalId = ? ORDER BY taskId ASC;
+SELECT * FROM TaskData WHERE goalId = ? AND taskDepth <= 0 ORDER BY taskId ASC;
 
 selectAllOfOwnerTask:
 SELECT * FROM TaskData WHERE taskOwnerId = ? ORDER BY taskId ASC;
@@ -182,7 +188,7 @@ INSERT INTO TaskData(taskId, taskName, taskDescription, taskOwnerId, goalId, tas
 VALUES (?,?,?,?,?,?);
 
 insertOneEditUnfinishedTask:
-INSERT INTO UnfinishedTaskData
+INSERT OR REPLACE INTO UnfinishedTaskData
 VALUES (?,?,?,?,?,?,?,?,?,?);
 
 markTaskDoneWell:

@@ -1,17 +1,11 @@
-package com.example.towardsgoalsapp.database
+package com.example.towardsgoalsapp.database.repositories
 
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.map
-import app.cash.sqldelight.coroutines.asFlow
-import app.cash.sqldelight.coroutines.mapToList
 import com.example.towardsgoalsapp.Constants
-import com.example.towardsgoalsapp.database.TaskData
-import com.example.towardsgoalsapp.database.HabitData
+import com.example.towardsgoalsapp.database.GoalData
 import com.example.towardsgoalsapp.database.TGDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.lang.IllegalStateException
+
 class GoalRepository(private val db: TGDatabase) : UserDataInterface {
 
     override suspend fun updateTexts(id:Long, firstText: String, secondText: String) {
@@ -26,9 +20,13 @@ class GoalRepository(private val db: TGDatabase) : UserDataInterface {
         }
     }
 
-    override suspend fun getOneById(id: Long): GoalData? {
+    override suspend fun getOneById(id: Long, allowUnfinished: Boolean): GoalData? {
+        // allowUnfinished is ignored for goals as currently
+        // there is no other mechanism that would allow user to
+        // edit unfinished goal
         return withContext(Dispatchers.IO) {
-            val unfinished = db.goalDataQueries.getGoalUnfinished(id).executeAsList().last()
+            val unfinished = db.goalDataQueries.getGoalUnfinished(id).executeAsOneOrNull()
+                ?: return@withContext null
             if (unfinished) {
                 val ugd = db.goalDataQueries.selectGivenUnfinishedGoal(id).executeAsOneOrNull()
                 if (ugd == null) null

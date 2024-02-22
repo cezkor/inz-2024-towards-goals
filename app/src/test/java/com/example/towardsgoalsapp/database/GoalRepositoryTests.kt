@@ -3,6 +3,7 @@ package com.example.towardsgoalsapp.database
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
+import com.example.towardsgoalsapp.database.repositories.GoalRepository
 import com.google.common.truth.Truth.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule

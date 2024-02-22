@@ -1,39 +1,58 @@
-package com.example.towardsgoalsapp.etc
+package com.example.towardsgoalsapp.database.userdata
 
 import androidx.lifecycle.MutableLiveData
 import java.util.TreeMap
+import com.example.towardsgoalsapp.database.*
 
 enum class MutablesArrayContentState {
     ADDED_NEW, REPUTTED
 }
 
+class TaskDataReputter(
+    private val mtArray: ArrayList<MutableLiveData<TaskData>>
+): UserDataReputter<TaskData>(mtArray) {
 
+    override fun getOrderNumber(userData: TaskData): Long {
+        return userData.taskId
+    }
+}
+
+class HabitDataReputter(
+    private val mtArray: ArrayList<MutableLiveData<HabitData>>
+): UserDataReputter<HabitData>(mtArray) {
+
+    override fun getOrderNumber(userData: HabitData): Long {
+        return userData.habitId
+    }
+}
+
+class ImpIntDataReputter(
+    private val mtArray: ArrayList<MutableLiveData<ImpIntData>>
+): UserDataReputter<ImpIntData>(mtArray) {
+
+    override fun getOrderNumber(userData: ImpIntData): Long {
+        return userData.impIntId
+    }
+}
 
 abstract class UserDataReputter<UserData>(
-    private val arrayWithMutables: ArrayList<MutableLiveData<UserData>>,
-    arrayList: ArrayList<UserData>? = null
+    private val arrayWithMutables: ArrayList<MutableLiveData<UserData>>
 ) {
 
     private var orderedSetOfUserDataOrder = TreeMap<Long, Int>()
 
     private var firstWithNullIdx = 0
 
-    init {
-        arrayList?.run {
-            setWholeBasedOnArrayList(this)
-        }
-    }
-
-
     abstract fun getOrderNumber(userData: UserData) : Long
 
-    fun setWholeBasedOnArrayList(arrayList: ArrayList<UserData>): MutablesArrayContentState {
-        // assumption: database returns user data ordered by id
+    fun setWholeBasedOnArrayList(arrayList: ArrayList<UserData>): Pair<MutablesArrayContentState, Int> {
+        // assumption: database returns user data ordered by unique number
         var retVal = MutablesArrayContentState.REPUTTED
+        var addNew = 0
 
         orderedSetOfUserDataOrder.clear()
         if ( arrayWithMutables.size < arrayList.size ) {
-            val addNew = arrayList.size - arrayWithMutables.size
+            addNew = arrayList.size - arrayWithMutables.size
             arrayWithMutables += (1..addNew).map { MutableLiveData() }
             retVal = MutablesArrayContentState.ADDED_NEW
         }
@@ -44,14 +63,15 @@ abstract class UserDataReputter<UserData>(
         }
         firstWithNullIdx = arrayList.lastIndex + 1
 
-        return retVal
+        return Pair(retVal, addNew)
     }
 
-    fun reputBasedOnInsertOfArrayList(arrayList: ArrayList<UserData>): MutablesArrayContentState {
+    fun reputBasedOnInsertOfArrayList(arrayList: ArrayList<UserData>): Pair<MutablesArrayContentState, Int>  {
         var retVal = MutablesArrayContentState.REPUTTED
+        var addNew = 0
 
         if ( arrayList.size > arrayWithMutables.size - firstWithNullIdx  ) {
-            val addNew = arrayList.size + firstWithNullIdx - arrayWithMutables.size
+            addNew = arrayList.size + firstWithNullIdx - arrayWithMutables.size
             arrayWithMutables += (1..addNew).map { MutableLiveData() }
             retVal = MutablesArrayContentState.ADDED_NEW
         }
@@ -74,12 +94,12 @@ abstract class UserDataReputter<UserData>(
             }
         }
 
-        return retVal
+        return Pair(retVal, addNew)
     }
 
-    fun reputBasedOnDeleteOf(userData: UserData): MutablesArrayContentState {
+    fun reputBasedOnDeleteOf(userData: UserData): Pair<MutablesArrayContentState, Int>  {
         val position = orderedSetOfUserDataOrder[getOrderNumber(userData)]
-            ?: return MutablesArrayContentState.REPUTTED
+            ?: return Pair(MutablesArrayContentState.REPUTTED, 0)
 
         orderedSetOfUserDataOrder.remove(getOrderNumber(userData))
 
@@ -93,17 +113,17 @@ abstract class UserDataReputter<UserData>(
             }
         }
         firstWithNullIdx -= 1
-        return MutablesArrayContentState.REPUTTED
+        return Pair(MutablesArrayContentState.REPUTTED, 0)
     }
 
-    fun reputBasedOnInsertOf(userData: UserData): MutablesArrayContentState {
+    fun reputBasedOnInsertOf(userData: UserData): Pair<MutablesArrayContentState, Int> {
         var retVal = MutablesArrayContentState.REPUTTED
-
-
+        var addNew = 0
 
         if (firstWithNullIdx == arrayWithMutables.size) {
             arrayWithMutables.add(MutableLiveData())
             retVal = MutablesArrayContentState.ADDED_NEW
+            addNew = 1
         }
         arrayWithMutables[firstWithNullIdx].value = userData
 
@@ -122,7 +142,16 @@ abstract class UserDataReputter<UserData>(
             }
         }
 
-        return retVal
+        return Pair(retVal, addNew)
+    }
+
+    fun reputBasedOnUpdateOf(userData: UserData) : Pair<MutablesArrayContentState, Int> {
+        val ordNum = getOrderNumber(userData)
+        return if (orderedSetOfUserDataOrder.containsKey(ordNum)) {
+            val pos = orderedSetOfUserDataOrder[ordNum]
+            arrayWithMutables[pos!!].value = userData
+            Pair(MutablesArrayContentState.REPUTTED, 0)
+        } else reputBasedOnInsertOf(userData)
     }
 
 }

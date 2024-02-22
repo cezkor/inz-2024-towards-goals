@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.MutableLiveData
 import android.util.Log
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -16,12 +17,29 @@ import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
 import com.example.towardsgoalsapp.goals.GoalSynopsisesViewModel
 import com.example.towardsgoalsapp.goals.GoalViewModel
+import com.example.towardsgoalsapp.database.*
+import com.example.towardsgoalsapp.database.userdata.MutablesArrayContentState
+import com.example.towardsgoalsapp.database.userdata.OneModifyUserDataSharer
+import com.example.towardsgoalsapp.database.userdata.ViewModelUserDataSharer
+import com.example.towardsgoalsapp.database.userdata.ViewModelWithHabitsSharer
+import com.example.towardsgoalsapp.database.userdata.ViewModelWithManyHabitsSharers
+import com.example.towardsgoalsapp.habits.questioning.HabitQuestioningContract
+import com.example.towardsgoalsapp.habits.questioning.HabitQuestioningLauncher
+import com.example.towardsgoalsapp.tasks.TaskItemList
 
-class HabitItemListViewModel(val habitDataList: ArrayList<MutableLiveData<HabitData_OLD>>): ViewModel() {
-    fun updateOneDataAt() {}
+class HabitItemListViewModelFactory(private val sharer: OneModifyUserDataSharer<HabitData>): ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return HabitItemListViewModel(sharer) as T
+    }
+}
 
-    fun updateAll() {}
+class HabitItemListViewModel(private val sharer: OneModifyUserDataSharer<HabitData>): ViewModel() {
+    val habitDataList: ArrayList<MutableLiveData<HabitData>> = sharer.getArrayOfUserData() ?: ArrayList()
 
+    val listState = sharer.arrayState
+
+    val addedCount = sharer.addedCount
+    fun notifyTaskUpdateOf(habitId : Long) = sharer.signalNeedOfChangeFor(habitId)
 }
 
 class HabitItemList : Fragment() {
@@ -40,58 +58,104 @@ class HabitItemList : Fragment() {
                     putInt(INHERIT_FROM_CLASS_NUMBER, inheritFromClass)
                 }
             }
+
+        val expectedViewModelClasses = setOf(
+            Constants.viewModelClassToNumber[GoalSynopsisesViewModel::class.java]
+                ?: Constants.CLASS_NUMBER_NOT_RECOGNIZED,
+            Constants.viewModelClassToNumber[GoalViewModel::class.java]
+                ?: Constants.CLASS_NUMBER_NOT_RECOGNIZED
+        )
     }
 
     private var goalId = Constants.IGNORE_ID_AS_LONG
 
-    private var habitsCount = Constants.IGNORE_COUNT_AS_INT // will be got from database
-
     private lateinit var viewModel: HabitItemListViewModel
 
-    private fun extractLiveDataArray(clazz: Class<*>?) : java.util.ArrayList<MutableLiveData<HabitData_OLD>>?{
-        return when (clazz) {
-            GoalSynopsisesViewModel::class.java -> {
-                val inheritedViewModel: GoalSynopsisesViewModel =
-                    ViewModelProvider(requireActivity())[GoalSynopsisesViewModel::class.java]
-                inheritedViewModel.habitDataArraysPerGoal[goalId]
+    private lateinit var habitQuestioningLauncher: HabitQuestioningLauncher
+    private lateinit var habitDetailsLauncher: HabitInfoLauncher
+
+    private fun extractSharer(classnumber: Int) : OneModifyUserDataSharer<HabitData>?{
+        if ((classnumber in expectedViewModelClasses) && classnumber != Constants.CLASS_NUMBER_NOT_RECOGNIZED) {
+            val clazz: Class<out ViewModel>? = Constants.numberOfClassToViewModelClass[classnumber]
+            if (clazz == null ) return null
+            else {
+                val inheritedViewModel = ViewModelProvider(requireActivity())[clazz]
+                var sharer: ViewModelUserDataSharer<HabitData>? = null
+                if (inheritedViewModel is ViewModelWithHabitsSharer) {
+                    sharer = inheritedViewModel.getHabitsSharer()
+                }
+                if (inheritedViewModel is ViewModelWithManyHabitsSharers) {
+                    sharer = inheritedViewModel.getHabitsSharer(goalId)
+                }
+                return if (sharer is OneModifyUserDataSharer) sharer else null
             }
-            GoalViewModel::class.java -> {
-                val inheritedViewModel: GoalViewModel =
-                    ViewModelProvider(requireActivity())[GoalViewModel::class.java]
-                inheritedViewModel.arrayOfMutableHabitData
-            }
-            else -> null
         }
+        return null
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        arguments?.let {
-            goalId = it.getLong(GOAL_ID_OF_HABITS)
-            val classNumber = it.getInt(INHERIT_FROM_CLASS_NUMBER)
-            var liveDataz = extractLiveDataArray(
-                Constants.numberOfClassToViewModelClass[classNumber]
-            )
-            liveDataz?.run {
-                viewModel = HabitItemListViewModel(this)
-            }
-        }
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater.inflate(R.layout.task_list_fragment, container, false)
-        // Set the adapter
+
+        try {
+            requireActivity()
+        }
+        catch (e: IllegalStateException) {
+            Log.e(LOG_TAG, "unable to get activity", e)
+            return null
+        }
+
+        arguments?.let {
+            goalId = it.getLong(GOAL_ID_OF_HABITS)
+            val classNumber = it.getInt(INHERIT_FROM_CLASS_NUMBER)
+            val sharer = extractSharer(classNumber)
+            sharer?.run {
+                viewModel = ViewModelProvider(viewModelStore,
+                    HabitItemListViewModelFactory(this))[HabitItemListViewModel::class.java]
+            }
+
+        }
+
+        val view = inflater.inflate(R.layout.habit_list_fragment, container, false)
         if (view is RecyclerView) { with(view) {
+            view.itemAnimator = null
+            // set the adapter
+            habitQuestioningLauncher = registerForActivityResult(HabitQuestioningContract()) {
+                if (it != Constants.IGNORE_ID_AS_LONG) viewModel.notifyTaskUpdateOf(it)
+            }
+            habitDetailsLauncher = registerForActivityResult(HabitInfoContract()) {
+                if (it != Constants.IGNORE_ID_AS_LONG) viewModel.notifyTaskUpdateOf(it)
+            }
+
             view.setItemViewCacheSize(Constants.RV_ITEM_CACHE_SIZE)
             view.setHasFixedSize(true)
 
-            adapter = HabitItemListAdapter(viewModel).apply {
+            val completedHabitImage =
+                AppCompatResources.getDrawable(context, R.drawable.full_oval_green)
+            val habitImage = AppCompatResources.getDrawable(context, R.drawable.full_oval)
+            val editUnfinishedImage = AppCompatResources.getDrawable(context, R.drawable.alert)
+
+            adapter = HabitItemListAdapter(viewModel, habitImage, completedHabitImage,
+                editUnfinishedImage)
+            .apply {
                 stateRestorationPolicy = RecyclerView.Adapter
                     .StateRestorationPolicy.PREVENT_WHEN_EMPTY
+                setOnItemClickListener {
+                    habitDetailsLauncher.launch(
+                        Triple(it.habitId, Constants.IGNORE_ID_AS_LONG, false)
+                    )
+                }
+                setOnHabitMarkButtonClickListener {
+                    habitQuestioningLauncher.launch(
+                        it.habitId
+                    )
+                }
             }
             // adding a divider since i was not able to find a xml attribute/style for that
             view.addItemDecoration(
@@ -102,26 +166,29 @@ class HabitItemList : Fragment() {
                 }
             )
 
-            var i = 0
-            while (i < habitsCount) {
-                val k = i
-                viewModel.habitDataList[k].observe( viewLifecycleOwner
-                ) {
-                    Log.i(LOG_TAG, "data changed on pos $k, notifying")
-                    view.adapter?.notifyItemChanged(k)
+            viewModel.listState.observe(viewLifecycleOwner) {
+                if (it == MutablesArrayContentState.ADDED_NEW) {
+                    val added = viewModel.addedCount.value?: 0
+                    viewModel.habitDataList?.run {
+                        val size = this.size
+                        adapter?.notifyItemRangeInserted(size - added, added)
+                        for (i in size - added..<size) {
+                            this[i].observe( viewLifecycleOwner
+                            ) { hit ->
+                                Log.i(LOG_TAG, "data changed on pos $i, notifying")
+                                if (hit == null) {
+                                    view.adapter?.notifyItemRemoved(i)
+                                }
+                                else {
+                                    view.adapter?.notifyItemChanged(i)
+                                }
+                            }
+                        }
+                    }
                 }
-                i += 1
             }
         } }
         return view
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
     }
 
 }

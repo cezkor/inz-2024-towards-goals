@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import com.example.towardsgoalsapp.OwnerType
 import com.example.towardsgoalsapp.R
 import com.example.towardsgoalsapp.database.TGDatabase
+import com.example.towardsgoalsapp.impints.ImpIntItemList
 
 class ReminderViewModel(ownerType: OwnerType, ownerId: Long): ViewModel() {
 
@@ -44,9 +45,10 @@ class ReminderSetting : Fragment() {
         super.onCreate(savedInstanceState)
 
         arguments?.let {
-            val typeStr: String = it.getString(TYPE)?: OwnerType.TYPE_NONE.typeString
+            var otOrNull = OwnerType.from(it.getString(ImpIntItemList.OWNER_TYPE_OF_IMPINTS) ?: OwnerType.TYPE_NONE.typeString)
+            if (otOrNull == null) otOrNull = OwnerType.TYPE_NONE
             val id: Long = it.getLong(OWNER_ID)
-            viewModel = ReminderViewModel(OwnerType.valueOf(typeStr), id)
+            viewModel = ReminderViewModel(otOrNull, id)
             editable = it.getBoolean(EDITABLE, false)
         }
     }

@@ -51,7 +51,7 @@ INSERT INTO GoalData(goalId, goalName, goalDescription, pageNumber)
 VALUES (?,?,?,?);
 
 insertOneEditUnfinishedGoal:
-INSERT INTO UnfinishedGoalData
+INSERT OR REPLACE INTO UnfinishedGoalData
 VALUES (?,?,?,?,?);
 
 updateGoalTexts:

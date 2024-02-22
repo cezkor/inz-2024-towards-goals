@@ -8,21 +8,41 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.MutableLiveData
 import android.util.Log
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import com.example.towardsgoalsapp.Constants
+import com.example.towardsgoalsapp.Constants.Companion.CLASS_NUMBER_NOT_RECOGNIZED
 import com.example.towardsgoalsapp.R
 import com.example.towardsgoalsapp.goals.GoalSynopsisesViewModel
 import com.example.towardsgoalsapp.goals.GoalViewModel
+import com.example.towardsgoalsapp.database.*
+import com.example.towardsgoalsapp.database.userdata.MutablesArrayContentState
+import com.example.towardsgoalsapp.database.userdata.OneModifyUserDataSharer
+import com.example.towardsgoalsapp.etc.TupleOfFour
+import com.example.towardsgoalsapp.database.userdata.ViewModelUserDataSharer
+import com.example.towardsgoalsapp.database.userdata.ViewModelWithManyTasksSharers
+import com.example.towardsgoalsapp.database.userdata.ViewModelWithTasksSharer
+import com.example.towardsgoalsapp.tasks.ongoing.TaskDoingContract
+import com.example.towardsgoalsapp.tasks.ongoing.TaskDoingLauncher
 
-class TaskItemListViewModel(val taskDataList: ArrayList<MutableLiveData<TaskData_OLD>>): ViewModel() {
+class TaskItemListViewModelFactory(private val sharer: OneModifyUserDataSharer<TaskData>): ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return TaskItemListViewModel(sharer) as T
+    }
+}
 
-    fun updateOneDataAt() {}
+class TaskItemListViewModel(
+    private val sharer: OneModifyUserDataSharer<TaskData>
+): ViewModel() {
+    val taskDataList: ArrayList<MutableLiveData<TaskData>>? = sharer.getArrayOfUserData()
 
-    fun updateAll() {}
+    val listState = sharer.arrayState
 
+    val addedCount = sharer.addedCount
+    fun notifyTaskUpdateOf(taskId : Long) = sharer.signalNeedOfChangeFor(taskId)
 }
 
 class TaskItemList : Fragment() {
@@ -41,64 +61,111 @@ class TaskItemList : Fragment() {
                     putInt(INHERIT_FROM_CLASS_NUMBER, inheritFromClass)
                 }
             }
+
+        val expectedViewModelClasses = setOf(
+            Constants.viewModelClassToNumber[GoalSynopsisesViewModel::class.java]
+                ?: CLASS_NUMBER_NOT_RECOGNIZED,
+            Constants.viewModelClassToNumber[GoalViewModel::class.java]
+                ?: CLASS_NUMBER_NOT_RECOGNIZED,
+            Constants.viewModelClassToNumber[TaskDetailsViewModel::class.java]
+                ?: CLASS_NUMBER_NOT_RECOGNIZED
+        )
     }
 
     private var goalId = Constants.IGNORE_ID_AS_LONG
 
-    private var tasksCount = Constants.IGNORE_COUNT_AS_INT // will be got from database
-
     private lateinit var viewModel: TaskItemListViewModel
 
-    private fun extractLiveDataArray(clazz: Class<*>?) : java.util.ArrayList<MutableLiveData<TaskData_OLD>>?{
-        return when (clazz) {
-            GoalSynopsisesViewModel::class.java -> {
-                val inheritedViewModel: GoalSynopsisesViewModel =
-                    ViewModelProvider(requireActivity())[clazz]
-                inheritedViewModel.taskDataArraysPerGoal[goalId]
-            }
-            GoalViewModel::class.java -> {
-                val inheritedViewModel: GoalViewModel =
-                    ViewModelProvider(requireActivity())[clazz]
-                inheritedViewModel.arrayOfMutableTaskData
-            }
-            TaskViewModel::class.java, TaskDetailsViewModel::class.java,
-                TaskOngoing::class.java -> {
-                val inheritedViewModel: TaskViewModel =
-                    ViewModelProvider(requireActivity())[TaskViewModel::class.java]
-                inheritedViewModel.arrayOfMutableSubtasksTaskData
-            }
-            else -> null
-        }
-    }
+    private lateinit var taskDoingLauncher: TaskDoingLauncher
+    private lateinit var taskDetailsLauncher: TaskInfoLauncher
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    private fun extractSharer(classnumber: Int) : OneModifyUserDataSharer<TaskData>?{
+        if ((classnumber in expectedViewModelClasses) && classnumber != CLASS_NUMBER_NOT_RECOGNIZED) {
+            val clazz: Class<out ViewModel>? = Constants.numberOfClassToViewModelClass[classnumber]
+            if (clazz == null ) return null
+            else {
 
-        arguments?.let {
-            goalId = it.getLong(GOAL_ID_OF_TASK)
-            val classNumber = it.getInt(INHERIT_FROM_CLASS_NUMBER)
-            val liveDataz = extractLiveDataArray(
-                Constants.numberOfClassToViewModelClass[classNumber]
-            )
-            liveDataz?.run {
-                viewModel = TaskItemListViewModel(this)
+                val inheritedViewModel = ViewModelProvider(requireActivity())[clazz]
+                var sharer: ViewModelUserDataSharer<TaskData>? = null
+                if (inheritedViewModel is ViewModelWithTasksSharer) {
+                    sharer = inheritedViewModel.getTasksSharer()
+                }
+                if (inheritedViewModel is ViewModelWithManyTasksSharers) {
+                    sharer = inheritedViewModel.getTasksSharer(goalId)
+                }
+                return if (sharer is OneModifyUserDataSharer) sharer else null
             }
         }
+        return null
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+
+        try {
+            requireActivity()
+        }
+        catch (e: IllegalStateException) {
+            Log.e(LOG_TAG, "unable to get activity", e)
+            return null
+        }
+
+        arguments?.let {
+            goalId = it.getLong(GOAL_ID_OF_TASK)
+            val classNumber = it.getInt(INHERIT_FROM_CLASS_NUMBER)
+            val sharer = extractSharer(classNumber)
+            sharer?.run {
+                viewModel = ViewModelProvider(viewModelStore,
+                    TaskItemListViewModelFactory(this))[TaskItemListViewModel::class.java]
+            }
+        }
+
         val view = inflater.inflate(R.layout.task_list_fragment, container, false)
         if (view is RecyclerView) { with(view) {
+
+            // for reasons unknown to me
+            // animations of recycler view items can cause crashes
+            view.itemAnimator = null
+
+            taskDetailsLauncher = registerForActivityResult(TaskInfoContract()) {
+                val hasAllActiveListeners: Boolean =
+                    viewModel.taskDataList?.firstOrNull { tm -> !tm.hasActiveObservers() }
+                        ?.hasActiveObservers() ?: false
+                Log.i(LOG_TAG, "active listeners $hasAllActiveListeners")
+                if (it != Constants.IGNORE_ID_AS_LONG) viewModel.notifyTaskUpdateOf(it)
+            }
+
+            taskDoingLauncher = registerForActivityResult(TaskDoingContract()) {
+                if (it != Constants.IGNORE_ID_AS_LONG) viewModel.notifyTaskUpdateOf(it)
+            }
+
             view.setItemViewCacheSize(Constants.RV_ITEM_CACHE_SIZE)
             view.setHasFixedSize(true)
 
-            adapter = TaskItemListAdapter(viewModel).apply {
+            val taskDoneDrawable = AppCompatResources.getDrawable(context, R.drawable.checked)
+            val taskFailedDrawable = AppCompatResources.getDrawable(context, R.drawable.cross)
+            val unfinishedDrawable = AppCompatResources.getDrawable(context, R.drawable.alert)
+            val subtasksDrawable = AppCompatResources.getDrawable(context, R.drawable.four_lines)
+
+            adapter = TaskItemListAdapter(viewModel,
+                taskDoneDrawable, taskFailedDrawable, subtasksDrawable ,unfinishedDrawable)
+            .apply {
                 stateRestorationPolicy = RecyclerView.Adapter
                     .StateRestorationPolicy.PREVENT_WHEN_EMPTY
+                setOnItemClickListener {
+                    taskDetailsLauncher.launch(
+                        // for showing/editing
+                        TupleOfFour(it.taskId, Constants.IGNORE_ID_AS_LONG,
+                            it.taskOwnerId?: Constants.IGNORE_ID_AS_LONG, false)
+                    )
+                }
+                setOnDoTaskButtonClickListener {
+                    taskDoingLauncher.launch(it.taskId)
+                }
             }
+
             view.addItemDecoration(
                 DividerItemDecoration(view.context, RecyclerView.HORIZONTAL).apply {
                     setDrawable(
@@ -107,16 +174,31 @@ class TaskItemList : Fragment() {
                 }
             )
 
-            var i = 0
-            while (i < tasksCount) {
-                val k = i
-                viewModel.taskDataList[k].observe( viewLifecycleOwner
-                ) {
-                    Log.i(LOG_TAG, "data changed on pos $k, notifying")
-                    view.adapter?.notifyItemChanged(k)
+            Log.i(LOG_TAG, "list state before creating listener ${viewModel.listState.value?.name}")
+            viewModel.listState.observe(viewLifecycleOwner) {
+                Log.i(LOG_TAG, "list state ${it.name}")
+                if (it == MutablesArrayContentState.ADDED_NEW) {
+                    val added = viewModel.addedCount.value?: 0
+                    viewModel.taskDataList?.run {
+                        val size = this.size
+                        adapter?.notifyItemRangeInserted(size - added, added)
+                        for (i in size - added..<size) {
+                            Log.i(LOG_TAG, "data listener for pos $i")
+                            this[i].observe( viewLifecycleOwner
+                            ) { tsit ->
+                                Log.i(LOG_TAG, "data changed on pos $i, notifying")
+                                if (tsit == null) {
+                                    view.adapter?.notifyItemRemoved(i)
+                                }
+                                else {
+                                    view.adapter?.notifyItemChanged(i)
+                                }
+                            }
+                        }
+                    }
                 }
-                i += 1
             }
+
         } }
         return view
     }

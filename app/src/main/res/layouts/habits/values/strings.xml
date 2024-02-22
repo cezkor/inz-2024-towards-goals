@@ -7,4 +7,19 @@
     <string name="habits_make_done_well">Make done well</string>
     <string name="habits_make_done_not_well">Make not done well</string>
     <string name="habits_does_not_apply">Does not apply</string>
+    <string name="habits_mark_done">Mark done</string>
+    <string name="habits_dont_do_while_edit">You can\'t mark habit while you are editing it</string>
+    <string name="habits_questioning">Asking about: %s</string>
+    <string name="habits_will_take_defaults">Tap Back button to make this habit marked as done well; default values for questions will be assumed</string>
+    <string name="habits_question_tab">Questions</string>
+    <string name="habits_marking_tab">Marking</string>
+    <string name="habits_done_not_well">Done not well</string>
+    <string name="habits_done_well">Done well</string>
+    <string name="habits_about_target">Habit day %d of %d</string>
+    <string name="habits_skip">Skip habit</string>
+    <string name="habits_target_period_text">"Target period: %d %s"</string>
+    <string name="habits_day">day</string>
+    <string name="habits_day_plural">days</string>
+    <string name="habits_targets">Habit targets</string>
+    <string name="habits_target_count_text">"Target count of days: "</string>
 </resources>

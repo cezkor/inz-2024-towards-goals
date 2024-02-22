@@ -1,10 +1,9 @@
 package com.example.towardsgoalsapp.database
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
-import androidx.lifecycle.MutableLiveData
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
-import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.OwnerType
+import com.example.towardsgoalsapp.database.repositories.ReminderRepository
 import com.google.common.truth.Truth.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule

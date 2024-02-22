@@ -12,7 +12,8 @@ CREATE TABLE HabitData (
     habitDoneNotWellCount INTEGER DEFAULT 0 NOT NULL,
     habitTotalCount INTEGER DEFAULT 0 NOT NULL,
     habitTargetCompleted INTEGER AS Boolean DEFAULT 0 NOT NULL,
-    FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE
+    FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE,
+    CONSTRAINT properTarget CHECK ( habitTargetCount > 0 AND habitTargetPeriod > 0 )
 );
 
 CREATE TABLE UnfinishedHabitData (
@@ -26,7 +27,8 @@ CREATE TABLE UnfinishedHabitData (
     habitDoneNotWellCount INTEGER DEFAULT 0 NOT NULL,
     habitTotalCount INTEGER DEFAULT 0 NOT NULL,
     habitTargetCompleted INTEGER AS Boolean DEFAULT 0 NOT NULL,
-    FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE
+    FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE,
+    CONSTRAINT properTarget CHECK ( habitTargetCount > 0 AND habitTargetPeriod > 0 )
 );
 
 CREATE TRIGGER deleteNowFinishedHabit
@@ -71,7 +73,7 @@ BEGIN
 END;
 
 CREATE TRIGGER onDeleteHabit
-BEFORE DELETE ON HabitData
+AFTER DELETE ON HabitData
 BEGIN
     UPDATE __GoalRecalcTable SET _needsRecalc = 1 WHERE _goalId = old.goalId;
 END;
@@ -102,7 +104,7 @@ INSERT INTO HabitData(habitId, habitName, habitDescription, habitTargetCount, ha
 VALUES (?,?,?,?,?,?);
 
 insertOneEditUnfinishedHabit:
-INSERT INTO UnfinishedHabitData
+INSERT OR REPLACE INTO UnfinishedHabitData
 VALUES (?,?,?,?,?,?,?,?,?,?);
 
 markHabitAsDoneWell:

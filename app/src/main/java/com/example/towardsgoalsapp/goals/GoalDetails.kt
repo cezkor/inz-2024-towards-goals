@@ -5,83 +5,278 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.PersistableBundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewModelScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.etc.DoubleTapOnBack
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.habits.HabitData_OLD
 import com.example.towardsgoalsapp.habits.HabitItemList
 import com.example.towardsgoalsapp.etc.OneTextFragment
 import com.example.towardsgoalsapp.etc.TextsFragment
 import com.example.towardsgoalsapp.etc.TextsViewModel
-import com.example.towardsgoalsapp.tasks.TaskData_OLD
 import com.example.towardsgoalsapp.tasks.TaskItemList
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import com.example.towardsgoalsapp.database.*
+import com.example.towardsgoalsapp.database.repositories.GoalRepository
+import com.example.towardsgoalsapp.database.repositories.HabitRepository
+import com.example.towardsgoalsapp.database.repositories.TaskRepository
+import com.example.towardsgoalsapp.etc.DescriptionFixer
+import com.example.towardsgoalsapp.database.userdata.HabitDataMutableArrayManager
+import com.example.towardsgoalsapp.database.userdata.MutablesArrayContentState
+import com.example.towardsgoalsapp.etc.NameFixer
+import com.example.towardsgoalsapp.database.userdata.OneModifyUserDataSharer
+import com.example.towardsgoalsapp.database.userdata.RecreatingGoalDataFactory
+import com.example.towardsgoalsapp.etc.SaveSuccessToastLauncher
+import com.example.towardsgoalsapp.database.userdata.TaskDataMutableArrayManager
+import com.example.towardsgoalsapp.etc.TupleOfFour
+import com.example.towardsgoalsapp.database.userdata.ViewModelUserDataSharer
+import com.example.towardsgoalsapp.database.userdata.ViewModelWithHabitsSharer
+import com.example.towardsgoalsapp.database.userdata.ViewModelWithTasksSharer
+import com.example.towardsgoalsapp.habits.HabitInfoContract
+import com.example.towardsgoalsapp.habits.HabitInfoLauncher
+import com.example.towardsgoalsapp.main.App
+import com.example.towardsgoalsapp.tasks.TaskInfoContract
+import com.example.towardsgoalsapp.tasks.TaskInfoLauncher
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
-class GoalViewModel(private val goalId: Long): TextsViewModel() {
+class GoalViewModelFactory(
+    private val dbo: TGDatabase,
+    private val goalId: Long,
+    private val pageNumber: Int
+): ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        return GoalViewModel(dbo, goalId, pageNumber) as T
+    }
+}
 
-    val mutableGoalData = MutableLiveData<GoalData_OLD>()
+class GoalViewModel(private val dbo: TGDatabase,
+                    private var goalId: Long,
+                    private var pageNumber: Int
+): TextsViewModel(), ViewModelWithTasksSharer, ViewModelWithHabitsSharer {
 
-    val arrayOfMutableHabitData: ArrayList<MutableLiveData<HabitData_OLD>> =
+    private val goalRepo = GoalRepository(dbo)
+    private val taskRepo = TaskRepository(dbo)
+    private val habitRepo = HabitRepository(dbo)
+
+    val mutableGoalData = MutableLiveData<GoalData>(null)
+
+    val arrayOfMutableHabitData: ArrayList<MutableLiveData<HabitData>> =
         java.util.ArrayList()
 
-    val arrayOfMutableTaskData: ArrayList<MutableLiveData<TaskData_OLD>> =
+    private val habitsMLDManager: HabitDataMutableArrayManager
+        = HabitDataMutableArrayManager(arrayOfMutableHabitData)
+
+    private var addedHabitsSet: Set<Long> = setOf()
+
+    val arrayOfMutableTaskData: ArrayList<MutableLiveData<TaskData>> =
         java.util.ArrayList()
 
-    private fun calculateProgress(): Double {return .0} // to do when database code is ready
+    private val tasksMLDManager: TaskDataMutableArrayManager
+            = TaskDataMutableArrayManager(arrayOfMutableTaskData)
 
-    fun updateGoalTexts(
-        newName: String?,
-        newDescription: String?
-    ) {
-        // validation should within AddOrEditGoal
-        // update in database
+    private var addedTasksSet: Set<Long> = setOf()
 
-        val old = mutableGoalData.value
-        mutableGoalData.value = GoalData_OLD(
-            old?.goalId ?: Constants.IGNORE_ID_AS_LONG,
-            newName?: old?.goalName ?: Constants.EMPTY_STRING,
-            newDescription?: old?.goalDescription ?: Constants.EMPTY_STRING,
-            old?.progress ?: calculateProgress()
+    private val getMutex = Mutex()
+
+    val tasksSharer = object :
+        OneModifyUserDataSharer<TaskData> {
+        override fun getArrayOfUserData(): ArrayList<MutableLiveData<TaskData>>?
+                = arrayOfMutableTaskData
+        override fun signalNeedOfChangeFor(userDataId: Long) { viewModelScope.launch {
+            if (userDataId == Constants.IGNORE_ID_AS_LONG) return@launch
+            val manager = tasksMLDManager
+            val list = getArrayOfUserData() ?: return@launch
+            val hadSuchTask = manager.hasUserDataOfId(userDataId)
+            val taskData = taskRepo.getOneById(userDataId)
+            if (taskData == null) {
+                // it was probably removed
+                if (hadSuchTask)
+                    manager.deleteOneOldUserDataById(userDataId)
+            }
+            else {
+                if (! hadSuchTask) addedTasksSet.plus(userDataId)
+                manager.updateOneUserData(taskData)
+            }
+        } }
+        override val arrayState: MutableLiveData<MutablesArrayContentState>
+                = tasksMLDManager.contentState
+        override val addedCount
+                = tasksMLDManager.addedCount
+        override fun isArrayConsideredEmpty(): Boolean {
+            return arrayOfMutableTaskData.none { md -> md.value != null } ||
+                    arrayOfMutableTaskData.isEmpty()
+        }
+    }
+
+    val habitsSharer = object :
+        OneModifyUserDataSharer<HabitData> {
+        override fun getArrayOfUserData(): ArrayList<MutableLiveData<HabitData>>?
+                = arrayOfMutableHabitData
+        override fun signalNeedOfChangeFor(userDataId: Long) { viewModelScope.launch {
+            if (userDataId == Constants.IGNORE_ID_AS_LONG) return@launch
+            val manager = habitsMLDManager
+            val list = getArrayOfUserData() ?: return@launch
+            val hadSuchHabit = manager.hasUserDataOfId(userDataId)
+            val habitData = habitRepo.getOneById(userDataId)
+            if (habitData == null) {
+                // it was probably removed
+                if (hadSuchHabit)
+                    manager.deleteOneOldUserDataById(userDataId)
+            }
+            else {
+                if (! hadSuchHabit) addedHabitsSet = addedHabitsSet.plus(userDataId)
+                manager.updateOneUserData(habitData)
+            }
+        } }
+        override val arrayState: MutableLiveData<MutablesArrayContentState>
+                = habitsMLDManager.contentState
+        override val addedCount
+                = habitsMLDManager.addedCount
+
+        override fun isArrayConsideredEmpty(): Boolean {
+            return arrayOfMutableHabitData.none { md -> md.value != null } ||
+                    arrayOfMutableHabitData.isEmpty()
+        }
+    }
+
+    override fun getTasksSharer(): ViewModelUserDataSharer<TaskData>? = tasksSharer
+
+    override fun getHabitsSharer(): ViewModelUserDataSharer<HabitData>? = habitsSharer
+
+    suspend fun getEverything() = getMutex.withLock {
+        mutableGoalData.value = goalRepo.getOneById(goalId)
+        if (mutableGoalData.value == null) return@withLock
+        if (pageNumber == Constants.IGNORE_PAGE_AS_INT) {
+            pageNumber = mutableGoalData.value!!.pageNumber
+        }
+        nameOfData.value = mutableGoalData.value?.goalName ?: nameOfData.value
+        descriptionOfData.value =
+            mutableGoalData.value?.goalDescription ?: descriptionOfData.value
+
+        habitsMLDManager.setUserDataArray(
+            habitRepo.getAllByGoalId(goalId)
+        )
+        tasksMLDManager.setUserDataArray(
+            taskRepo.getAllByGoalId(goalId)
         )
     }
 
-    fun updateOneTask() {}
+    override fun putTexts(newName: String?, newDescription: String?) {
+        var name: String? = newName ?: mutableGoalData.value?.goalName
+        var desc: String? = newDescription ?: mutableGoalData.value?.goalDescription
+        if (name == null || desc == null) return
+        name = NameFixer.fix(name)
+        desc = DescriptionFixer.fix(desc)
+        nameOfData.value = name
+        descriptionOfData.value = desc
+    }
 
-    fun updateOneHabit() {}
+    suspend fun deleteAddedData() {
+        for (tid in addedTasksSet) taskRepo.deleteById(tid)
+        for (hid in addedHabitsSet) habitRepo.deleteById(hid)
+        addedHabitsSet = setOf()
+        addedTasksSet = setOf()
+    }
 
-    fun getEverything(fromUnfinished: Boolean = false) {}
-    override fun updateTexts(newName: String?, newDescription: String?) {
-        TODO("Not yet implemented")
+    suspend fun deleteWholeGoal() {
+        goalRepo.deleteById(goalId)
+    }
+
+    private suspend fun addGoal() : Long {
+        return goalRepo.addOneGoal(
+            nameOfData.value ?: Constants.EMPTY_STRING,
+            descriptionOfData.value ?: Constants.EMPTY_STRING,
+            pageNumber
+        )
+    }
+
+    suspend fun saveMainDataAsUnfinished() : Boolean = addMainDataDenier.doWork {
+        if (pageNumber == Constants.IGNORE_PAGE_AS_INT) return@doWork false
+        if (goalId == Constants.IGNORE_ID_AS_LONG) {
+
+            val newGoalId = addGoal()
+            if (newGoalId == Constants.IGNORE_ID_AS_LONG) return@doWork false
+            goalId = newGoalId
+        }
+        var goal: GoalData? = goalRepo.getOneById(goalId) ?: return@doWork false
+        goalRepo.markEditing(goalId, true)
+        val newUnfGoalData = RecreatingGoalDataFactory.createUserDataBasedOnTexts(
+            goal!!, nameOfData.value, descriptionOfData.value
+        )
+        goalRepo.putAsUnfinished(newUnfGoalData)
+        mutableGoalData.value = goalRepo.getOneById(goalId)
+
+        addedAnyData = true
+        return@doWork true
+    }
+
+
+    override suspend fun saveMainData() : Boolean {
+        if (pageNumber == Constants.IGNORE_PAGE_AS_INT) return false
+        if (goalId == Constants.IGNORE_ID_AS_LONG) {
+            val newGoalId = addGoal()
+            if (newGoalId == Constants.IGNORE_ID_AS_LONG) return false
+            goalId = newGoalId
+        }
+        else goalRepo.updateTexts(
+            goalId,
+            nameOfData.value ?: Constants.EMPTY_STRING,
+            descriptionOfData.value ?: Constants.EMPTY_STRING
+        )
+        var goal: GoalData? = goalRepo.getOneById(goalId) ?: return false
+        if (goal!!.goalEditUnfinished) {
+            goalRepo.markEditing(goalId, false)
+            goal = goalRepo.getOneById(goalId)
+        }
+        if (goal == null) return false
+        mutableGoalData.value = goal!!
+        addedAnyData = true
+        return true
     }
 
 }
 
-class GoalRefreshRequesterContract: ActivityResultContract<Pair<Long, Boolean>, Long>() {
+typealias GoalRefreshRequesterResultLauncher = ActivityResultLauncher<Triple<Long, Boolean, Int?>>
+
+class GoalRefreshRequesterContract: ActivityResultContract<Triple<Long, Boolean, Int?>, Long>() {
 
     companion object {
         const val GOAL_ID_FROM_REQUESTER = "gid1"
         const val FOR_ADDING = "gfa"
+        const val PAGE_NUMBER = "gpn"
         const val GOAL_ID_TO_REQUESTER = "gid2"
         const val LOG_TAG = "GoalRRC"
+
     }
-    override fun createIntent(context: Context, input: Pair<Long, Boolean>): Intent {
+    override fun createIntent(context: Context, input: Triple<Long, Boolean, Int?>): Intent {
         Log.i(LOG_TAG, "creating intent for $context, input $input")
 
         return Intent(context, GoalDetails::class.java).apply {
             action = Intent.ACTION_SEND
             putExtra(GOAL_ID_FROM_REQUESTER, input.first)
             putExtra(FOR_ADDING, input.second)
+            input.third?.run { putExtra(PAGE_NUMBER, this) }
         }
     }
 
@@ -102,65 +297,163 @@ class GoalDetails : AppCompatActivity() {
         const val LOG_TAG = "GoalDetails"
 
         const val LAST_TAB_ID = "gdlt"
+        const val PAGE_NUMBER = GoalRefreshRequesterContract.PAGE_NUMBER
         const val GOAL_ID = "gdgid"
         const val UNFINISHED_EDITING = "gdue"
         const val FOR_ADDING = GoalRefreshRequesterContract.FOR_ADDING
-
         private const val TEXTS_TAB_ID = 0
-        private const val TASKS_TAB_ID = 2
-        private const val HABITS_TAB_ID = 3
-        private const val STATS_TAB_ID = 1
-        private const val TAB_COUNT = 3
     }
 
     private val classNumber = Constants.viewModelClassToNumber[GoalViewModel::class.java]
 
     private lateinit var viewModel: GoalViewModel
+    private lateinit var tabsPager: ViewPager2
+    private lateinit var databaseObject: TGDatabase
 
     private var goalId = Constants.IGNORE_ID_AS_LONG
+    private var pageNumber: Int = Constants.IGNORE_PAGE_AS_INT
 
     private var isEdit: Boolean = false
     private var forAdding: Boolean = false
     private var isUnfinished: Boolean = false
 
-    private var menu: Menu? = null
     private var lastTabId: Int = TEXTS_TAB_ID
+    private var tasksTabId = 1
+    private var habitsTabId = 2
+    private var statsTabId = 3
+    private var tabCount = 4
+
+    private lateinit var taskAddOrEditLauncher: TaskInfoLauncher
+    private lateinit var habitAddOrEditLauncher: HabitInfoLauncher
+
+    private lateinit var doubleTapCallback: OnBackPressedCallback
+    private lateinit var refreshRequesterCallback: OnBackPressedCallback
+
+    private var userAddedOrRemovedTaskAtLeastOnce = false
+    private var userAddedOrRemovedHabitAtLeastOnce = false
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.goal_detail_menu, menu)
-        this.menu = menu
         return true
     }
 
+    override fun onPrepareOptionsMenu(menu: Menu?): Boolean {
+        if (forAdding) {
+            menu?.findItem(R.id.editGoalItem)?.title = getString(R.string.add_end_name)
+            menu?.findItem(R.id.deleteGoalItem)?.title = getString(R.string.cancel)
+        }
+        else {
+            if (! isEdit)
+                menu?.findItem(R.id.editGoalItem)?.title = getString(R.string.enable_edit)
+            else
+                menu?.findItem(R.id.editGoalItem)?.title = getString(R.string.edit_end_name)
+        }
+        return true
+    }
+
+    private fun recreatePagerAdapter() {
+        // this method is called whenever needed to recreate any of fragments
+        tabsPager.adapter = GoalDetailsPageAdapter(this)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        fun determineResultAndFinish() {
+            determineResultOnPlannedFinish()
+            finish()
+        }
+
+        fun carefullyAddThing(launchUnit: () -> Unit) {
+            if (goalId == Constants.IGNORE_ID_AS_LONG) { lifecycleScope.launch {
+                // can't add task/habit of goal if there is no goal -> add is as unfinished
+                val saved = viewModel.saveMainDataAsUnfinished()
+                if (saved && viewModel.mutableGoalData.value != null) {
+                    goalId = viewModel.mutableGoalData.value!!.goalId
+                    launchUnit()
+                } }
+            } else launchUnit()
+        }
+
         return when (item.itemId) {
             R.id.editGoalItem -> {
-                if (! forAdding)
-                    if (isEdit) { isEdit = false; item.title = getString(R.string.edit_end_name) }
-                    else { isEdit = true; item.title = getString(R.string.enable_edit) }
-                else {
-                    // end adding
-                    finish()
+
+                if (! forAdding) {
+                    if (isEdit) {
+                        isEdit = false
+                        doubleTapCallback.isEnabled = true
+                        refreshRequesterCallback.isEnabled = false
+                        recreatePagerAdapter()
+
+                        lifecycleScope.launch { SaveSuccessToastLauncher
+                            .launchToast(this@GoalDetails, viewModel.saveMainData()) }
+                    } else {
+                        isEdit = true
+                        doubleTapCallback.isEnabled = false
+                        refreshRequesterCallback.isEnabled = true
+                        recreatePagerAdapter()
+                    }
+                    invalidateMenu()
+                }
+
+                else lifecycleScope.launch {
+                    isEdit = false
+                    recreatePagerAdapter() // so user won't edit before saving
+                    // also destroying fragments will force them to save data from their ui
+                    // if they store it directly
+                    // add and leave
+                    if (viewModel.saveMainData())
+                        runOnUiThread { determineResultAndFinish() }
                 }
                 true
             }
             R.id.addHabitGoalItem -> {
+                fun launchAdding() {
+                    habitAddOrEditLauncher.launch(
+                        Triple(Constants.IGNORE_ID_AS_LONG, goalId, true)
+                    )
+                }
+                carefullyAddThing { launchAdding() }
                 true
             }
             R.id.addTaskGoalItem -> {
+                fun launchAdding() {
+                    taskAddOrEditLauncher.launch(
+                        TupleOfFour(Constants.IGNORE_ID_AS_LONG, goalId,
+                            Constants.IGNORE_ID_AS_LONG ,true)
+                        // for adding without a task as owner
+                    )
+                }
+                carefullyAddThing { launchAdding() }
                 true
             }
             R.id.deleteGoalItem -> {
-                // change text when it is adding
+                if (forAdding) {
+                    goalId = Constants.IGNORE_ID_AS_LONG;
+                    if (viewModel.mutableGoalData.value != null)
+                    { lifecycleScope.launch {
+                        viewModel.deleteWholeGoal()
+                        runOnUiThread { determineResultAndFinish() }
+                    } } else {
+                        // didn't add, requester should ignore
+                        runOnUiThread { determineResultAndFinish() }
+                    }
+
+                }
+                else { lifecycleScope.launch {
+                    viewModel.deleteWholeGoal()
+                    runOnUiThread { determineResultAndFinish() }
+                } }
                 true
             }
-            else -> super.onOptionsItemSelected(item)
+            else -> false
         }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
 
+        if (isEdit) runBlocking { viewModel.saveMainDataAsUnfinished() }
+
         outState.run {
+            putInt(PAGE_NUMBER, pageNumber)
             putInt(LAST_TAB_ID,
                 findViewById<TabLayout>(R.id.goalTabs).id)
             putLong(GOAL_ID, goalId)
@@ -170,13 +463,28 @@ class GoalDetails : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    override fun onRestoreInstanceState(
+        savedInstanceState: Bundle?,
+        persistentState: PersistableBundle?
+    ) {
+        savedInstanceState?.run {
+            isUnfinished = getBoolean(UNFINISHED_EDITING, false)
+            goalId = getLong(GOAL_ID, Constants.IGNORE_ID_AS_LONG)
+            lastTabId = getInt(LAST_TAB_ID, TEXTS_TAB_ID)
+            forAdding = getBoolean(FOR_ADDING, false)
+            pageNumber = getInt(PAGE_NUMBER, Constants.IGNORE_PAGE_AS_INT)
+        }
+
+        super.onRestoreInstanceState(savedInstanceState, persistentState)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_goal_details)
 
         val toolbar: Toolbar = findViewById(R.id.goalToolbar)
 
-        val tabsPager: ViewPager2 = findViewById(R.id.goalDetailsViewPager)
+        tabsPager = findViewById(R.id.goalDetailsViewPager)
         val tabs: TabLayout = findViewById(R.id.goalTabs)
 
         fun recoverSavedState() {
@@ -185,6 +493,7 @@ class GoalDetails : AppCompatActivity() {
                 goalId = getLong(GOAL_ID, Constants.IGNORE_ID_AS_LONG)
                 lastTabId = getInt(LAST_TAB_ID, TEXTS_TAB_ID)
                 forAdding = getBoolean(FOR_ADDING, false)
+                pageNumber = getInt(PAGE_NUMBER, Constants.IGNORE_PAGE_AS_INT)
             }
         }
 
@@ -194,15 +503,31 @@ class GoalDetails : AppCompatActivity() {
             goalId = id
             forAdding =
                 intent.getBooleanExtra(GoalRefreshRequesterContract.FOR_ADDING, forAdding)
+            pageNumber = intent.getIntExtra(GoalRefreshRequesterContract.PAGE_NUMBER, pageNumber)
         }
 
         fun processArgsAndSavedState() {
             if (forAdding || isUnfinished) isEdit = true
 
-            viewModel = GoalViewModel(goalId)
+            if (forAdding) {
+                statsTabId = -1000
+                tasksTabId = 1
+                habitsTabId = 2
+                tabCount = 3
+            }
+
+            (application as App? )?.run {
+                databaseObject = DatabaseObjectFactory.newDatabaseObject(this.driver)
+            }
+            viewModel = ViewModelProvider(this,
+                GoalViewModelFactory(databaseObject, goalId, pageNumber)
+            )[GoalViewModel::class.java]
         }
 
         fun prepareUI() {
+
+            tabs.tabMode = TabLayout.MODE_SCROLLABLE
+            tabs.tabGravity = TabLayout.GRAVITY_FILL
 
             tabsPager.isUserInputEnabled = false
 
@@ -211,33 +536,106 @@ class GoalDetails : AppCompatActivity() {
             TabLayoutMediator(tabs, tabsPager) {
                 tab, position -> tab.text = when (position) {
                     TEXTS_TAB_ID -> getString(R.string.name_and_description)
-                    TASKS_TAB_ID -> getString(R.string.tasks_name_plural)
-                    HABITS_TAB_ID -> getString(R.string.habits_name_plural)
-                    STATS_TAB_ID -> getString(R.string.stats_name)
+                    tasksTabId -> getString(R.string.tasks_name_plural)
+                    habitsTabId -> getString(R.string.habits_name_plural)
+                    statsTabId -> getString(R.string.stats_name)
                     else -> Constants.EMPTY_STRING
                 }
             }.attach()
 
             tabsPager.currentItem = lastTabId
 
-            toolbar.title = viewModel.mutableGoalData.value?.goalName
-                ?: R.string.default_title.toString()
             setSupportActionBar(toolbar)
 
             viewModel.mutableGoalData.observe(this) {
-                toolbar.title = it.goalName
+                val name = viewModel.mutableGoalData.value?.goalName
+                    ?: getString(R.string.default_title)
+                    // to change it with proper call and string !!!
+                if (forAdding) {
+                    toolbar.title = getString(R.string.adding, name)
+                }
+                else {
+                    toolbar.title = name
+                }
+                goalId = viewModel.mutableGoalData.value?.goalId
+                    ?: Constants.IGNORE_ID_AS_LONG
             }
 
             if (forAdding) {
-                menu?.getItem(R.id.editItem)?.title = getString(R.string.add_end_name)
+                invalidateMenu()
             }
 
-            onBackPressedDispatcher.addCallback(
-                DoubleTapOnBack(this, getString(R.string.abandoning_aoe)) {
-                    setResult(RESULT_CANCELED)
+            doubleTapCallback = DoubleTapOnBack(this, getString(R.string.abandoning_aoe)) {
+                fun doWhenAlmostDone() {
+                    goalId = Constants.IGNORE_ID_AS_LONG
                     onBackPressed()
                 }
-            )
+
+                if (forAdding) {
+                    if (viewModel.mutableGoalData.value != null)
+                    { lifecycleScope.launch {
+                        viewModel.deleteWholeGoal()
+                        doWhenAlmostDone()
+                    } } else {  doWhenAlmostDone() }
+                }
+                else { lifecycleScope.launch {
+                    viewModel.deleteAddedData()
+                    doWhenAlmostDone()
+                } }
+            }
+            refreshRequesterCallback = object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    determineResultOnPlannedFinish()
+                    finish()
+                }
+
+            }
+            onBackPressedDispatcher.addCallback(doubleTapCallback)
+            onBackPressedDispatcher.addCallback(refreshRequesterCallback)
+
+            if (isEdit) {
+                doubleTapCallback.isEnabled = true
+                refreshRequesterCallback.isEnabled = false
+            }
+            else {
+                doubleTapCallback.isEnabled = false
+                refreshRequesterCallback.isEnabled = true
+            }
+
+            taskAddOrEditLauncher = registerForActivityResult(TaskInfoContract()) {
+                if (it != Constants.IGNORE_ID_AS_LONG) {
+                    if (!userAddedOrRemovedTaskAtLeastOnce)
+                        userAddedOrRemovedTaskAtLeastOnce = true
+                    val wasEmpty = viewModel.getTasksSharer()?.isArrayConsideredEmpty() == true
+                    viewModel.tasksSharer.signalNeedOfChangeFor(it)
+                    if (wasEmpty) recreatePagerAdapter()
+                }
+            }
+            habitAddOrEditLauncher = registerForActivityResult(HabitInfoContract()) {
+                if (it != Constants.IGNORE_ID_AS_LONG) {
+                    if (!userAddedOrRemovedHabitAtLeastOnce)
+                        userAddedOrRemovedHabitAtLeastOnce = true
+                    val wasEmpty = viewModel.getHabitsSharer()?.isArrayConsideredEmpty() == true
+                    viewModel.habitsSharer.signalNeedOfChangeFor(it)
+                    if (wasEmpty) recreatePagerAdapter()
+                }
+            }
+
+            viewModel.getTasksSharer()?.arrayState?.observe(this) {
+                if (it == MutablesArrayContentState.REPUTTED
+                    && userAddedOrRemovedTaskAtLeastOnce
+                    && viewModel.getTasksSharer()?.isArrayConsideredEmpty() == true) {
+                    recreatePagerAdapter() // so user can see there is no task
+                }
+            }
+
+            viewModel.getHabitsSharer()?.arrayState?.observe(this) {
+                if (it == MutablesArrayContentState.REPUTTED
+                    && userAddedOrRemovedHabitAtLeastOnce
+                    && viewModel.getHabitsSharer()?.isArrayConsideredEmpty() == true) {
+                    recreatePagerAdapter() // so user can see there is no habit
+                }
+            }
         }
 
         fun doInThisOrder() {
@@ -250,41 +648,43 @@ class GoalDetails : AppCompatActivity() {
 
             prepareUI()
 
-            viewModel.getEverything(isUnfinished)
+            lifecycleScope.launch { repeatOnLifecycle(Lifecycle.State.CREATED) {
+                viewModel.getEverything()
+            } }
 
         }; doInThisOrder()
 
 
     }
 
-    override fun onStop() {
+    private fun determineResultOnPlannedFinish() {
         val result = if (goalId == Constants.IGNORE_ID_AS_LONG) RESULT_CANCELED else RESULT_OK
         setResult(result, Intent().apply {
             putExtra(GoalRefreshRequesterContract.GOAL_ID_TO_REQUESTER, goalId)
         })
-        super.onStop()
     }
 
     private inner class GoalDetailsPageAdapter(fragAct: FragmentActivity):
         FragmentStateAdapter(fragAct) {
-        override fun getItemCount(): Int = TAB_COUNT
+
+        override fun getItemCount(): Int = tabCount
 
         override fun createFragment(position: Int): Fragment {
             if (classNumber == null) return Fragment()
 
             return when (position) {
-                TEXTS_TAB_ID -> TextsFragment.newInstance(isEdit)
-                TASKS_TAB_ID ->
-                    if (viewModel.arrayOfMutableTaskData.isEmpty())
+                TEXTS_TAB_ID -> TextsFragment.newInstance(isEdit, classNumber)
+                tasksTabId ->
+                    if (viewModel.getTasksSharer()?.isArrayConsideredEmpty() == true)
                         OneTextFragment.newInstance(getString(R.string.tasks_no_tasks))
                     else
                         TaskItemList.newInstance(goalId, classNumber)
-                HABITS_TAB_ID ->
-                    if (viewModel.arrayOfMutableHabitData.isEmpty())
+                habitsTabId ->
+                    if (viewModel.getHabitsSharer()?.isArrayConsideredEmpty() == true)
                         OneTextFragment.newInstance(getString(R.string.habits_no_habits))
                     else
                         HabitItemList.newInstance(goalId, classNumber)
-                STATS_TAB_ID -> Fragment() // todo: make stats fragment
+                statsTabId -> Fragment() // todo: make stats fragment
                 else -> Fragment()
             }
         }

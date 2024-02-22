@@ -38,7 +38,7 @@ class OneTextFragment(): Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_one_text, container, true)
+        return inflater.inflate(R.layout.fragment_one_text, container, false)
     }
 
 }

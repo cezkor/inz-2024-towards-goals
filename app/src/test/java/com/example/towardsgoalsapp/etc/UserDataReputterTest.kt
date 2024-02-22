@@ -2,6 +2,8 @@ package com.example.towardsgoalsapp.etc
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
+import com.example.towardsgoalsapp.database.userdata.MutablesArrayContentState
+import com.example.towardsgoalsapp.database.userdata.UserDataReputter
 import org.junit.Test
 import java.util.ArrayList
 import com.google.common.truth.Truth.*
@@ -77,11 +79,11 @@ class UserDataReputterTest {
         assertThat(mutArray[3].value).isNull()
         assertThat(mutArray[4].value).isNull()
 
-        assertThat(reputter.reputBasedOnInsertOfArrayList(array2))
+        assertThat(reputter.reputBasedOnInsertOfArrayList(array2).first)
             .isEqualTo(MutablesArrayContentState.ADDED_NEW)
         assertThat(mutArray.size).isEqualTo(6)
 
-        assertThat(reputter.reputBasedOnDeleteOf(array1[2]))
+        assertThat(reputter.reputBasedOnDeleteOf(array1[2]).first)
             .isEqualTo(MutablesArrayContentState.REPUTTED)
         assertThat(mutArray[5].value).isNull()
         assertThat(mutArray[4].value).isEqualTo(array2[2])
@@ -90,13 +92,13 @@ class UserDataReputterTest {
         assertThat(mutArray[1].value).isEqualTo(array1[1])
         assertThat(mutArray[0].value).isEqualTo(array1[0])
 
-        assertThat(reputter.reputBasedOnInsertOf(aloneData))
+        assertThat(reputter.reputBasedOnInsertOf(aloneData).first)
             .isEqualTo(MutablesArrayContentState.REPUTTED)
         assertThat(mutArray.size).isEqualTo(6)
         assertThat(mutArray[5].value).isEqualTo(aloneData)
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).isInOrder()
 
-        assertThat(reputter.reputBasedOnInsertOf(array1[2]))
+        assertThat(reputter.reputBasedOnInsertOf(array1[2]).first)
             .isEqualTo(MutablesArrayContentState.ADDED_NEW)
         assertThat(mutArray.size).isEqualTo(3 + 3 + 1)
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).isInOrder()
@@ -104,7 +106,7 @@ class UserDataReputterTest {
             1L, 2L, 3L, 4L, 5L, 6L, 9L
         )
 
-        assertThat(reputter.reputBasedOnInsertOfArrayList(array3))
+        assertThat(reputter.reputBasedOnInsertOfArrayList(array3).first)
             .isEqualTo(MutablesArrayContentState.ADDED_NEW)
         assertThat(mutArray.size).isEqualTo(3 + 3 + 1 + 3)
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).isInOrder()
@@ -112,12 +114,12 @@ class UserDataReputterTest {
             1L, 2L, 3L, 4L, 5L, 6L, 9L, 10L, 11L, 12L
         )
 
-        assertThat(reputter.reputBasedOnDeleteOf(aloneData))
+        assertThat(reputter.reputBasedOnDeleteOf(aloneData).first)
             .isEqualTo(MutablesArrayContentState.REPUTTED)
         assertThat(mutArray.size).isEqualTo(10)
         assertThat(mutArray[mutArray.lastIndex].value).isNull()
 
-        assertThat(reputter.reputBasedOnInsertOfArrayList(array4))
+        assertThat(reputter.reputBasedOnInsertOfArrayList(array4).first)
             .isEqualTo(MutablesArrayContentState.ADDED_NEW)
         assertThat(mutArray.size).isEqualTo(3 + 3 + 3 + 3)
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).isInOrder()

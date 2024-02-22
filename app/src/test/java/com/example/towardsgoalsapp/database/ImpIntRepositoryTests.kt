@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.OwnerType
+import com.example.towardsgoalsapp.database.repositories.ImpIntRepository
 import com.google.common.truth.Truth.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule

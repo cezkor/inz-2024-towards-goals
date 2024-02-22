@@ -7,4 +7,19 @@
     <string name="habits_make_done_well">Oznacz jako utrzymany</string>
     <string name="habits_make_done_not_well">Oznacz jako nieutrzymany</string>
     <string name="habits_does_not_apply">Nie dotyczy</string>
+    <string name="habits_mark_done">Określ utrzymanie nawyku</string>
+    <string name="habits_dont_do_while_edit">Nie możesz określić utrzymania nawyku podczas jego edycji</string>
+    <string name="habits_questioning">Pytając o: %s</string>
+    <string name="habits_will_take_defaults">Wciśnij przycisk Zawróć aby oznaczyć nawyk jako utrzymany; domyślne wartości zostaną przyjęte dla pytań</string>
+    <string name="habits_question_tab">Pytania</string>
+    <string name="habits_marking_tab">Określanie utrzymania nawyku</string>
+    <string name="habits_done_not_well">Nieutrzymany</string>
+    <string name="habits_done_well">Utrzymany</string>
+    <string name="habits_skip">Nie dotyczy</string>
+    <string name="habits_about_target">Dzień nawyku %d z %d</string>
+    <string name="habits_target_period_text">"Okres mierzenia: %d %s"</string>
+    <string name="habits_day">Dzień</string>
+    <string name="habits_day_plural">Dni</string>
+    <string name="habits_targets">Mierzenie postępu</string>
+    <string name="habits_target_count_text">"Docelowa ilość dni utrzymania nawyku w okresie: "</string>
 </resources>

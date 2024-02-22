@@ -1,4 +1,4 @@
-package com.example.towardsgoalsapp.tasks
+package com.example.towardsgoalsapp.tasks.ongoing
 
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
@@ -6,8 +6,10 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.ViewModel
+import android.widget.Button
+import androidx.lifecycle.lifecycleScope
 import com.example.towardsgoalsapp.R
+import kotlinx.coroutines.launch
 
 
 class TaskQuestionSecond : Fragment() {
@@ -30,6 +32,17 @@ class TaskQuestionSecond : Fragment() {
 
         viewModel = ViewModelProvider(requireActivity())[TaskOngoingViewModel::class.java]
 
+        val taskNextButton : Button = view.findViewById(R.id.taskNext)
+        taskNextButton.setOnClickListener {
+
+            // put data into view model from ui elements
+
+            lifecycleScope.launch {
+                if (viewModel.saveMainData())
+                    viewModel.mutableOfTaskOngoingStates.value =
+                        TaskOngoingViewModel.TaskOngoingStates.FINISHED
+            }
+        }
 
     }
 

@@ -1,19 +1,25 @@
-package com.example.towardsgoalsapp.database
+package com.example.towardsgoalsapp.database.repositories
 
 import androidx.lifecycle.MutableLiveData
 import com.example.towardsgoalsapp.Constants
+import com.example.towardsgoalsapp.database.HabitData
+import com.example.towardsgoalsapp.database.TGDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class HabitRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserData {
-    override suspend fun getAllByOwnerId(ownerId: Long): ArrayList<HabitData> {
+    override suspend fun getAllByOwnerId(ownerId: Long, allowUnfinished: Boolean): ArrayList<HabitData> {
         return withContext(Dispatchers.IO) {
-            db.habitDataQueries.selectAllOf(ownerId).executeAsList()
+            val all = db.habitDataQueries.selectAllOf(ownerId).executeAsList()
                 .toCollection(ArrayList())
+            val filtered =
+                if (allowUnfinished) all else all.filter { hd -> !hd.habitEditUnfinished }
+            filtered.toCollection(ArrayList())
         }
     }
 
-    suspend fun getAllByGoalId(goalId: Long): ArrayList<HabitData> = getAllByOwnerId(goalId)
+    suspend fun getAllByGoalId(goalId: Long, allowUnfinished: Boolean = true): ArrayList<HabitData>
+        = getAllByOwnerId(goalId, allowUnfinished)
 
     suspend fun addHabit(habitName: String, habitDescription: String,
                         habitTargetCount: Long, habitTargetPeriod: Long, goalId: Long ) : Long {
@@ -101,10 +107,12 @@ class HabitRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDa
         }
     }
 
-    override suspend fun getOneById(id: Long): HabitData?{
+    override suspend fun getOneById(id: Long, allowUnfinished: Boolean ): HabitData?{
         return withContext(Dispatchers.IO) {
-            val unfinished = db.habitDataQueries.getHabitUnfinished(id).executeAsList().last()
+            val unfinished = db.habitDataQueries.getHabitUnfinished(id).executeAsOneOrNull()
+                ?: return@withContext null
             if (unfinished) {
+                if (!allowUnfinished) return@withContext null
                 val uhd = db.habitDataQueries.selectGivenUnfinishedHabit(id).executeAsOneOrNull()
                 if (uhd == null) null
                 else HabitData(
@@ -122,7 +130,8 @@ class HabitRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDa
                 )
             }
             else {
-                db.habitDataQueries.selectGivenHabit(id).executeAsOneOrNull()
+                val x = db.habitDataQueries.selectGivenHabit(id).executeAsOneOrNull()
+                x
             }
         }
     }

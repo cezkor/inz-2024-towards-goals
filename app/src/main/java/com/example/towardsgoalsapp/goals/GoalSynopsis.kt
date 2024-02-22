@@ -8,94 +8,25 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.activity.result.ActivityResultLauncher
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.habits.HabitData_OLD
 import com.example.towardsgoalsapp.habits.HabitItemList
 import com.example.towardsgoalsapp.main.MainActivity
 import com.example.towardsgoalsapp.etc.OneTextFragment
-import com.example.towardsgoalsapp.tasks.TaskData_OLD
 import com.example.towardsgoalsapp.tasks.TaskItemList
 import com.google.android.material.tabs.TabLayout
-
-class GoalSynopsisesViewModel: ViewModel() {
-
-    // meanings of enum entries in order:
-    // not ready to show
-    // readied when activity view created: with goal data, without it
-    // data changed (in case of page with GoalSynopsis)
-    // populated with GoalData (to make GoalSynopsis page)
-    // populated with AddGoalSuggestion
-    enum class MutableGoalDataStates {
-        NOT_READY, INITIALIZED_POPULATED, INITIALIZED_EMPTY , REFRESHED, POPULATED, EMPTIED
-    }
-
-    val arrayOfGoalData: ArrayList<MutableLiveData<GoalData_OLD?>> =
-        List(Constants.MAX_GOALS_AMOUNT) { MutableLiveData<GoalData_OLD?>() }.toCollection(ArrayList())
-
-    val habitDataArraysPerGoal: HashMap<Long,ArrayList<MutableLiveData<HabitData_OLD>>> =
-        HashMap(Constants.MAX_GOALS_AMOUNT)
-
-    val taskDataArraysPerGoal: HashMap<Long,ArrayList<MutableLiveData<TaskData_OLD>>> =
-        HashMap(Constants.MAX_GOALS_AMOUNT)
-
-    val arrayOfGoalDataStates: Array<MutableLiveData<MutableGoalDataStates>> =
-        Array(Constants.MAX_GOALS_AMOUNT) {MutableLiveData(MutableGoalDataStates.NOT_READY)}
-
-    val gidToPosition = HashMap<Long, Int>()
-
-    val lastTabIndexes: Array<MutableLiveData<Int>> =
-        Array(Constants.MAX_GOALS_AMOUNT) { MutableLiveData(Constants.IGNORE_ID_AS_INT) }
-    fun getEverything() {
-
-        for (i in setOf(0,1,2,3,4,5,6)) {
-            arrayOfGoalDataStates[i].value = MutableGoalDataStates.INITIALIZED_EMPTY
-        }
-
-        arrayOfGoalData[3].value = GoalData_OLD(
-            100, "a goal", "super description!", 0.1
-        )
-        taskDataArraysPerGoal[100] = java.util.ArrayList(
-            List(25) { MutableLiveData<TaskData_OLD>() }.toCollection(ArrayList())
-        )
-        for (i in 0..<25) taskDataArraysPerGoal[100]?.get(i).apply {
-            this?.run { this.value = TaskData_OLD(
-                (100+i).toLong(), "task $i", "descr",
-                0.0, -1, false, 1000
-            ) }
-        }
-        habitDataArraysPerGoal[100] = java.util.ArrayList(
-            List(5) { MutableLiveData<HabitData_OLD>() }.toCollection(ArrayList())
-        )
-        for (i in 0..<5) habitDataArraysPerGoal[100]?.get(i).apply {
-            this?.run { this.value = HabitData_OLD((200+i).toLong(), "habit $i") }
-        }
-
-        arrayOfGoalDataStates[3].value = MutableGoalDataStates.INITIALIZED_POPULATED
-
-    }
-
-    fun updateOneGoal() {}
-
-    fun addOneGoal(
-        newName: String?,
-        newDescription: String?
-    ) {
-        // add new goal via repository to database
-        // get it to view model
-    }
-}
+import com.example.towardsgoalsapp.database.*
 
 class GoalSynopsis: Fragment() {
 
-    private lateinit var goalDetailsOpener: ActivityResultLauncher<Pair<Long, Boolean>>
+    private lateinit var goalDetailsOpener: GoalRefreshRequesterResultLauncher
 
     companion object {
         const val LOG_TAG = "GoalSynopsis"
@@ -111,7 +42,8 @@ class GoalSynopsis: Fragment() {
         private val acceptedGoalDataStates =
             setOf(
                 GoalSynopsisesViewModel.MutableGoalDataStates.INITIALIZED_POPULATED,
-                GoalSynopsisesViewModel.MutableGoalDataStates.POPULATED
+                GoalSynopsisesViewModel.MutableGoalDataStates.POPULATED,
+                GoalSynopsisesViewModel.MutableGoalDataStates.REFRESHED
             )
 
         private const val TASKS_TAB_ID = 0
@@ -132,13 +64,26 @@ class GoalSynopsis: Fragment() {
     private lateinit var noHabitsFragment: OneTextFragment
 
     private val fragmentContainerId = R.id.goalSynopsisFrameLayout
+    private var lastPageTabId: Int = TASKS_TAB_ID
+
+    private var animateTabs = true
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         // todo: generating page from this fragment causes frame skips - fix it
 
+        try {
+            requireActivity()
+            requireContext()
+        }
+        catch (e: IllegalStateException) {
+            Log.e(LOG_TAG, "no activity nor context", e)
+            return
+        }
+
         val synopsisTitle: TextView = view.findViewById(R.id.goalSynopsisTitle)
+        val synopsisGoalPageNumber: TextView = view.findViewById(R.id.goalSynopsisGoalPage)
         val synopsisDescription: TextView = view.findViewById(R.id.goalSynopsisDescription)
         val synopsisProgress: ProgressBar = view.findViewById(R.id.goalSynopsisProgressBar)
 
@@ -146,20 +91,57 @@ class GoalSynopsis: Fragment() {
 
         val goalDetailsButton: Button = view.findViewById(R.id.expandGoalButton)
 
-        pageViewModel = ViewModelProvider(requireActivity())[GoalSynopsisesViewModel::class.java]
-
-        var lastPageTabId: Int? = TASKS_TAB_ID
-
-        fun updateUI(data: GoalData_OLD) {
-            synopsisTitle.text = data.goalName
-            synopsisDescription.text = data.goalDescription
-            synopsisProgress.progress = (100 * data.progress).toInt()
+        val classNumber: Int? = Constants.viewModelClassToNumber[GoalSynopsisesViewModel::class.java]
+        if (classNumber == null) {
+            Log.e(LOG_TAG,"Class number is null")
+            return
         }
 
-        fun getArgs() {
+        pageViewModel = ViewModelProvider(requireActivity())[GoalSynopsisesViewModel::class.java]
+
+        fun updateUI(data: GoalData) {
+            synopsisTitle.text = data.goalName
+            synopsisGoalPageNumber.text =
+                getString(R.string.goals_goal_page, data.pageNumber+1, Constants.MAX_GOALS_AMOUNT)
+            synopsisDescription.text = data.goalDescription
+            synopsisProgress.progress = (100 * data.goalProgress).toInt()
+            if (data.goalEditUnfinished)
+                goalDetailsButton
+                    .setCompoundDrawables(
+                        null,
+                        null,
+                        AppCompatResources.getDrawable(requireContext(), R.drawable.white_alert),
+                        null
+                    )
+
+            // recreate fragment at current position, reset selection then select its tab
+            val curTab
+                = if (tabs.selectedTabPosition != -1) tabs.selectedTabPosition else TASKS_TAB_ID
+            val newFragment = when (curTab) {
+                TASKS_TAB_ID -> { TaskItemList.newInstance(goalId, classNumber) }
+                HABITS_TAB_ID -> {
+                    HabitItemList.newInstance(goalId, classNumber)
+                }
+                else -> Fragment()
+            }
+            if (curTab == TASKS_TAB_ID && newFragment is TaskItemList)
+                tasksFragment = newFragment
+            if (curTab == HABITS_TAB_ID && newFragment is HabitItemList)
+                habitsFragment = newFragment
+
+            val oldAnimateTabsVal = animateTabs
+            animateTabs = false
+            tabs.selectTab(null)
+            tabs.selectTab(tabs.getTabAt(curTab))
+            animateTabs = oldAnimateTabsVal
+        }
+
+        fun getArgsAndState() {
             arguments?.run {
                 pageNumber = this.getInt(MainActivity.PAGE_NUMBER)
-                lastPageTabId = this.getInt(LAST_PAGE_BY_ID)
+            }
+            savedInstanceState?.run {
+                lastPageTabId = this.getInt(LAST_PAGE_BY_ID, lastPageTabId)
             }
         }
 
@@ -170,46 +152,44 @@ class GoalSynopsis: Fragment() {
                         ?: Constants.IGNORE_ID_AS_LONG
 
                 pageViewModel.lastTabIndexes[pageNumber].value =
-                    lastPageTabId ?: TASKS_TAB_ID
+                    lastPageTabId
             }
         }
 
         fun tieToPageViewModel(){
-            val updater = Observer<GoalData_OLD?> {
 
+            fun checkAndUpdate(goal: GoalData?) {
                 if (pageViewModel.arrayOfGoalDataStates[pageNumber].value in acceptedGoalDataStates)
-                    it?.run { updateUI(this) }
-                // else ignore -> we're being replaced by no goal or there was no goal at all
+                    goal?.run { updateUI(this) }
             }
 
-            pageViewModel.arrayOfGoalData[pageNumber].observe(
-                viewLifecycleOwner, updater
-            )
+            pageViewModel.arrayOfGoalDataStates[pageNumber].observe(viewLifecycleOwner) {
+                val goal = pageViewModel.arrayOfGoalData[pageNumber].value
+                checkAndUpdate(goal)
+            }
 
         }
 
         fun readyTheMoreButton() {
             goalDetailsOpener = registerForActivityResult(GoalRefreshRequesterContract()){
-
                 if (it == Constants.IGNORE_ID_AS_LONG) return@registerForActivityResult
-                // get goal from given id
-                // val pos = pageViewModel.gidToPosition[it]
-
+                // if returned an id -> update goal of such id
+                pageViewModel.getOrUpdateOneGoal(it)
             }
 
             goalDetailsButton.setOnClickListener {
                 Log.i(LOG_TAG, "launching intent for goalid $goalId")
-                if (goalId != Constants.IGNORE_ID_AS_LONG)
-                    goalDetailsOpener.launch(Pair(goalId, true))
+                if (goalId != Constants.IGNORE_ID_AS_LONG)             // i don't need page number
+                                                                       // for opening an
+                                                                       // existing goal
+                    goalDetailsOpener.launch(Triple(goalId, false, null))
             }
         }
 
         fun setupListsFragments() {
-            val classNumber: Int? = Constants.viewModelClassToNumber[GoalSynopsisesViewModel::class.java]
-            if (classNumber != null) {
-                tasksFragment = TaskItemList.newInstance(goalId, classNumber)
-                habitsFragment = HabitItemList.newInstance(goalId, classNumber)
-            } else { Log.i(LOG_TAG, "class number is null"); return }
+
+            tasksFragment = TaskItemList.newInstance(goalId, classNumber)
+            habitsFragment = HabitItemList.newInstance(goalId, classNumber)
 
             noHabitsFragment = OneTextFragment.newInstance(
                 resources.getString(R.string.habits_no_habits)
@@ -220,9 +200,8 @@ class GoalSynopsis: Fragment() {
 
             tabs.addOnTabSelectedListener(TabsListener(
                 tabs.getTabAt(HABITS_TAB_ID), tabs.getTabAt(TASKS_TAB_ID),
-                childFragmentManager, fragmentContainerId,
-                habitsFragment , tasksFragment, pageViewModel.lastTabIndexes[pageNumber],
-                noHabitsFragment, noTasksFragment, SizeGetter()
+                childFragmentManager, fragmentContainerId, pageViewModel.lastTabIndexes[pageNumber],
+                noTasksFragment, noHabitsFragment, SizeGetter()
             ))
 
             // set tab to show
@@ -234,7 +213,7 @@ class GoalSynopsis: Fragment() {
         }
 
         fun doInThisOrder() {
-            getArgs()
+            getArgsAndState()
 
             processSavedArgs()
 
@@ -249,6 +228,12 @@ class GoalSynopsis: Fragment() {
 
     }
 
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        lastPageTabId = savedInstanceState?.getInt(LAST_PAGE_BY_ID) ?: lastPageTabId
+
+        super.onViewStateRestored(savedInstanceState)
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         val tmp = pageViewModel.lastTabIndexes[pageNumber].value
         tmp?.run { outState.putInt(LAST_PAGE_BY_ID, this) }
@@ -260,7 +245,7 @@ class GoalSynopsis: Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_goal_synopsis, container, true)
+        return inflater.inflate(R.layout.fragment_goal_synopsis, container, false)
     }
 
     private inner class SizeGetter {
@@ -270,11 +255,13 @@ class GoalSynopsis: Fragment() {
         }
 
         fun getSizeOfHabitList() : Int = if (isGoalDataValid())
-            pageViewModel.habitDataArraysPerGoal[goalId]?.size ?: 0
+            pageViewModel.getHabitsSharer(goalId)?.getArrayOfUserData()
+                ?.filter { md -> md.value != null }?.size ?: 0
             else 0
 
         fun getSizeOfTaskList() : Int = if (isGoalDataValid())
-            pageViewModel.taskDataArraysPerGoal[goalId]?.size ?: 0
+            pageViewModel.getTasksSharer(goalId)?.getArrayOfUserData()
+                ?.filter { md -> md.value != null }?.size ?: 0
             else 0
     }
 
@@ -283,13 +270,14 @@ class GoalSynopsis: Fragment() {
         private val tasksTab: TabLayout.Tab?,
         private val fManager: FragmentManager,
         private val replacedViewId: Int,
-        private val habitsFragment: HabitItemList,
-        private val tasksFragment: Fragment,
         private val lastTabIndex: MutableLiveData<Int>,
         private val noTasksFragment: OneTextFragment,
         private val noHabitsFragment: OneTextFragment,
         private val sizeGetter: SizeGetter
     ) : TabLayout.OnTabSelectedListener {
+
+
+        val gsTag = "gstag99999"
 
         override fun onTabSelected(tab: TabLayout.Tab?) {
             val fragment: Fragment? = when (tab) {
@@ -309,9 +297,11 @@ class GoalSynopsis: Fragment() {
             }
             fragment?.run{
                 fManager.beginTransaction().run {
-                    setCustomAnimations(R.anim.layout_accelerator, R.anim.layout_deccelerator)
-                    replace(replacedViewId, fragment)
-                    commit()
+                    setReorderingAllowed(true)
+                    if (animateTabs)
+                        setCustomAnimations(R.anim.layout_accelerator, R.anim.layout_deccelerator)
+                    replace(replacedViewId, fragment, gsTag)
+                    commitNow()
                 }
             }
         }
@@ -325,7 +315,4 @@ class GoalSynopsis: Fragment() {
         }
 
     }
-
-
-
 }

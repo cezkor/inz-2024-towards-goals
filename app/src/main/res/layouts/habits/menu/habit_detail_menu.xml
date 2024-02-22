@@ -5,16 +5,10 @@
     >
 
     <item
-        android:id="@+id/habitDoneWellItem"
+        android:id="@+id/habitMarkDoneItem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:title="@string/habits_make_done_well" />
-
-    <item
-        android:id="@+id/habitDoneNotWellItem"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:title="@string/habits_make_done_not_well" />
+        android:title="@string/habits_mark_done" />
 
     <item
         android:id="@+id/addImpIntItem"
@@ -23,7 +17,7 @@
         android:title="@string/impint_menu_add_empty_imp_int" />
 
     <item
-        android:id="@+id/editItem"
+        android:id="@+id/editHabitItem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:title="@string/enable_edit" />

@@ -15,13 +15,29 @@
     app:layout_constraintTop_toTopOf="parent"
     >
 
-        <TextView
-            android:id="@+id/goalSynopsisTitle"
-            style="@style/Widget.Style.TowardsGoalsApp.TitleTextView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+        <LinearLayout
+            android:orientation="horizontal"
             android:layout_weight="10"
-            android:text="@string/default_title" />
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/goalSynopsisTitle"
+                style="@style/Widget.Style.TowardsGoalsApp.TitleTextView"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="85"
+                android:text="@string/default_title" />
+
+            <TextView
+                android:id="@+id/goalSynopsisGoalPage"
+                android:layout_width="0dp"
+                android:minWidth="20dp"
+                android:layout_height="match_parent"
+                android:layout_weight="15"
+                android:text="@string/goals_goal_page" />
+
+        </LinearLayout>
 
         <TextView
             android:id="@+id/goalSynopsisDescription"

@@ -6,7 +6,7 @@ import app.cash.sqldelight.adapter.primitive.IntColumnAdapter
 import app.cash.sqldelight.db.SqlDriver
 import com.example.towardsgoalsapp.OwnerType
 
-class DatabaseObjectFactory {
+class DatabaseObjectFactory private constructor() {
 
     companion object {
         fun newDatabaseObject(driver: SqlDriver): TGDatabase {
