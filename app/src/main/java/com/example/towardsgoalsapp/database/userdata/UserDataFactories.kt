@@ -51,7 +51,8 @@ val RecreatingTaskDataFactory = object : RecreateUserDataWithText<TaskData> {
             userData.taskDepth,
             userData.subtasksCount,
             userData.taskDone,
-            userData.taskFailed
+            userData.taskFailed,
+            userData.taskPriority
         )
     }
 
@@ -75,7 +76,9 @@ val RecreatingHabitDataFactory = object : RecreateHabitDataBasedWithTargetsAndTe
             userData.habitDoneWellCount,
             userData.habitDoneNotWellCount,
             userData.habitTotalCount,
-            userData.habitTargetCompleted
+            userData.habitTargetCompleted,
+            userData.habitMarkCount,
+            userData.habitLastMarkedOn
         )
     }
 
@@ -95,7 +98,9 @@ val RecreatingHabitDataFactory = object : RecreateHabitDataBasedWithTargetsAndTe
             userData.habitDoneWellCount,
             userData.habitDoneNotWellCount,
             userData.habitTotalCount,
-            userData.habitTargetCompleted
+            userData.habitTargetCompleted,
+            userData.habitMarkCount,
+            userData.habitLastMarkedOn
         )
     }
 

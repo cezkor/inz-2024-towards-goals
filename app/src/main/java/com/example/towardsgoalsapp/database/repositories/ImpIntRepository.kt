@@ -17,7 +17,7 @@ class ImpIntRepository(private val db: TGDatabase) : OwnedByTypedOwnerUserData {
                 .toCollection(ArrayList())
             if (allowUnfinished) {
                 val u = db.impIntsDataQueries.selectAllUnfinishedImpIntsOf(ownerId, ownerType)
-                    .executeAsList().toCollection(ArrayList())
+                    .executeAsList().toCollection(java.util.ArrayList())
                 f.addAll(u.map { selectObject ->
                     ImpIntData(
                         selectObject.impIntId,

@@ -20,9 +20,8 @@ class UserDataReputterTest {
         val orderNumber: Long
     )
 
-    class DClassReputter(mArray: ArrayList<MutableLiveData<DClass>>,
-                        arrayList: ArrayList<DClass>? = null)
-        : UserDataReputter<DClass>(mArray, arrayList) {
+    class DClassReputter(mArray: ArrayList<MutableLiveData<DClass>>)
+        : UserDataReputter<DClass>(mArray) {
         override fun getOrderNumber(userData: DClass): Long = userData.orderNumber
 
     }
@@ -44,6 +43,7 @@ class UserDataReputterTest {
         reputter = DClassReputter(mutArray)
         array = arrayListOf<DClass>(DClass("t1", 3),
             DClass("t2", 2), DClass("t3", 1))
+        reputter.setWholeBasedOnArrayList(array)
 
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).isInOrder(
             java.util.Comparator<Long>{ o1: Long?, o2: Long? -> -o1?.compareTo(o2!!)!!}
@@ -74,7 +74,8 @@ class UserDataReputterTest {
 
         val aloneData = DClass("alone", 9)
 
-        var reputter = DClassReputter(mutArray, array1)
+        var reputter = DClassReputter(mutArray)
+        reputter.setWholeBasedOnArrayList(array1)
         assertThat(mutArray.size).isEqualTo(5)
         assertThat(mutArray[3].value).isNull()
         assertThat(mutArray[4].value).isNull()

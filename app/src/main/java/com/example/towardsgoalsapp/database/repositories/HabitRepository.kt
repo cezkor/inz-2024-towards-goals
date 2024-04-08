@@ -2,10 +2,18 @@ package com.example.towardsgoalsapp.database.repositories
 
 import androidx.lifecycle.MutableLiveData
 import com.example.towardsgoalsapp.Constants
+import com.example.towardsgoalsapp.OwnerType
 import com.example.towardsgoalsapp.database.HabitData
 import com.example.towardsgoalsapp.database.TGDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalUnit
 
 class HabitRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserData {
     override suspend fun getAllByOwnerId(ownerId: Long, allowUnfinished: Boolean): ArrayList<HabitData> {
@@ -49,7 +57,9 @@ class HabitRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDa
                 habitData.habitDoneWellCount,
                 habitData.habitDoneNotWellCount,
                 habitData.habitTotalCount,
-                habitData.habitTargetCompleted
+                habitData.habitTargetCompleted,
+                habitData.habitMarkCount,
+                habitData.habitLastMarkedOn
             )
         }
     }
@@ -83,31 +93,85 @@ class HabitRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDa
         }
     }
 
+    suspend fun autoSkipDaysWithoutMarkingIfApplicableOfHabit(id: Long) : Long{
+        //                                                                daysSkipped
+        return withContext(Dispatchers.IO) {
+            val habit = db.habitDataQueries.selectGivenHabit(id).executeAsOneOrNull()
+                ?: return@withContext 0L
+            // lastMarkedOn == null <=> habit was never marked before, so its useless to skip
+            val lastMarkedOn = habit.habitLastMarkedOn ?: return@withContext 0L
+            val lMOtoDateTime = LocalDateTime.ofInstant(lastMarkedOn, ZoneId.systemDefault())
+            val now = LocalDateTime.now()
+            // allow to at most 23:59:00 of next day
+            val latestDateTimeToAllow = lMOtoDateTime
+                .plusDays(1)
+                .withSecond(0)
+                .withHour(23)
+                .withNano(0)
+                .withMinute(59)
+            val earliestTimeOfTwoDaysAfter = lMOtoDateTime
+                .plusDays(2)
+                .withSecond(0)
+                .withHour(0)
+                .withNano(0)
+                .withMinute(0)
+            if (now <= latestDateTimeToAllow) return@withContext 0
+            // skip one day if user happens to start filling in questions about habit between
+            // 23:59:00 and 00:00:00 of the next day
+            if ( now <= earliestTimeOfTwoDaysAfter) {
+                skipHabit(id, now.atZone(ZoneId.systemDefault()).toInstant())
+                return@withContext 1
+            }
+
+            val daysToSkip = Duration.between(now, earliestTimeOfTwoDaysAfter).toDays()
+            db.habitDataQueries.autoSkipHabitByDayCount(daysToSkip, daysToSkip, id)
+
+            var dayOfSkipping = earliestTimeOfTwoDaysAfter
+                .plusMinutes(1)
+                .atZone(ZoneId.systemDefault())
+                .toInstant() // assume we skip at 00:01 of each day to skip
+            // add proper information for HabitStatsData
+            for (i in 0..<daysToSkip) {
+                db.habitStatsDataQueries.insertData(
+                    habit.goalId,
+                    habit.habitId,
+                    // habit skipped
+                    false,
+                    false,
+                    dayOfSkipping
+                )
+                dayOfSkipping = dayOfSkipping.plus(1,ChronoUnit.DAYS)
+            }
+
+            return@withContext daysToSkip
+        }
+    }
+
     override suspend fun markEditing(id: Long, isUnfinished: Boolean) {
         return withContext(Dispatchers.IO) {
             db.habitDataQueries.markHabitEdit(isUnfinished, id)
         }
     }
 
-    suspend fun skipHabit(id: Long) {
+    suspend fun skipHabit(id: Long, markedOn: Instant) {
         return withContext(Dispatchers.IO) {
-            db.habitDataQueries.skipHabit(id)
+            db.habitDataQueries.skipHabit(markedOn,id)
         }
     }
 
-    suspend fun markHabitDoneWell(id: Long) {
+    suspend fun markHabitDoneWell(id: Long, markedOn: Instant) {
         return withContext(Dispatchers.IO) {
-            db.habitDataQueries.markHabitAsDoneWell(id)
+            db.habitDataQueries.markHabitAsDoneWell(markedOn,id)
         }
     }
 
-    suspend fun markHabitDoneNotWell(id: Long) {
+    suspend fun markHabitDoneNotWell(id: Long, markedOn: Instant) {
         return withContext(Dispatchers.IO) {
-            db.habitDataQueries.markHabitAsNotDoneWell(id)
+            db.habitDataQueries.markHabitAsNotDoneWell(markedOn,id)
         }
     }
 
-    override suspend fun getOneById(id: Long, allowUnfinished: Boolean ): HabitData?{
+    override suspend fun getOneById(id: Long, allowUnfinished: Boolean ): HabitData? {
         return withContext(Dispatchers.IO) {
             val unfinished = db.habitDataQueries.getHabitUnfinished(id).executeAsOneOrNull()
                 ?: return@withContext null
@@ -126,7 +190,9 @@ class HabitRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDa
                     uhd.habitDoneWellCount,
                     uhd.habitDoneNotWellCount,
                     uhd.habitTotalCount,
-                    uhd.habitTargetCompleted
+                    uhd.habitTargetCompleted,
+                    uhd.habitMarkCount,
+                    uhd.habitLastMarkedOn
                 )
             }
             else {
@@ -138,6 +204,9 @@ class HabitRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDa
 
     override suspend fun deleteById(id: Long) {
         return withContext(Dispatchers.IO) {
+            val reminder = db.reminderDataQueries.selectOf(id, OwnerType.TYPE_HABIT)
+                .executeAsOneOrNull()
+            reminder?.run { db.reminderDataQueries.deleteReminder(reminder.remId) }
             db.habitDataQueries.deleteHabit(id)
         }
     }

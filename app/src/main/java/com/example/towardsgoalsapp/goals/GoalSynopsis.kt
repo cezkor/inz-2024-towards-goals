@@ -9,20 +9,19 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
-import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.habits.HabitItemList
+import com.example.towardsgoalsapp.habits.HabitItemListFragment
 import com.example.towardsgoalsapp.main.MainActivity
 import com.example.towardsgoalsapp.etc.OneTextFragment
-import com.example.towardsgoalsapp.tasks.TaskItemList
+import com.example.towardsgoalsapp.tasks.TaskItemListFragment
 import com.google.android.material.tabs.TabLayout
 import com.example.towardsgoalsapp.database.*
+import com.example.towardsgoalsapp.etc.errors.ErrorHandling
 
 class GoalSynopsis: Fragment() {
 
@@ -57,8 +56,8 @@ class GoalSynopsis: Fragment() {
     private var pageNumber: Int = Constants.IGNORE_PAGE_AS_INT
     private var goalId: Long  = Constants.IGNORE_ID_AS_LONG
 
-    private lateinit var tasksFragment: TaskItemList
-    private lateinit var habitsFragment: HabitItemList
+    private lateinit var tasksFragment: TaskItemListFragment
+    private lateinit var habitsFragment: HabitItemListFragment
 
     private lateinit var noTasksFragment: OneTextFragment
     private lateinit var noHabitsFragment: OneTextFragment
@@ -99,6 +98,10 @@ class GoalSynopsis: Fragment() {
 
         pageViewModel = ViewModelProvider(requireActivity())[GoalSynopsisesViewModel::class.java]
 
+        pageViewModel.exceptionMutable.observe(viewLifecycleOwner) {
+            ErrorHandling.showExceptionDialog(requireActivity(), it)
+        }
+
         fun updateUI(data: GoalData) {
             synopsisTitle.text = data.goalName
             synopsisGoalPageNumber.text =
@@ -118,15 +121,15 @@ class GoalSynopsis: Fragment() {
             val curTab
                 = if (tabs.selectedTabPosition != -1) tabs.selectedTabPosition else TASKS_TAB_ID
             val newFragment = when (curTab) {
-                TASKS_TAB_ID -> { TaskItemList.newInstance(goalId, classNumber) }
+                TASKS_TAB_ID -> { TaskItemListFragment.newInstance(goalId, classNumber) }
                 HABITS_TAB_ID -> {
-                    HabitItemList.newInstance(goalId, classNumber)
+                    HabitItemListFragment.newInstance(goalId, classNumber)
                 }
                 else -> Fragment()
             }
-            if (curTab == TASKS_TAB_ID && newFragment is TaskItemList)
+            if (curTab == TASKS_TAB_ID && newFragment is TaskItemListFragment)
                 tasksFragment = newFragment
-            if (curTab == HABITS_TAB_ID && newFragment is HabitItemList)
+            if (curTab == HABITS_TAB_ID && newFragment is HabitItemListFragment)
                 habitsFragment = newFragment
 
             val oldAnimateTabsVal = animateTabs
@@ -188,8 +191,8 @@ class GoalSynopsis: Fragment() {
 
         fun setupListsFragments() {
 
-            tasksFragment = TaskItemList.newInstance(goalId, classNumber)
-            habitsFragment = HabitItemList.newInstance(goalId, classNumber)
+            tasksFragment = TaskItemListFragment.newInstance(goalId, classNumber)
+            habitsFragment = HabitItemListFragment.newInstance(goalId, classNumber)
 
             noHabitsFragment = OneTextFragment.newInstance(
                 resources.getString(R.string.habits_no_habits)

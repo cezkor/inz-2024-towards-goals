@@ -7,20 +7,26 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.OwnerType
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.database.userdata.MutablesArrayContentState
+import com.example.towardsgoalsapp.etc.OneTextFragment
+import com.example.towardsgoalsapp.etc.OneTimeEvent
 import com.example.towardsgoalsapp.impints.ImpIntItemList
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.math.sign
 
 
 class TaskDoing : Fragment() {
 
-
-
     companion object {
-
+        const val LOG_TAG = "TaskDoing"
     }
 
     private lateinit var viewModel: TaskOngoingViewModel
@@ -39,40 +45,36 @@ class TaskDoing : Fragment() {
         val classNum = Constants.viewModelClassToNumber[TaskOngoingViewModel::class.java]
             ?: Constants.CLASS_NUMBER_NOT_RECOGNIZED
 
-        val markDoneButton : Button = view.findViewById(R.id.taskMarkDone)
-        val markFailedButton : Button = view.findViewById(R.id.taskMarkFailed)
+        val pButton = view.findViewById<Button>(R.id.proceedButton)
 
-        viewModel.mutableTaskData.observe(viewLifecycleOwner) {
-            if (it == null) return@observe
-            val impIntsFragment = ImpIntItemList.newInstance(it.taskId,
-                OwnerType.TYPE_TASK, classNum, true)
-            impIntsFragment.run {
+        viewModel.mutableTaskData.observe(viewLifecycleOwner) { t ->
+            if (t == null) return@observe
+            viewModel.getImpIntsSharer().arrayState.observe(viewLifecycleOwner) {
+                val impIntsFragment = if (viewModel.getImpIntsSharer().isArrayConsideredEmpty())
+                    OneTextFragment.newInstance(getString(R.string.impints_no_impints))
+                else
+                    ImpIntItemList.newInstance(t.taskId,
+                        OwnerType.TYPE_TASK, classNum, true)
                 childFragmentManager.beginTransaction()
-                    .replace(R.id.impIntsContainer, this)
+                    .replace(R.id.impIntsContainer, impIntsFragment)
                     .setReorderingAllowed(true)
+                    .commit()
+            }
+
+            if (viewModel.pomidoroIsOn) {
+                val pomidoroFragment = PomidoroFragment()
+                childFragmentManager.beginTransaction()
+                    .setReorderingAllowed(true)
+                    .replace(R.id.pomidoroContainer, pomidoroFragment)
                     .commit()
             }
         }
 
-        markDoneButton.setOnClickListener {
-            lifecycleScope.launch {
-                viewModel.taskFailed.value = false
-                viewModel.saveMainData()
-                viewModel.mutableOfTaskOngoingStates.value =
-                    TaskOngoingViewModel.TaskOngoingStates.SECOND_QUESTIONS
-            }
+        pButton.setOnClickListener {
+            // switch to marking tasks
+            viewModel.mutableOfTaskOngoingStates.value = TaskOngoingViewModel.TaskOngoingStates.MARKING_TASK
         }
-
-        markFailedButton.setOnClickListener {
-            lifecycleScope.launch {
-                viewModel.taskFailed.value = true
-                viewModel.saveMainData()
-                viewModel.mutableOfTaskOngoingStates.value =
-                    TaskOngoingViewModel.TaskOngoingStates.SECOND_QUESTIONS
-            }
-        }
-
-
     }
+
 
 }

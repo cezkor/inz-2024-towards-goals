@@ -23,8 +23,7 @@ import com.example.towardsgoalsapp.database.userdata.MarkedMultipleModifyUserDat
 import com.example.towardsgoalsapp.database.userdata.ViewModelWithImpIntsSharer
 import com.example.towardsgoalsapp.habits.questioning.HabitQuestionsViewModel
 import com.example.towardsgoalsapp.habits.HabitViewModel
-import com.example.towardsgoalsapp.tasks.TaskDetailsViewModel
-import com.example.towardsgoalsapp.tasks.TaskItemList
+import com.example.towardsgoalsapp.tasks.details.TaskDetailsViewModel
 import com.example.towardsgoalsapp.tasks.ongoing.TaskOngoingViewModel
 
 class ImpIntItemListViewModelFactory(private val sharer: MarkedMultipleModifyUserDataSharer<ImpIntData>): ViewModelProvider.Factory {
@@ -207,11 +206,6 @@ class ImpIntItemList : Fragment() {
 
         } }
         return view
-    }
-
-    override fun onPause() {
-
-        super.onPause()
     }
 
 }

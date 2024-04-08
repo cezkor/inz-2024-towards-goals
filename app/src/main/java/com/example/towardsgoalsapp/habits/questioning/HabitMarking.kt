@@ -8,10 +8,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.lifecycle.lifecycleScope
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.OwnerType
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.database.userdata.MutablesArrayContentState
+import com.example.towardsgoalsapp.etc.OneTextFragment
 import com.example.towardsgoalsapp.impints.ImpIntItemList
+import kotlinx.coroutines.launch
 
 
 class HabitMarking : Fragment() {
@@ -26,7 +30,7 @@ class HabitMarking : Fragment() {
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_habit_questions, container, false)
+        return inflater.inflate(R.layout.fragment_habit_marking, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -41,45 +45,56 @@ class HabitMarking : Fragment() {
         val markDoneNotWellButton = view.findViewById<Button>(R.id.habitMarkNotDoneWell)
         val skipButton = view.findViewById<Button>(R.id.habitSkipButton)
 
-        var impIntsFragment: ImpIntItemList?
+        var buttonPushed: Boolean = false
 
         markDoneWellButton.setOnClickListener {
-            if (markDoneWellButton.isEnabled && markDoneNotWellButton.isEnabled && skipButton.isEnabled) {
-                viewModel.markHabitAs(true)
+            if (!buttonPushed) {
+                buttonPushed = true
+                viewModel.habitShouldBeMarkedAs(true)
                 markDoneWellButton.isEnabled = false
                 viewModel.shouldLeave.value = true
+
             }
         }
         markDoneNotWellButton.setOnClickListener {
-            if (markDoneWellButton.isEnabled && markDoneNotWellButton.isEnabled && skipButton.isEnabled) {
-                viewModel.markHabitAs(false)
+            if (!buttonPushed) {
+                buttonPushed = true
+                viewModel.habitShouldBeMarkedAs(false)
                 markDoneNotWellButton.isEnabled = false
                 viewModel.shouldLeave.value = true
             }
         }
         skipButton.setOnClickListener {
-            if (markDoneWellButton.isEnabled && markDoneNotWellButton.isEnabled && skipButton.isEnabled) {
+            if (!buttonPushed) {
+                buttonPushed = true
                 viewModel.skipHabit()
                 skipButton.isEnabled = false
                 viewModel.shouldLeave.value = true
             }
         }
 
-        viewModel.mutableHabitData.observe(viewLifecycleOwner) {
-            if (it == null) return@observe
-            targetText.text = getString(R.string.habits_about_target,
-                it.habitTotalCount + 1 , it.habitTargetPeriod)
-            impIntsFragment = ImpIntItemList.newInstance(it.habitId,
-                OwnerType.TYPE_HABIT, classNum, true)
-            impIntsFragment?.run {
+        viewModel.mutableHabitData.observe(viewLifecycleOwner) { h ->
+            if (h == null) return@observe
+            targetText.text = getString(
+                R.string.habits_about_target,
+                h.habitTotalCount + 1, h.habitTargetPeriod
+            )
+            viewModel.getImpIntsSharer().arrayState.observe(viewLifecycleOwner) {
+                val impIntsFragment = if (viewModel.getHabitParamsSharer().isArrayConsideredEmpty())
+                    OneTextFragment.newInstance(getString(R.string.impints_no_impints))
+                else
+                    ImpIntItemList.newInstance(
+                        h.habitId,
+                        OwnerType.TYPE_HABIT, classNum, true
+                    )
+
                 childFragmentManager.beginTransaction()
-                    .replace(R.id.impIntsContainer, this)
+                    .replace(R.id.impIntsContainer, impIntsFragment)
                     .setReorderingAllowed(true)
                     .commit()
+
             }
         }
-
-
     }
 
 }

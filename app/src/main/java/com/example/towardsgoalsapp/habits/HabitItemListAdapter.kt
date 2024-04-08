@@ -12,13 +12,16 @@ import android.widget.TextView
 import androidx.lifecycle.MutableLiveData
 import com.example.towardsgoalsapp.R
 import com.example.towardsgoalsapp.database.*
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 
 class HabitItemListAdapter(
     private val viewModel: HabitItemListViewModel,
     private val habitMarkImage: Drawable?,
     private val completedHabitMarkImage: Drawable?,
-    private val editUnfinishedImage: Drawable?
+    private val editUnfinishedImage: Drawable?,
+    private val notMarkableHabitImage: Drawable?
 ) : RecyclerView.Adapter<HabitItemListAdapter.ViewHolder>() {
 
     private val habitsMutablesList: List<MutableLiveData<HabitData>> = viewModel.habitDataList
@@ -70,7 +73,32 @@ class HabitItemListAdapter(
                 habitMarkImage?.run { habitMarkButton.setImageDrawable(this) }
 
             viewOfItem.setOnClickListener { onItemClickListener?.invoke(habitData) }
-            habitMarkButton.setOnClickListener { onHabitMarkButtonClickListener?.invoke(habitData) }
+
+            // we can't mark habit on the same day it was marked (if it was recorded)
+            val canMarkHabit: Boolean = if (habitData.habitLastMarkedOn == null) true
+            else {
+                val now = LocalDateTime.now()
+                val lastMarkedOn = LocalDateTime.ofInstant(
+                    habitData.habitLastMarkedOn,
+                    ZoneId.systemDefault()
+                )
+                if (now <= lastMarkedOn) false
+                else {
+                    val lMODate = lastMarkedOn.toLocalDate()
+                    val nowDate = now.toLocalDate()
+                    nowDate > lMODate
+                }
+            }
+            if (canMarkHabit) {
+                habitMarkButton.isEnabled = true
+                habitMarkButton.setOnClickListener{
+                    onHabitMarkButtonClickListener?.invoke(habitData) }
+            }
+            else {
+                habitMarkButton.isEnabled = false
+                notMarkableHabitImage?.run { habitMarkButton.setImageDrawable(this) }
+            }
+
             habitNameTextView.text = habitData.habitName
         }
 

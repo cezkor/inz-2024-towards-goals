@@ -24,6 +24,19 @@
 
     </style>
 
+    <style name="Widget.Style.TowardsGoalsApp.TimeTextView" parent="">
+        <item name="android:textColor">@color/progress_red</item>
+        <item name="android:textSize">40sp</item>
+    </style>
+
+    <style name="Widget.Style.TowardsGoalsApp.BigTextView" parent="">
+        <item name="android:textSize">60sp</item>
+    </style>
+
+    <style name="Widget.Style.TowardsGoalsApp.LargeTextView" parent="">
+        <item name="android:textSize">38sp</item>
+    </style>
+
     <style name="Widget.Style.TowardsGoalsApp.ImpIntEditTextAppearance" parent="@style/TextAppearance.MaterialComponents.Body2">
         <item name="android:textColorHint">@color/gray_800</item>
         <item name="android:colorControlActivated">@color/black</item>
@@ -44,6 +57,11 @@
 
     <style name="Widget.Style.TowardsGoalsApp.DoneButton" parent="">
         <item name="backgroundTint">@color/progress_green</item>
+        <item name="android:textColor">@color/black</item>
+    </style>
+
+    <style name="Widget.Style.TowardsGoalsApp.OtherButton" parent="">
+        <item name="backgroundTint">@color/light_blue_400</item>
         <item name="android:textColor">@color/black</item>
     </style>
 

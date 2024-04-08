@@ -6,4 +6,5 @@
     <string name="menu_delete">Delete</string>
     <string name="goals_adding_goal">Adding a goal</string>
     <string name="goals_goal_page">Goal %d of %d</string>
+    <string name="goals_pick_a_task_or_habit">Pick statistics to show</string>
 </resources>

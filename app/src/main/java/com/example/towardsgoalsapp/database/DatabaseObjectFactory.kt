@@ -27,19 +27,31 @@ class DatabaseObjectFactory private constructor() {
                 ),
                 ReminderDataAdapter = ReminderData.Adapter(
                     ownerTypeAdapter = EnumColumnAdapter<OwnerType>(),
-                    remindOnAdapter = TextAndInstantAdapter
+                    remindOnAdapter = TextAndInstantAdapter,
+                    lastRemindedAdapter = TextAndInstantAdapter
                 ),
                 TaskDataAdapter = TaskData.Adapter(
                     taskDepthAdapter = IntColumnAdapter,
+                    taskPriorityAdapter = IntColumnAdapter
                 ),
                 UnfinishedTaskDataAdapter = UnfinishedTaskData.Adapter(
                     taskDepthAdapter = IntColumnAdapter,
+                    taskPriorityAdapter = IntColumnAdapter
                 ),
                 HabitStatsDataAdapter = HabitStatsData.Adapter(
                     addedOnAdapter = TextAndInstantAdapter
                 ),
-                TaskStatsDataAdapter = TaskStatsData.Adapter(
+                MarkableTaskStatsDataAdapter = MarkableTaskStatsData.Adapter(
                     addedOnAdapter = TextAndInstantAdapter
+                ),
+                HabitParameterValueAdapter = HabitParameterValue.Adapter(
+                    addedOnAdapter = TextAndInstantAdapter
+                ),
+                HabitDataAdapter = HabitData.Adapter(
+                    habitLastMarkedOnAdapter = TextAndInstantAdapter
+                ),
+                UnfinishedHabitDataAdapter = UnfinishedHabitData.Adapter(
+                    habitLastMarkedOnAdapter = TextAndInstantAdapter
                 )
             )
         }

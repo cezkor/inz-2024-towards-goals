@@ -1,0 +1,99 @@
+import kotlin.Boolean;
+import java.time.Instant;
+
+CREATE TABLE HabitParameter (
+    paramId INTEGER PRIMARY KEY AUTOINCREMENT,
+    hParEditUnfinished INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    habitId INTEGER NOT NULL REFERENCES HabitData(habitId) ON DELETE CASCADE,
+    name TEXT NOT NULL DEFAULT "Param",
+    targetVal REAL NOT NULL,
+    unit TEXT
+);
+
+CREATE TABLE UnfinishedHabitParameter (
+    paramId INTEGER PRIMARY KEY AUTOINCREMENT,
+    habitId INTEGER NOT NULL REFERENCES HabitData(habitId) ON DELETE CASCADE,
+    name TEXT NOT NULL DEFAULT "Param",
+    targetVal REAL NOT NULL,
+    unit TEXT
+);
+
+CREATE TABLE HabitParameterValue (
+    valueId INTEGER PRIMARY KEY AUTOINCREMENT,
+    paramId INTEGER NOT NULL REFERENCES HabitParameter(paramId) ON DELETE CASCADE,
+    value REAL NOT NULL,
+    addedOn TEXT AS Instant NOT NULL,
+    habitDayNumber INTEGER NOT NULL DEFAULT -1
+);
+
+selectAllValuesOfParameter:
+SELECT * FROM HabitParameterValue WHERE paramId = ?;
+
+putNewValueOfParameter:
+INSERT INTO HabitParameterValue(paramId, value, addedOn) VALUES (?, ?, ?);
+
+CREATE TRIGGER fetchHabitDayCountAfterPuttingValue
+AFTER INSERT ON HabitParameterValue
+BEGIN
+    UPDATE HabitParameterValue
+    SET habitDayNumber = (
+        SELECT habitMarkCount
+        FROM HabitData
+        WHERE habitId = ( SELECT habitId FROM HabitParameter WHERE paramId = new.paramId)
+    )
+    WHERE valueId = new.valueId;
+END;
+
+CREATE TRIGGER deleteNowFinishedHabitParameter
+AFTER UPDATE ON HabitParameter
+WHEN new.hParEditUnfinished = 0
+BEGIN
+	DELETE FROM UnfinishedHabitParameter WHERE paramId = new.paramId;
+END;
+
+selectAllFinishedHabitParamsOf:
+SELECT * FROM HabitParameter WHERE habitId = ? AND hParEditUnfinished = 0 ORDER BY paramId ASC;
+
+selectAllUnfinishedHabitParamsOf:
+SELECT *
+FROM UnfinishedHabitParameter uhp
+JOIN HabitParameter hp ON uhp.paramId = hp.paramId
+WHERE uhp.habitId = ?
+ORDER BY uhp.paramId ASC;
+
+selectGivenHabitParameter:
+SELECT * FROM HabitParameter WHERE paramId = ?;
+
+selectGivenUnfinishedHabitParam:
+SELECT * FROM UnfinishedHabitParameter WHERE paramId = ?;
+
+insertOneHabitParam:
+INSERT INTO HabitParameter( habitId, name, unit, targetVal)
+VALUES (?,?,?, ?);
+
+updateHabitParamTexts:
+UPDATE HabitParameter SET name = ?, unit = ? WHERE paramId = ?;
+
+updateHabitParamTargetValue:
+UPDATE HabitParameter SET targetVal = ? WHERE paramId = ?;
+
+updateUnfinishedHabitParam:
+UPDATE UnfinishedHabitParameter SET name = ?, unit = ?, targetVal = ? WHERE paramId = ?;
+
+deleteHabitParam:
+DELETE FROM HabitParameter WHERE paramId = ?;
+
+getHabitParamUnfinished:
+SELECT hParEditUnfinished FROM HabitParameter WHERE paramId = ?;
+
+markHabitParamEdit:
+UPDATE HabitParameter SET hParEditUnfinished = ? WHERE paramId = ?;
+
+getCountOfParamsOf:
+SELECT COUNT(*) FROM HabitParameter WHERE habitId = ?;
+
+getCountOfValuesOf:
+SELECT COUNT(*) FROM HabitParameterValue WHERE paramId = ?;
+
+lastInsertRowId:
+SELECT last_insert_rowid();

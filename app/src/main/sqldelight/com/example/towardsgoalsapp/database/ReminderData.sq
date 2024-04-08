@@ -7,6 +7,7 @@ import kotlin.Int;
 CREATE TABLE ReminderData (
     remId INTEGER PRIMARY KEY AUTOINCREMENT,
     remindOn TEXT AS Instant NOT NULL,
+    lastReminded TEXT AS Instant,
     ownerId INTEGER NOT NULL,
     ownerType TEXT AS OwnerType NOT NULL,
     UNIQUE (remId, ownerId, ownerType)
@@ -22,8 +23,14 @@ selectOf:
 SELECT * FROM ReminderData WHERE ownerId = ? AND ownerType = ?;
 
 insertOne:
-INSERT INTO ReminderData
-VALUES (?,?,?,?);
+INSERT INTO ReminderData(remindOn, ownerId, ownerType)
+VALUES (?,?,?);
+
+updateRemindOn:
+UPDATE ReminderData SET remindOn = ? WHERE remId = ?;
+
+updateLastReminded:
+UPDATE ReminderData SET lastReminded = ? WHERE remId = ?;
 
 deleteReminder:
 DELETE FROM ReminderData WHERE remId = ?;

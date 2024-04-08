@@ -2,6 +2,7 @@ package com.example.towardsgoalsapp.database.userdata
 
 import androidx.lifecycle.MutableLiveData
 import com.example.towardsgoalsapp.database.HabitData
+import com.example.towardsgoalsapp.database.HabitParameter
 import com.example.towardsgoalsapp.database.ImpIntData
 import com.example.towardsgoalsapp.database.TaskData
 
@@ -64,6 +65,26 @@ class ImpIntDataMutableArrayManager(
 
 }
 
+class HabitParameterMutableArrayManager(
+    private val mtArray: ArrayList<MutableLiveData<HabitParameter>>,
+    arrayList: ArrayList<HabitParameter>? = null
+): UserDataManager<HabitParameter>(mtArray, arrayList) {
+
+    init {
+        reputter = HabitParameterDataReputter(mtArray)
+        arrayList?.run {
+            val p = reputter.setWholeBasedOnArrayList(this)
+            contentState.value = p.first
+            addedCount.value = p.second
+        }
+        for (ud in arrayWithMutables)
+            ud.value?.run { idToUserData[getIdOf(this)] = this }
+    }
+
+    override fun getIdOf(userData: HabitParameter): Long = userData.paramId
+
+}
+
 abstract class UserDataManager<UserData> (
     protected val arrayWithMutables: ArrayList<MutableLiveData<UserData>>,
     protected val arrayList: ArrayList<UserData>?
@@ -89,43 +110,43 @@ abstract class UserDataManager<UserData> (
         idToUserData.clear()
         for (ud in arrayWithMutables)
             ud.value?.run { idToUserData[getIdOf(this)] = this }
-        contentState.value = ret.first!!
         addedCount.value = ret.second!!
+        contentState.value = ret.first!!
     }
 
     fun insertWholeArray(arrayList: ArrayList<UserData>) {
         val ret = reputter.reputBasedOnInsertOfArrayList(arrayList)
         for (ud in arrayList)
             idToUserData[getIdOf(ud)] = ud
-        contentState.value = ret.first!!
         addedCount.value = ret.second!!
+        contentState.value = ret.first!!
     }
 
     fun updateOneUserData(userData: UserData)   {
         val ret = reputter.reputBasedOnUpdateOf(userData)
             idToUserData[getIdOf(userData)] = userData
-        contentState.value = ret.first!!
         addedCount.value = ret.second!!
+        contentState.value = ret.first!!
     }
 
     fun insertOneUserData(userData: UserData)  {
         val ret = reputter.reputBasedOnInsertOf(userData)
         idToUserData[getIdOf(userData)] = userData
-        contentState.value = ret.first!!
         addedCount.value = ret.second!!
+        contentState.value = ret.first!!
     }
 
     fun deleteOneOldUserDataById(userDataId : Long) {
         val ud = getCurrentUserDataById(userDataId)
         if (ud == null) {
-            contentState.value = MutablesArrayContentState.REPUTTED
             addedCount.value = 0
+            contentState.value = MutablesArrayContentState.REPUTTED
             return
         }
         val ret = reputter.reputBasedOnDeleteOf(ud)
         idToUserData.remove(userDataId)
-        contentState.value = ret.first!!
         addedCount.value = ret.second!!
+        contentState.value = ret.first!!
     }
 
 }

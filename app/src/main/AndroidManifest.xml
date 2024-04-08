@@ -2,20 +2,60 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <application
         android:name=".main.App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.TowardsGoalsApp"
         tools:targetApi="31">
+        <service
+            android:name=".reminders.ReminderService"
+            android:enabled="true"
+            android:exported="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Reminders" />
+        </service>
+        <receiver android:name=".reminders.ReminderOnBootReceiver" android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <service
+            android:name=".tasks.ongoing.TaskDoingTimingService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Pomidoro Timer" />
+        </service>
+
         <activity
             android:name=".tasks.ongoing.TaskOngoing"
-            android:exported="false">
+            android:exported="false"
+            android:launchMode="singleTop"
+            >
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".habits.questioning.HabitQuestions"
+            android:exported="false"
+            android:launchMode="singleTop"
+           >
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
             </intent-filter>
@@ -28,7 +68,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".tasks.TaskDetails"
+            android:name=".tasks.details.TaskDetails"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
@@ -44,7 +84,8 @@
         <activity
             android:name=".main.MainActivity"
             android:exported="true"
-            android:label="">
+            android:label=""
+            android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

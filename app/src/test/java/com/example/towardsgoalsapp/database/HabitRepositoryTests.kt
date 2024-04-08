@@ -10,6 +10,7 @@ import com.google.common.truth.Truth.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule
 import org.junit.Test
+import java.time.Instant
 
 class HabitRepositoryTests {
 
@@ -118,7 +119,9 @@ class HabitRepositoryTests {
                         0,
                         0,
                         0,
-                        false
+                        false,
+                        0,
+                        null
                     ),
                     HabitData(
                         Constants.IGNORE_ID_AS_LONG,
@@ -131,7 +134,9 @@ class HabitRepositoryTests {
                         0,
                         0,
                         0,
-                        false
+                        false,
+                        0,
+                        null
                     ),
                     HabitData(
                         Constants.IGNORE_ID_AS_LONG,
@@ -144,7 +149,9 @@ class HabitRepositoryTests {
                         0,
                         0,
                         0,
-                        false
+                        false,
+                        0,
+                        null
                     ),
                     HabitData(
                         Constants.IGNORE_ID_AS_LONG,
@@ -157,7 +164,9 @@ class HabitRepositoryTests {
                         0,
                         0,
                         0,
-                        false
+                        false,
+                        0,
+                        null
                     )
                 ).map { MutableLiveData(it) }
             )
@@ -230,7 +239,9 @@ class HabitRepositoryTests {
             habList[0].habitDoneWellCount,
             habList[0].habitDoneNotWellCount,
             habList[0].habitTotalCount,
-            habList[0].habitTargetCompleted
+            habList[0].habitTargetCompleted,
+            habList[0].habitMarkCount,
+            habList[0].habitLastMarkedOn
         )
         mainRepo.markEditing(habId1, true)
         mainRepo.putAsUnfinished(editedHabit)
@@ -307,10 +318,13 @@ class HabitRepositoryTests {
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 0L)
         assertThat(habList.map { it.habitTotalCount }).containsExactly(0L, 0L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( false, false)
+        assertThat(habList.map { it.habitMarkCount }).containsExactly(0L, 0L)
+        assertThat(habList.map { it.habitLastMarkedOn }).containsExactly(null, null)
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal!!.goalProgress).isEqualTo(0.0)
 
-        mainRepo.skipHabit(habId1)
+        val i1 = Instant.now()
+        mainRepo.skipHabit(habId1, i1)
 
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
@@ -319,10 +333,14 @@ class HabitRepositoryTests {
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 0L)
         assertThat(habList.map { it.habitTotalCount }).containsExactly(1L, 0L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( false, false)
+        assertThat(habList.map { it.habitMarkCount }).containsExactly(0L, 0L)
+        assertThat(habList.map { it.habitMarkCount }).containsExactly(1L, 0L)
+        assertThat(habList.map { it.habitLastMarkedOn }).containsExactly(i1, null)
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal!!.goalProgress).isEqualTo(0.0)
 
-        mainRepo.markHabitDoneNotWell(habId1)
+        val i2 = Instant.now()
+        mainRepo.markHabitDoneNotWell(habId1, i2)
 
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
@@ -331,10 +349,13 @@ class HabitRepositoryTests {
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 1L, 0L)
         assertThat(habList.map { it.habitTotalCount }).containsExactly(2L, 0L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( false, false)
+        assertThat(habList.map { it.habitMarkCount }).containsExactly(2L, 0L)
+        assertThat(habList.map { it.habitLastMarkedOn }).containsExactly(i2, null)
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal!!.goalProgress).isEqualTo(0.0)
 
-        mainRepo.markHabitDoneWell(habId1)
+        val i3 = Instant.now()
+        mainRepo.markHabitDoneWell(habId1, i3)
 
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
@@ -343,13 +364,15 @@ class HabitRepositoryTests {
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 0L)
         assertThat(habList.map { it.habitTotalCount }).containsExactly(0L, 0L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( true, false)
+        assertThat(habList.map { it.habitMarkCount }).containsExactly(3L, 0L)
+        assertThat(habList.map { it.habitLastMarkedOn }).containsExactly(i3, null)
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal!!.goalProgress).isEqualTo(0.5)
 
-        mainRepo.markHabitDoneWell(habId1)
-        mainRepo.markHabitDoneWell(habId1)
-        mainRepo.markHabitDoneWell(habId1)
-        mainRepo.markHabitDoneWell(habId1)
+        mainRepo.markHabitDoneWell(habId1, Instant.now())
+        mainRepo.markHabitDoneWell(habId1, Instant.now())
+        mainRepo.markHabitDoneWell(habId1, Instant.now())
+        mainRepo.markHabitDoneWell(habId1, Instant.now())
 
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
@@ -358,13 +381,14 @@ class HabitRepositoryTests {
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 0L)
         assertThat(habList.map { it.habitTotalCount }).containsExactly(4L, 0L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( true, false)
+        assertThat(habList.map { it.habitMarkCount }).containsExactly(7L, 0L)
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal!!.goalProgress).isEqualTo(0.5)
 
-        mainRepo.markHabitDoneNotWell(habId2)
-        mainRepo.markHabitDoneNotWell(habId2)
-        mainRepo.markHabitDoneNotWell(habId2)
-        mainRepo.markHabitDoneNotWell(habId2)
+        mainRepo.markHabitDoneNotWell(habId2, Instant.now())
+        mainRepo.markHabitDoneNotWell(habId2, Instant.now())
+        mainRepo.markHabitDoneNotWell(habId2, Instant.now())
+        mainRepo.markHabitDoneNotWell(habId2, Instant.now())
 
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
@@ -373,12 +397,13 @@ class HabitRepositoryTests {
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 1L)
         assertThat(habList.map { it.habitTotalCount }).containsExactly(4L, 1L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( true, false)
+        assertThat(habList.map { it.habitMarkCount }).containsExactly(7L, 4L)
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal!!.goalProgress).isEqualTo(0.5)
 
-        mainRepo.skipHabit(habId2)
-        mainRepo.skipHabit(habId2)
-        mainRepo.skipHabit(habId2)
+        mainRepo.skipHabit(habId2, Instant.now())
+        mainRepo.skipHabit(habId2, Instant.now())
+        mainRepo.skipHabit(habId2, Instant.now())
 
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
@@ -387,15 +412,16 @@ class HabitRepositoryTests {
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 0L)
         assertThat(habList.map { it.habitTotalCount }).containsExactly(4L, 1L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( true, false)
+        assertThat(habList.map { it.habitMarkCount }).containsExactly(7L, 7L)
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal!!.goalProgress).isEqualTo(0.5)
 
-        mainRepo.markHabitDoneWell(habId2)
-        mainRepo.markHabitDoneWell(habId2)
-        mainRepo.markHabitDoneWell(habId2)
-        mainRepo.markHabitDoneWell(habId2)
-        mainRepo.markHabitDoneWell(habId2)
-        mainRepo.markHabitDoneWell(habId2)
+        mainRepo.markHabitDoneWell(habId2, Instant.now())
+        mainRepo.markHabitDoneWell(habId2, Instant.now())
+        mainRepo.markHabitDoneWell(habId2, Instant.now())
+        mainRepo.markHabitDoneWell(habId2, Instant.now())
+        mainRepo.markHabitDoneWell(habId2, Instant.now())
+        mainRepo.markHabitDoneWell(habId2, Instant.now())
 
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
@@ -404,6 +430,7 @@ class HabitRepositoryTests {
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 0L)
         assertThat(habList.map { it.habitTotalCount }).containsExactly(4L, 1L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( true, true)
+        assertThat(habList.map { it.habitMarkCount }).containsExactly(7L, 13L)
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal!!.goalProgress).isEqualTo(1.0)
 

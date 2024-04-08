@@ -35,6 +35,15 @@ class ImpIntDataReputter(
     }
 }
 
+class HabitParameterDataReputter(
+    private val mtArray: ArrayList<MutableLiveData<HabitParameter>>
+): UserDataReputter<HabitParameter>(mtArray) {
+
+    override fun getOrderNumber(userData: HabitParameter): Long {
+        return userData.paramId
+    }
+}
+
 abstract class UserDataReputter<UserData>(
     private val arrayWithMutables: ArrayList<MutableLiveData<UserData>>
 ) {

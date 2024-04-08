@@ -2,6 +2,7 @@ package com.example.towardsgoalsapp.database.userdata
 
 import androidx.lifecycle.MutableLiveData
 import com.example.towardsgoalsapp.database.HabitData
+import com.example.towardsgoalsapp.database.HabitParameter
 import com.example.towardsgoalsapp.database.ImpIntData
 import com.example.towardsgoalsapp.database.TaskData
 
@@ -68,4 +69,8 @@ interface ViewModelWithHabitsSharer {
 
 interface ViewModelWithImpIntsSharer {
     fun getImpIntsSharer() : ViewModelUserDataSharer<ImpIntData>?
+}
+
+interface ViewModelWithHabitParamsSharer {
+    fun getHabitParamsSharer() : ViewModelUserDataSharer<HabitParameter>?
 }

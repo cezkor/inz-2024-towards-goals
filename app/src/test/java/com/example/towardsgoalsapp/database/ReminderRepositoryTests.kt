@@ -93,6 +93,8 @@ class ReminderRepositoryTests {
             assertThat(onlyTaskRem).isNotNull()
             assertThat(onlyTaskRem!!.ownerType).isEqualTo(OwnerType.TYPE_TASK)
 
+            // add update statements
+
             repo.deleteById(remId2)
             repo.deleteById(remId3)
             assertThat(repo.getAll().size).isEqualTo(0)

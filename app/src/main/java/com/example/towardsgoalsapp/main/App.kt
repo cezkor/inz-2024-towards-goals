@@ -1,24 +1,38 @@
 package com.example.towardsgoalsapp.main
 
 import android.app.Application
-import androidx.sqlite.db.SupportSQLiteDatabase
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.util.Log
 import app.cash.sqldelight.db.SqlDriver
-import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 import com.example.towardsgoalsapp.Constants
-import com.example.towardsgoalsapp.database.TGDatabase
+import com.example.towardsgoalsapp.database.DatabaseGeneration
+import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
+
 
 class App: Application() {
 
-    val driver: SqlDriver = AndroidSqliteDriver(
-        schema = TGDatabase.Schema,
-        context = this,
-        name = Constants.DATABASE_FILE_NAME,
-        callback = object: AndroidSqliteDriver.Callback(TGDatabase.Schema) {
-            override fun onOpen(db: SupportSQLiteDatabase) {
-                db.setForeignKeyConstraintsEnabled(true)
-                super.onOpen(db)
-            }
+    override fun onCreate() {
+        super.onCreate()
+
+        // add task pomidoro notification channel in app context
+        val notificationManager =
+            getSystemService(NotificationManager::class.java)
+        if (notificationManager == null) {
+            Log.e("APPCREATE", "no notification manager")
+            return
         }
-    )
+        val taskPomidoroNotificationChannel = NotificationChannel(
+            Constants.TASK_POMIDORO_NOTIFICATION_CHANNEL,
+            "TowardsGoals: Pomidoro",
+            NotificationManager.IMPORTANCE_LOW
+        )
+        notificationManager.createNotificationChannel(taskPomidoroNotificationChannel)
+    }
+
+    val driver: SqlDriver = DatabaseGeneration.getDriver(this)
+
 
 }

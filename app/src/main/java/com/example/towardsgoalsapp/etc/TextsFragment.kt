@@ -14,9 +14,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.Constants.Companion.EMPTY_STRING
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.etc.errors.ErrorHandlingViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 
-abstract class TextsViewModel : ViewModel() {
+abstract class TextsViewModel : ErrorHandlingViewModel() {
 
     val nameOfData: MutableLiveData<String> = MutableLiveData(Constants.EMPTY_STRING)
 

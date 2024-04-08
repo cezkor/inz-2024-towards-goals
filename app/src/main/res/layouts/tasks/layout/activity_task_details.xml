@@ -29,6 +29,36 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/taskToolbar">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="20dp"
+            android:layout_weight="0"
+            android:orientation="horizontal"
+            >
+
+            <ImageButton
+                android:layout_weight="0"
+                android:layout_width="64dp"
+                android:layout_height="match_parent"
+                android:id="@+id/tabBackButton"
+                android:background="@color/transparent"
+                android:src="@drawable/tab_left"/>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                />
+
+            <ImageButton
+                android:layout_weight="0"
+                android:layout_width="64dp"
+                android:layout_height="match_parent"
+                android:src="@drawable/tab_right"
+                android:background="@color/transparent"
+                android:id="@+id/tabNextButton"/>
+
+        </LinearLayout>
 
         <com.google.android.material.tabs.TabLayout
             android:id="@+id/taskTabs"

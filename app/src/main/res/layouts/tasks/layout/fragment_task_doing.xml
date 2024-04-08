@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
 
     <TextView
         android:id="@+id/impIntTextView"
@@ -11,52 +12,34 @@
         android:layout_height="wrap_content"
         android:text="@string/impints_name_plural"
         app:layout_constrainedWidth="false"
-        app:layout_constraintBottom_toTopOf="@+id/impIntsContainer" />
+        android:layout_weight="0" />
 
     <FrameLayout
+        android:layout_weight="2"
         android:id="@+id/impIntsContainer"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/impIntTextView"
-        app:layout_constraintBottom_toTopOf="@id/divider2"
-        app:layout_constrainedWidth="false"/>
+        android:layout_height="wrap_content" />
 
     <View
-        android:id="@+id/divider2"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="?android:attr/listDivider"
-        app:layout_constraintBottom_toTopOf="@+id/linearLayout" />
+        android:layout_weight="0"
+        />
 
-    <LinearLayout
-        android:id="@+id/linearLayout"
+    <FrameLayout
+        android:layout_weight="1"
+        android:id="@+id/pomidoroContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+    <Button
+        android:layout_marginStart="5dp"
+        android:layout_marginEnd="5dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constrainedWidth="false"
-        app:layout_constraintBottom_toBottomOf="parent">
-
-        <Button
-            android:id="@+id/taskMarkDone"
-            style="@style/Widget.Style.TowardsGoalsApp.DoneButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="2dp"
-            android:layout_weight="1"
-            android:text="@string/tasks_done"
-            android:theme="@style/Widget.Theme.TowardsGoalsApp.UsualButton.Colored" />
-
-        <Button
-            android:id="@+id/taskMarkFailed"
-            style="@style/Widget.Style.TowardsGoalsApp.FailedButton"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="2dp"
-            android:layout_weight="1"
-            android:text="@string/tasks_failed"
-            android:theme="@style/Widget.Theme.TowardsGoalsApp.UsualButton.Colored" />
+        android:text="@string/tasks_end_task_and_proceed"
+        android:id="@+id/proceedButton"/>
 
 
-    </LinearLayout>
-
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

@@ -34,7 +34,16 @@ android {
 
 
     buildTypes {
+
+        debug {
+            buildConfigField("Boolean", "SHOULD_USE_TEST_DATA", "true")
+            kotlinOptions {
+                freeCompilerArgs = listOf("-Xdebug")
+            }
+        }
+
         release {
+            buildConfigField("Boolean", "SHOULD_USE_TEST_DATA", "false")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -44,7 +53,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
 
-
     }
     kotlinOptions {
         jvmTarget = "1.8"
@@ -53,6 +61,7 @@ android {
     buildToolsVersion = "33.0.1"
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 
 
@@ -71,16 +80,24 @@ sqldelight {
 
 dependencies {
 
+    // https://stackoverflow.com/questions/56639529/
+    // duplicate-class-com-google-common-util-concurrent-listenablefuture-found-in-modu
+    implementation("com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava")
+
+    implementation("com.github.signaflo:timeseries:0.4")
+    implementation("org.apache.commons:commons-math3:3.6.1")
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
     implementation("app.cash.sqldelight:android-driver:2.0.1")
     implementation("app.cash.sqldelight:primitive-adapters:2.0.1")
     implementation("app.cash.sqldelight:coroutines-extensions:2.0.1")
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("androidx.gridlayout:gridlayout:1.0.0")
-    implementation("com.google.android.material:material:1.8.0")
+    implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.legacy:legacy-support-v4:1.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("androidx.lifecycle:lifecycle-service:2.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.concurrent:concurrent-futures-ktx:1.1.0")
     implementation("androidx.recyclerview:recyclerview:1.3.0")

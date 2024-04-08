@@ -1,0 +1,53 @@
+CREATE TABLE TestDataPresent (
+    id INTEGER UNIQUE NOT NULL,
+    testStatus INTEGER NOT NULL,
+    CONSTRAINT onlyOne CHECK (id = 1)
+);
+
+getTestStatus:
+SELECT testStatus FROM TestDataPresent WHERE id = 1;
+
+setTestAsBeingGenerated:
+INSERT OR REPLACE INTO TestDataPresent(id, testStatus) VALUES (1,1);
+
+setTestAsGenerated:
+INSERT OR REPLACE INTO TestDataPresent(id, testStatus) VALUES (1,2);
+
+setTestAsNotExistent:
+INSERT OR REPLACE INTO TestDataPresent(id, testStatus) VALUES (1,0);
+
+CREATE TRIGGER deleteTestDataOnInsert
+AFTER INSERT ON TestDataPresent
+WHEN new.id = 1 AND new.testStatus = 0
+BEGIN
+    DELETE FROM TaskData;
+    DELETE FROM HabitData;
+    DELETE FROM GoalData;
+    DELETE FROM __GoalRecalcTable;
+    DELETE FROM MarkableTaskStatsData;
+    DELETE FROM HabitStatsData;
+    DELETE FROM ReminderData;
+    DELETE FROM ImpIntData;
+    DELETE FROM UnfinishedGoalData;
+    DELETE FROM UnfinishedTaskData;
+    DELETE FROM UnfinishedHabitData;
+    DELETE FROM UnfinishedImpIntData;
+END;
+
+CREATE TRIGGER deleteTestDataOnUpdate
+AFTER UPDATE ON TestDataPresent
+WHEN new.id = 1 AND new.testStatus = 0
+BEGIN
+    DELETE FROM TaskData;
+    DELETE FROM HabitData;
+    DELETE FROM GoalData;
+    DELETE FROM __GoalRecalcTable;
+    DELETE FROM MarkableTaskStatsData;
+    DELETE FROM HabitStatsData;
+    DELETE FROM ReminderData;
+    DELETE FROM ImpIntData;
+    DELETE FROM UnfinishedGoalData;
+    DELETE FROM UnfinishedTaskData;
+    DELETE FROM UnfinishedHabitData;
+    DELETE FROM UnfinishedImpIntData;
+END;

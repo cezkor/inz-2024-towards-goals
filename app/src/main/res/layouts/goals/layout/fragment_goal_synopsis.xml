@@ -26,15 +26,15 @@
                 style="@style/Widget.Style.TowardsGoalsApp.TitleTextView"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="85"
+                android:layout_weight="75"
                 android:text="@string/default_title" />
 
             <TextView
                 android:id="@+id/goalSynopsisGoalPage"
                 android:layout_width="0dp"
-                android:minWidth="20dp"
+                android:minWidth="50dp"
                 android:layout_height="match_parent"
-                android:layout_weight="15"
+                android:layout_weight="25"
                 android:text="@string/goals_goal_page" />
 
         </LinearLayout>

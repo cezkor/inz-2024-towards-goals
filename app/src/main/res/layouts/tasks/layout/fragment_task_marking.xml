@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.LinearLayoutCompat xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <TextView
+        android:id="@+id/taskDoingSummaryTV"
+        android:layout_marginTop="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="@string/tasks_doing_summary"
+        />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="@string/tasks_decide"
+        />
+
+    <LinearLayout
+    android:layout_weight="0"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <Button
+        android:id="@+id/taskMarkDone"
+        style="@style/Widget.Style.TowardsGoalsApp.DoneButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="2dp"
+        android:layout_weight="1"
+        android:text="@string/tasks_done"
+        android:theme="@style/Widget.Theme.TowardsGoalsApp.UsualButton.Colored" />
+
+    <Button
+        android:id="@+id/taskMarkFailed"
+        style="@style/Widget.Style.TowardsGoalsApp.FailedButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="2dp"
+        android:layout_weight="1"
+        android:text="@string/tasks_failed"
+        android:theme="@style/Widget.Theme.TowardsGoalsApp.UsualButton.Colored" />
+
+
+    </LinearLayout>
+</androidx.appcompat.widget.LinearLayoutCompat>

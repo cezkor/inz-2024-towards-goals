@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.towardsgoalsapp.etc.TextsViewModel
 import com.example.towardsgoalsapp.database.*
 import com.example.towardsgoalsapp.database.repositories.ImpIntRepository
+import com.example.towardsgoalsapp.database.repositories.ReminderRepository
+import com.example.towardsgoalsapp.database.repositories.StatsDataRepository
 import com.example.towardsgoalsapp.database.repositories.TaskRepository
 import com.example.towardsgoalsapp.etc.DescriptionFixer
 import com.example.towardsgoalsapp.database.userdata.ImpIntDataMutableArrayManager
@@ -12,6 +14,7 @@ import com.example.towardsgoalsapp.database.userdata.MutablesArrayContentState
 import com.example.towardsgoalsapp.database.userdata.MarkedMultipleModifyUserDataSharer
 import com.example.towardsgoalsapp.etc.NameFixer
 import com.example.towardsgoalsapp.database.userdata.ViewModelWithImpIntsSharer
+import com.example.towardsgoalsapp.stats.StatsShowing
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 
@@ -23,6 +26,8 @@ open class TaskViewModel(
 
     protected val taskRepo: TaskRepository = TaskRepository(dbo)
     protected val impIntRepo: ImpIntRepository = ImpIntRepository(dbo)
+    protected val statsRepo: StatsDataRepository = StatsDataRepository(dbo)
+    protected val reminderRepo: ReminderRepository = ReminderRepository(dbo)
 
     protected val getMutex: Mutex = Mutex()
 
@@ -33,6 +38,9 @@ open class TaskViewModel(
 
     protected val arrayOfMutableImpIntDataManager: ImpIntDataMutableArrayManager
         = ImpIntDataMutableArrayManager(arrayOfMutableImpIntData)
+
+    val canShowTasksStats: MutableLiveData<Boolean> = MutableLiveData(false)
+    suspend fun checkIfCanShowTasksStats() = StatsShowing.canShowTaskGeneralStats(statsRepo, taskId)
 
     protected var addedImpIntsSet: Set<Long> = setOf()
     protected var removedImpIntsSet: Set<Long> = setOf()

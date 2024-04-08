@@ -14,6 +14,7 @@ CREATE TABLE TaskData (
     subtasksCount INTEGER DEFAULT 0 NOT NULL,
     taskDone INTEGER AS Boolean DEFAULT 0 NOT NULL,
     taskFailed INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    taskPriority INTEGER AS Int DEFAULT 0 NOT NULL , -- highest priority 0, lowest 4
     FOREIGN KEY (taskOwnerId) REFERENCES TaskData (taskId) ON DELETE CASCADE,
     FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE,
     CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 OR taskFailed != 1 ),
@@ -49,6 +50,7 @@ CREATE TABLE UnfinishedTaskData (
     subtasksCount INTEGER DEFAULT 0 NOT NULL,
     taskDone INTEGER AS Boolean DEFAULT 0 NOT NULL,
     taskFailed INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    taskPriority INTEGER AS Int DEFAULT 0 NOT NULL ,
     FOREIGN KEY (taskOwnerId) REFERENCES TaskData (taskId) ON DELETE CASCADE,
     FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE,
     CONSTRAINT taskNotDoneImpliesNotFailed CHECK ( taskDone !=0 OR taskFailed != 1 ),
@@ -184,12 +186,12 @@ selectGivenUnfinishedTask:
 SELECT * FROM UnfinishedTaskData WHERE taskId = ?;
 
 insertOneTask:
-INSERT INTO TaskData(taskId, taskName, taskDescription, taskOwnerId, goalId, taskDepth)
-VALUES (?,?,?,?,?,?);
+INSERT INTO TaskData(taskId, taskName, taskDescription, taskOwnerId, goalId, taskDepth, taskPriority)
+VALUES (?,?,?,?,?,?, ?);
 
 insertOneEditUnfinishedTask:
 INSERT OR REPLACE INTO UnfinishedTaskData
-VALUES (?,?,?,?,?,?,?,?,?,?);
+VALUES (?,?,?,?,?,?,?,?,?,?,?);
 
 markTaskDoneWell:
 UPDATE TaskData SET taskDone = 1, taskFailed = 0 WHERE taskId = ? AND subtasksCount = 0;
@@ -199,6 +201,9 @@ UPDATE TaskData SET taskDone = 1, taskFailed = 1 WHERE taskId = ? AND subtasksCo
 
 updateTaskTexts:
 UPDATE TaskData SET taskName = ?, taskDescription = ? WHERE taskId = ?;
+
+updateTaskPriority:
+UPDATE TaskData SET taskPriority = ? WHERE taskId = ?;
 
 markTaskEdit:
 UPDATE TaskData SET taskEditUnfinished = ? WHERE taskId = ?;

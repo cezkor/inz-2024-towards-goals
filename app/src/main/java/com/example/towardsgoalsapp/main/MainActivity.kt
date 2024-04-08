@@ -1,9 +1,13 @@
 package com.example.towardsgoalsapp.main
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.util.Log
 import android.view.Menu
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
@@ -13,16 +17,22 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
+import com.example.towardsgoalsapp.BuildConfig
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.database.DatabaseGeneration
 import com.example.towardsgoalsapp.database.DatabaseObjectFactory
 import com.example.towardsgoalsapp.database.TGDatabase
+import com.example.towardsgoalsapp.etc.errors.ErrorHandling
+import com.example.towardsgoalsapp.etc.errors.ErrorHandlingViewModel
 import com.example.towardsgoalsapp.goals.AddGoalSuggestion
 import com.example.towardsgoalsapp.goals.GoalSynopsis
 import com.example.towardsgoalsapp.goals.GoalSynopsisesViewModel
 import com.example.towardsgoalsapp.goals.GoalSynopsisesViewModelFactory
+import com.example.towardsgoalsapp.reminders.ReminderService
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
@@ -49,14 +59,49 @@ class MainActivity : AppCompatActivity() {
     private lateinit var goalPager: ViewPager2
     private lateinit var databaseObject: TGDatabase
 
+    private var isServiceRunning: Boolean = false
+    private fun tryToRunReminderServiceIfApplicable() {
+        val lbm = LocalBroadcastManager.getInstance(this)
+        lbm.sendBroadcastSync(Intent(ReminderService.IS_SERVICE_ALIVE_INTENT_FILTER))
+        if (! isServiceRunning) {
+            startForegroundService(Intent(this, ReminderService::class.java))
+        }
+    }
+
+    private var externalUIRefreshReceiver: BroadcastReceiver? = null
+
+    private var reminderServiceAliveReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent == null) {
+                isServiceRunning = false
+                return
+            }
+            if (intent.action != ReminderService.SERVICE_ALIVE_INTENT_FILTER) {
+                isServiceRunning = false
+                return
+            }
+            isServiceRunning = true
+        }
+    }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.title_only_menu, menu)
         return true
     }
 
+    override fun onDestroy() {
+        externalUIRefreshReceiver?.run {
+            LocalBroadcastManager.getInstance(this@MainActivity)
+                .unregisterReceiver(this)
+        }
+        super.onDestroy()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        tryToRunReminderServiceIfApplicable()
 
         val toolbar:  androidx.appcompat.widget.Toolbar= findViewById(R.id.goalToolbar)
         toolbar.setTitle(R.string.app_name)
@@ -69,15 +114,39 @@ class MainActivity : AppCompatActivity() {
         sharedViewModelForAllPages =
             ViewModelProvider(this,
         GoalSynopsisesViewModelFactory(databaseObject))[GoalSynopsisesViewModel::class.java]
+                                                                //  match everything
+        externalUIRefreshReceiver = ShouldRefreshUIBroadcastReceiver(null) {
+            lifecycleScope.launch {
+                Log.i(LOG_TAG, "Getting goals because of refresh request")
+                sharedViewModelForAllPages.getEverything()
+            }
+        }
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            externalUIRefreshReceiver!!,
+            IntentFilter(ShouldRefreshUIBroadcastReceiver.INTENT_FILTER)
+        )
+
+        Log.i(LOG_TAG, "application should be running on test data: " +
+                "${BuildConfig.SHOULD_USE_TEST_DATA}")
+        if (BuildConfig.SHOULD_USE_TEST_DATA) {
+            lifecycleScope.launch(sharedViewModelForAllPages.exceptionHandler) {
+            if (DatabaseGeneration.assureDatabaseHasTestData(databaseObject)) {
+                Log.i(LOG_TAG, "getEverything because filled out test data")
+                Toast.makeText(this@MainActivity,
+                    getString(R.string.put_test_data), Toast.LENGTH_SHORT).show()
+                sharedViewModelForAllPages.getEverything()
+            }
+        } }
+
+        sharedViewModelForAllPages.exceptionMutable.observe(this) {
+            ErrorHandling.showExceptionDialog(this, it)
+        }
 
         Log.i(LOG_TAG, "created viewmodel: $sharedViewModelForAllPages")
 
         goalPager = findViewById(R.id.goalPager)
 
         // position in page is the same as position in the goal data states array
-        val adapter = GoalPagesAdapter(this,
-            sharedViewModelForAllPages.arrayOfGoalDataStates)
-
         fun recreatePagerAdapter() {
             goalPager.adapter = GoalPagesAdapter(
                 this,
@@ -118,7 +187,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         sharedViewModelForAllPages.allReady.observe(this) {
-            if (it) {
+            it.handleIfNotHandledWith {
+                if (! it.value) return@handleIfNotHandledWith
                 // if all ready -> create the adapter as everything that could be
                 goalPager.adapter = GoalPagesAdapter(
                     this,
@@ -127,7 +197,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        lifecycleScope.launch {
+        lifecycleScope.launch(sharedViewModelForAllPages.exceptionHandler) {
             repeatOnLifecycle(Lifecycle.State.CREATED) {
                 Log.i(LOG_TAG, "Getting goals")
                 sharedViewModelForAllPages.getEverything()

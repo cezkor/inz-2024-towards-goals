@@ -2,7 +2,7 @@ package com.example.towardsgoalsapp.database.repositories
 
 import androidx.lifecycle.MutableLiveData
 import com.example.towardsgoalsapp.Constants
-import com.example.towardsgoalsapp.database.HabitData
+import com.example.towardsgoalsapp.OwnerType
 import com.example.towardsgoalsapp.database.TGDatabase
 import com.example.towardsgoalsapp.database.TaskData
 import kotlinx.coroutines.Dispatchers
@@ -30,7 +30,7 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
     }
 
     suspend fun addTask(taskName: String, taskDescription: String,
-                        goalId: Long, taskOwnerId: Long?, taskDepth: Int) : Pair<Long, Boolean> {
+                        goalId: Long, taskOwnerId: Long?, taskDepth: Int, taskPriority: Int) : Pair<Long, Boolean> {
 
         return withContext(Dispatchers.IO) {
 
@@ -43,7 +43,8 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
                 taskDescription,
                 taskOwnerId,
                 goalId,
-                taskDepth
+                taskDepth,
+                taskPriority
             )
             return@withContext Pair<Long, Boolean>(
                 db.taskDataQueries.
@@ -65,7 +66,8 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
                 taskData.taskDepth,
                 taskData.subtasksCount,
                 taskData.taskDone,
-                taskData.taskFailed
+                taskData.taskFailed,
+                taskData.taskPriority
             )
         }
     }
@@ -87,12 +89,19 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
                         taskDescription,
                         taskOwnerId,
                         goalId,
-                        taskDepth
+                        taskDepth,
+                        taskPriority
                     )
                 } }
             }
 
             return@withContext retVal
+        }
+    }
+
+    suspend fun updatePriority(id: Long, priority: Int) {
+        return withContext(Dispatchers.IO) {
+            db.taskDataQueries.updateTaskPriority(priority, id)
         }
     }
 
@@ -144,7 +153,8 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
                     utd.taskDepth,
                     utd.subtasksCount,
                     utd.taskDone,
-                    utd.taskFailed
+                    utd.taskFailed,
+                    utd.taskPriority
                 )
             }
             else {
@@ -157,6 +167,9 @@ class TaskRepository(private val db: TGDatabase): OwnedByOneTypeOnlyOwnerUserDat
         return withContext(Dispatchers.IO) {
             db.taskDataQueries.transaction {
                 val ids = db.taskDataQueries.__getIdsOfAllOwnersOfTask(id).executeAsList()
+                val reminder = db.reminderDataQueries.selectOf(id, OwnerType.TYPE_TASK)
+                    .executeAsOneOrNull()
+                reminder?.run { db.reminderDataQueries.deleteReminder(reminder.remId) }
                 db.taskDataQueries.deleteTask(id)
                 for ( idObj in ids ) {
                     db.taskDataQueries.__triggerProgressRecalcForTask(idObj)

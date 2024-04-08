@@ -8,29 +8,23 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant
 
-object FromOldestToNewestComparator: Comparator<ReminderData> {
-    override fun compare(o1: ReminderData?, o2: ReminderData?): Int {
-        if (o1 == null && o2 == null) return 0
-        if (o1 == null) return -1
-        if (o2 == null) return 1
-        return o1.remindOn.compareTo(o2.remindOn)
-    }
-
-}
-
 class ReminderRepository(private val db: TGDatabase) : OwnedByTypedOwnerUserData {
 
     suspend fun getAll(): List<ReminderData> {
         return withContext(Dispatchers.IO) {
             db.reminderDataQueries.
-            selectAll().executeAsList().sortedWith(FromOldestToNewestComparator)
+            selectAll().executeAsList()
         }
     }
+    // note: Tasks/Habits have 1-1 mapping with their Reminders
     override suspend fun getAllByOwnerTypeAndId(ownerType: OwnerType, ownerId: Long, allowUnfinished: Boolean): ReminderData? {
         return withContext(Dispatchers.IO) {
             db.reminderDataQueries.selectOf(ownerId, ownerType).executeAsOneOrNull()
         }
     }
+
+    suspend fun getOneByOwnerTypeAndId(ownerType: OwnerType, ownerId: Long)
+        : ReminderData? = getAllByOwnerTypeAndId(ownerType, ownerId, false)
 
     override suspend fun getOneById(id: Long, allowUnfinished: Boolean): ReminderData? {
         // status of finished is unused
@@ -49,13 +43,24 @@ class ReminderRepository(private val db: TGDatabase) : OwnedByTypedOwnerUserData
                             ownerType: OwnerType, ownerId: Long) : Long {
         return withContext(Dispatchers.IO) {
             db.reminderDataQueries.insertOne(
-                null,
                 remindOn,
                 ownerId,
                 ownerType
             )
             db.reminderDataQueries.
             lastInsertRowId().executeAsOneOrNull()?: Constants.IGNORE_ID_AS_LONG
+        }
+    }
+
+    suspend fun updateRemindOn(remId: Long, remindOn: Instant) {
+        return withContext(Dispatchers.IO) {
+            db.reminderDataQueries.updateRemindOn(remindOn, remId)
+        }
+    }
+
+    suspend fun updateLastReminded(remId: Long, remindedOn: Instant) {
+        return withContext(Dispatchers.IO) {
+            db.reminderDataQueries.updateLastReminded(remindedOn, remId)
         }
     }
 

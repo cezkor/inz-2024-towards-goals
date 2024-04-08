@@ -1,3 +1,4 @@
+import java.time.Instant;
 import kotlin.Boolean;
 
 CREATE TABLE HabitData (
@@ -12,6 +13,8 @@ CREATE TABLE HabitData (
     habitDoneNotWellCount INTEGER DEFAULT 0 NOT NULL,
     habitTotalCount INTEGER DEFAULT 0 NOT NULL,
     habitTargetCompleted INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    habitMarkCount INTEGER DEFAULT 0 NOT NULL,
+    habitLastMarkedOn TEXT AS Instant,
     FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE,
     CONSTRAINT properTarget CHECK ( habitTargetCount > 0 AND habitTargetPeriod > 0 )
 );
@@ -27,6 +30,8 @@ CREATE TABLE UnfinishedHabitData (
     habitDoneNotWellCount INTEGER DEFAULT 0 NOT NULL,
     habitTotalCount INTEGER DEFAULT 0 NOT NULL,
     habitTargetCompleted INTEGER AS Boolean DEFAULT 0 NOT NULL,
+    habitMarkCount INTEGER DEFAULT 0 NOT NULL,
+    habitLastMarkedOn TEXT AS Instant,
     FOREIGN KEY (goalId) REFERENCES GoalData (goalId) ON DELETE CASCADE,
     CONSTRAINT properTarget CHECK ( habitTargetCount > 0 AND habitTargetPeriod > 0 )
 );
@@ -40,8 +45,7 @@ END;
 
 CREATE TRIGGER checkIfMatchedTarget
 AFTER UPDATE ON HabitData
-WHEN ( (new.habitTargetPeriod <= new.habitTotalCount)
-        AND new.habitTargetCompleted != 1 )
+WHEN ( (new.habitTargetPeriod <= new.habitTotalCount) )
 BEGIN
     UPDATE HabitData
     SET habitTargetCompleted = (
@@ -61,7 +65,8 @@ BEGIN
             CASE WHEN T.resultPercentage >= T.targetPercentage THEN 1 ELSE 0 END
         FROM T
     )
-    WHERE habitId = new.habitId;
+    WHERE habitId = new.habitId
+    AND habitTargetCompleted != 1; -- do not recalc progress of already accomplished habit
 
     UPDATE HabitData SET
         habitTotalCount = 0,
@@ -105,21 +110,28 @@ VALUES (?,?,?,?,?,?);
 
 insertOneEditUnfinishedHabit:
 INSERT OR REPLACE INTO UnfinishedHabitData
-VALUES (?,?,?,?,?,?,?,?,?,?);
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?);
 
 markHabitAsDoneWell:
 UPDATE HabitData
-SET habitDoneWellCount = habitDoneWellCount + 1, habitTotalCount = habitTotalCount + 1
+SET habitDoneWellCount = habitDoneWellCount + 1, habitLastMarkedOn = ?,
+habitTotalCount = habitTotalCount + 1, habitMarkCount = habitMarkCount + 1
 WHERE habitId = ?;
 
 markHabitAsNotDoneWell:
 UPDATE HabitData
-SET habitDoneNotWellCount = habitDoneNotWellCount + 1, habitTotalCount = habitTotalCount + 1
+SET habitDoneNotWellCount = habitDoneNotWellCount + 1, habitLastMarkedOn = ?,
+habitTotalCount = habitTotalCount + 1, habitMarkCount = habitMarkCount + 1
 WHERE habitId = ?;
 
 skipHabit:
 UPDATE HabitData
-SET habitTotalCount = habitTotalCount + 1
+SET habitTotalCount = habitTotalCount + 1, habitMarkCount = habitMarkCount + 1, habitLastMarkedOn = ?
+WHERE habitId = ?;
+
+autoSkipHabitByDayCount:
+UPDATE HabitData
+SET habitTotalCount = habitTotalCount + ?, habitMarkCount = habitMarkCount + ?
 WHERE habitId = ?;
 
 updateHabitTargets:

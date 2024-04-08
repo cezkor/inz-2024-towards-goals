@@ -19,6 +19,8 @@ import com.example.towardsgoalsapp.database.userdata.TaskDataMutableArrayManager
 import com.example.towardsgoalsapp.database.userdata.ViewModelUserDataSharer
 import com.example.towardsgoalsapp.database.userdata.ViewModelWithManyHabitsSharers
 import com.example.towardsgoalsapp.database.userdata.ViewModelWithManyTasksSharers
+import com.example.towardsgoalsapp.etc.OneTimeEventWithValue
+import com.example.towardsgoalsapp.etc.errors.ErrorHandlingViewModel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -30,7 +32,7 @@ class GoalSynopsisesViewModelFactory(private val dbo: TGDatabase): ViewModelProv
 }
 
 class GoalSynopsisesViewModel(private val dbo: TGDatabase):
-    ViewModel(), ViewModelWithManyHabitsSharers, ViewModelWithManyTasksSharers {
+    ErrorHandlingViewModel(), ViewModelWithManyHabitsSharers, ViewModelWithManyTasksSharers {
 
     private val goalRepo = GoalRepository(dbo)
 
@@ -66,7 +68,7 @@ class GoalSynopsisesViewModel(private val dbo: TGDatabase):
     val arrayOfGoalDataStates: Array<MutableLiveData<MutableGoalDataStates>> =
         Array(Constants.MAX_GOALS_AMOUNT) { MutableLiveData(MutableGoalDataStates.NOT_READY) }
 
-    val allReady: MutableLiveData<Boolean> = MutableLiveData(false)
+    val allReady: MutableLiveData<OneTimeEventWithValue<Boolean>> = MutableLiveData()
     private val getMutex = Mutex()
 
     private val gidToPosition = HashMap<Long, Int>()
@@ -89,6 +91,9 @@ class GoalSynopsisesViewModel(private val dbo: TGDatabase):
                 )
             }
         }
+        else {
+            habitDataArrayManagerPerGoal[id]!!.setUserDataArray(habits)
+        }
         if (! taskDataArraysPerGoal.containsKey(id)){
             taskDataArraysPerGoal[id] = ArrayList()
         }
@@ -99,11 +104,14 @@ class GoalSynopsisesViewModel(private val dbo: TGDatabase):
                 )
             }
         }
+        else {
+            taskDataArrayManagerPerGoal[id]!!.setUserDataArray(tasks)
+        }
     }
 
     suspend fun getEverything() = getMutex.withLock {
             // for every goal up to max amount, based on its page number put it in the array
-        allReady.value = false
+        allReady.value = OneTimeEventWithValue<Boolean>(false)
 
         val goals = goalRepo.getAllGoals()
 
@@ -121,14 +129,15 @@ class GoalSynopsisesViewModel(private val dbo: TGDatabase):
                 arrayOfGoalDataStates[pnum].value = MutableGoalDataStates.INITIALIZED_EMPTY
         }
 
-        allReady.value = true
+        allReady.value = OneTimeEventWithValue<Boolean>(true)
     }
 
     private fun createSharerForTasksOf(goalId: Long): ViewModelUserDataSharer<TaskData> = object :
         OneModifyUserDataSharer<TaskData> {
         override fun getArrayOfUserData(): ArrayList<MutableLiveData<TaskData>>?
                 = taskDataArraysPerGoal[goalId]
-        override fun signalNeedOfChangeFor(userDataId: Long) { viewModelScope.launch {
+        override fun signalNeedOfChangeFor(userDataId: Long) { viewModelScope
+            .launch(exceptionHandler) {
             if (userDataId == Constants.IGNORE_ID_AS_LONG) return@launch
             val manager = taskDataArrayManagerPerGoal[goalId]
             val list = taskDataArraysPerGoal[goalId]
@@ -162,7 +171,8 @@ class GoalSynopsisesViewModel(private val dbo: TGDatabase):
         OneModifyUserDataSharer<HabitData> {
         override fun getArrayOfUserData(): ArrayList<MutableLiveData<HabitData>>?
                 = habitDataArraysPerGoal[goalId]
-        override fun signalNeedOfChangeFor(userDataId: Long) { viewModelScope.launch {
+        override fun signalNeedOfChangeFor(userDataId: Long) {
+            viewModelScope.launch(exceptionHandler) {
             if (userDataId == Constants.IGNORE_ID_AS_LONG) return@launch
             val manager = habitDataArrayManagerPerGoal[goalId]
             val list = habitDataArraysPerGoal[goalId]
@@ -195,7 +205,7 @@ class GoalSynopsisesViewModel(private val dbo: TGDatabase):
         // to fetch it
         val pos = gidToPosition[goalId]
 
-        viewModelScope.launch { getMutex.withLock {
+        viewModelScope.launch(exceptionHandler) { getMutex.withLock {
             if (goalId == Constants.IGNORE_ID_AS_LONG) return@withLock
             val goal = goalRepo.getOneById(goalId)
             if (goal == null) { // it was probably removed

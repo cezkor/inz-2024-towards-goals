@@ -6,4 +6,5 @@
     <string name="menu_delete">Usuń</string>
     <string name="goals_adding_goal">Dodawanie celu</string>
     <string name="goals_goal_page">Cel %d ze %d</string>
+    <string name="goals_pick_a_task_or_habit">Wybierz rodzaj statystyk do pokazania</string>
 </resources>

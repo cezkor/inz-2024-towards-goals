@@ -19,7 +19,7 @@ class TaskItemListAdapter(
     private val taskDoneImage: Drawable?,
     private val taskFailedImage : Drawable?,
     private val taskWithSubtasksImage: Drawable?,
-    private val editUnfinishedImage: Drawable?
+    private val editUnfinishedImage: Drawable?,
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {

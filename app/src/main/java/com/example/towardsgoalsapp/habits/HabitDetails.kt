@@ -1,14 +1,17 @@
 package com.example.towardsgoalsapp.habits
 
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.PersistableBundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ImageButton
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
@@ -20,6 +23,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.example.towardsgoalsapp.Constants
@@ -30,17 +34,24 @@ import com.example.towardsgoalsapp.habits.HabitInfoContract.Companion.HABIT_ID_F
 import com.example.towardsgoalsapp.impints.ImpIntItemList
 import com.example.towardsgoalsapp.etc.OneTextFragment
 import com.example.towardsgoalsapp.etc.TextsFragment
-import com.example.towardsgoalsapp.reminders.ReminderSetting
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.example.towardsgoalsapp.database.*
-import com.example.towardsgoalsapp.etc.SaveSuccessToastLauncher
+import com.example.towardsgoalsapp.etc.OneTimeEvent
+import com.example.towardsgoalsapp.etc.OneTimeHandleable
+import com.example.towardsgoalsapp.etc.errors.ErrorHandling
+import com.example.towardsgoalsapp.etc.errors.SaveSuccessToastLauncher
 import com.example.towardsgoalsapp.habits.HabitInfoContract.Companion.GOAL_ID_FROM_REQUESTER
 import com.example.towardsgoalsapp.habits.HabitInfoContract.Companion.HABIT_ID_IF_REFRESH_FOR_REQUESTER
+import com.example.towardsgoalsapp.habits.params.HabitTargets
 import com.example.towardsgoalsapp.habits.questioning.HabitQuestioningContract
 import com.example.towardsgoalsapp.habits.questioning.HabitQuestioningLauncher
 import com.example.towardsgoalsapp.main.App
-import com.example.towardsgoalsapp.tasks.TaskDetails
+import com.example.towardsgoalsapp.habits.params.HabitStatsFragment
+import com.example.towardsgoalsapp.main.RefreshTypes
+import com.example.towardsgoalsapp.main.ShouldRefreshUIBroadcastReceiver
+import com.example.towardsgoalsapp.reminders.ReminderService
+import com.example.towardsgoalsapp.tasks.details.TaskDetails
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -83,7 +94,7 @@ class HabitDetails : AppCompatActivity() {
     companion object{
         const val LOG_TAG = "HabitDetails"
 
-        const val LAST_TAB_ID = "hdlt"
+        const val LAST_TAB_IDX = "hdlt"
         const val HABIT_ID = "hdhid"
         const val GOAL_ID = "hdgid"
         const val UNFINISHED_EDITING = "hdue"
@@ -93,13 +104,28 @@ class HabitDetails : AppCompatActivity() {
         private const val TARGETS_TAB_ID = 1
         private const val IMP_INTS_TAB_ID = 2
         private const val REMINDER_TAB_ID = 3
-        private const val TAB_COUNT = 4
+        private const val STATS_TAB_ID = 4
+
+        fun getTabIdOfPosition(position: Int, forAdding: Boolean) : Int {
+            return when(position) {
+                0 -> TEXTS_TAB_ID
+                1 -> TARGETS_TAB_ID
+                2 -> if (! forAdding) STATS_TAB_ID else REMINDER_TAB_ID
+                3 -> if (! forAdding) REMINDER_TAB_ID else IMP_INTS_TAB_ID
+                4 -> if (! forAdding) IMP_INTS_TAB_ID else -1
+                else -> -1
+            }
+        }
+
+        fun getTabCount(forAdding: Boolean) : Int = if (forAdding) 4 else 5
+
     }
 
     private val classNumber = Constants.viewModelClassToNumber[HabitViewModel::class.java]
 
     private lateinit var viewModel: HabitViewModel
     private lateinit var databaseObject: TGDatabase
+    private lateinit var lbm: LocalBroadcastManager
 
     private var habitId = Constants.IGNORE_ID_AS_LONG
     private var goalId = Constants.IGNORE_ID_AS_LONG
@@ -108,8 +134,9 @@ class HabitDetails : AppCompatActivity() {
     private var forAdding: Boolean = false
     private var isUnfinished: Boolean = false
 
-    private var lastTabId: Int = TEXTS_TAB_ID
+    private var lastTabIdx: Int = 0
     private lateinit var tabsPager: ViewPager2
+    private lateinit var tabLayoutMediator: TabLayoutMediator
 
     private lateinit var habitQuestioningLauncher: HabitQuestioningLauncher
 
@@ -117,6 +144,7 @@ class HabitDetails : AppCompatActivity() {
     private lateinit var refreshRequesterCallback: OnBackPressedCallback
 
     private var canQuestionAboutThisHabit: Boolean = false
+    private var reloadUIBroadcastReceiver: BroadcastReceiver? = null
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.habit_detail_menu, menu)
@@ -134,7 +162,7 @@ class HabitDetails : AppCompatActivity() {
             else
                 menu?.findItem(R.id.editHabitItem)?.title = getString(R.string.edit_end_name)
         }
-        if (!canQuestionAboutThisHabit) {
+        if (!canQuestionAboutThisHabit || isEdit) {
             menu?.removeItem(R.id.habitMarkDoneItem)
         }
         return true
@@ -142,19 +170,23 @@ class HabitDetails : AppCompatActivity() {
 
     private fun recreatePagerAdapter() {
         tabsPager.adapter = HabitDetailsPageAdapter(this)
+        tabLayoutMediator.detach()
+        tabLayoutMediator.attach()
+    }
+
+    private fun addHabitIfNotPresentAndThenDoUnit(launchUnit: () -> Unit) {
+        if (habitId == Constants.IGNORE_ID_AS_LONG) {
+            lifecycleScope.launch(viewModel.exceptionHandler) {
+            // can't add task/impint of goal if there is no goal -> add is as unfinished
+            val saved = viewModel.saveMainDataAsUnfinished()
+            if (saved && viewModel.mutableHabitData.value != null) {
+                habitId = viewModel.mutableHabitData.value!!.habitId
+                launchUnit()
+            } }
+        } else launchUnit()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        fun carefullyAddThing(launchUnit: () -> Unit) {
-            if (habitId == Constants.IGNORE_ID_AS_LONG) { lifecycleScope.launch {
-                // can't add task/impint of goal if there is no goal -> add is as unfinished
-                val saved = viewModel.saveMainDataAsUnfinished()
-                if (saved && viewModel.mutableHabitData.value != null) {
-                    habitId = viewModel.mutableHabitData.value!!.habitId
-                    launchUnit()
-                } }
-            } else launchUnit()
-        }
 
         fun determineResultAndFinish() {
             determineResultOnPlannedFinish()
@@ -170,26 +202,31 @@ class HabitDetails : AppCompatActivity() {
                     recreatePagerAdapter()
                     invalidateMenu()
                 }
-                tabsPager.currentItem = IMP_INTS_TAB_ID
+                // set tab idx to that of imp ints
+                tabsPager.currentItem = when(getTabIdOfPosition(4, forAdding)){
+                    IMP_INTS_TAB_ID -> 4
+                    else -> 3 // assume impints tab is on position 3
+                }
                 fun launchAdding() {
-                    lifecycleScope.launch {
+                    lifecycleScope.launch(viewModel.exceptionHandler) {
                         val wasEmpty = viewModel.getImpIntsSharer().isArrayConsideredEmpty()
                         viewModel.addOneNewEmptyImpInt()
                         if (wasEmpty) runOnUiThread {recreatePagerAdapter()}
                     }
                 }
-                carefullyAddThing { launchAdding() }
+                viewModel.assureOfExistingHabitHandleableMutable
+                    .value = OneTimeHandleable { launchAdding() }
                 true
             }
             R.id.editHabitItem -> {
                 if (! forAdding) {
-                    val curTab = tabsPager.currentItem
+                    val curTabIdx = tabsPager.currentItem
                     if (isEdit) {
                         isEdit = false
                         doubleTapCallback.isEnabled = false
                         refreshRequesterCallback.isEnabled = true
                         recreatePagerAdapter()
-                        lifecycleScope.launch {
+                        lifecycleScope.launch(viewModel.exceptionHandler) {
                             SaveSuccessToastLauncher
                                 .launchToast(this@HabitDetails, viewModel.saveMainData())
                         }
@@ -199,9 +236,9 @@ class HabitDetails : AppCompatActivity() {
                         refreshRequesterCallback.isEnabled = false
                         recreatePagerAdapter()
                     }
-                    tabsPager.currentItem = curTab
+                    tabsPager.currentItem = curTabIdx
                 }
-                else lifecycleScope.launch {
+                else lifecycleScope.launch(viewModel.exceptionHandler) {
                     isEdit = false
                     recreatePagerAdapter()
                     if (viewModel.saveMainData())
@@ -209,7 +246,10 @@ class HabitDetails : AppCompatActivity() {
                             habitId = viewModel.mutableHabitData.value?.habitId ?: habitId
                             determineResultAndFinish()
                         }
-
+                    else ErrorHandling.showThrowableAsToast(
+                        this@HabitDetails,
+                        Throwable(getString(R.string.failed_to_save_data))
+                    )
                 }
                 if (canQuestionAboutThisHabit != ! isEdit) {
                     canQuestionAboutThisHabit = ! isEdit
@@ -229,7 +269,8 @@ class HabitDetails : AppCompatActivity() {
             R.id.deleteHabitItem -> {
                 if (forAdding) {
                     habitId = Constants.IGNORE_ID_AS_LONG;
-                    if (viewModel.mutableHabitData.value != null) { lifecycleScope.launch {
+                    if (viewModel.mutableHabitData.value != null) {
+                        lifecycleScope.launch(viewModel.exceptionHandler) {
                         viewModel.deleteWholeHabit()
                         runOnUiThread { determineResultAndFinish() }
                     } }
@@ -237,7 +278,7 @@ class HabitDetails : AppCompatActivity() {
                         runOnUiThread { determineResultAndFinish() }
                     }
                 }
-                else { lifecycleScope.launch {
+                else { lifecycleScope.launch(viewModel.exceptionHandler) {
                     viewModel.deleteWholeHabit()
                     runOnUiThread { determineResultAndFinish() }
                 } }
@@ -245,6 +286,23 @@ class HabitDetails : AppCompatActivity() {
             }
             else -> false
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        lbm.sendBroadcast(
+            Intent(ReminderService.EDIT_ONGOING_INTENT_FILTER)
+                .putExtra(ReminderService.BLOCK_NOTIFICATIONS, true)
+        )
+    }
+
+    override fun onDestroy() {
+        lbm.sendBroadcast(
+            Intent(ReminderService.EDIT_ONGOING_INTENT_FILTER)
+                .putExtra(ReminderService.BLOCK_NOTIFICATIONS, false)
+        )
+        reloadUIBroadcastReceiver?.run { lbm.unregisterReceiver(this) }
+        super.onDestroy()
     }
 
     override fun onRestoreInstanceState(
@@ -255,7 +313,7 @@ class HabitDetails : AppCompatActivity() {
             isUnfinished = getBoolean(UNFINISHED_EDITING, false)
             habitId = getLong(HABIT_ID, Constants.IGNORE_ID_AS_LONG)
             goalId = getLong(GOAL_ID, Constants.IGNORE_ID_AS_LONG)
-            lastTabId = getInt(LAST_TAB_ID, TEXTS_TAB_ID)
+            lastTabIdx = getInt(LAST_TAB_IDX, 0)
             forAdding = getBoolean(FOR_ADDING, false)
         }
 
@@ -268,8 +326,8 @@ class HabitDetails : AppCompatActivity() {
 
         outState.run {
             putInt(
-                LAST_TAB_ID,
-                findViewById<TabLayout>(R.id.habitTabs).id)
+                LAST_TAB_IDX,
+                tabsPager.currentItem)
             putLong(HABIT_ID, habitId)
             putBoolean(UNFINISHED_EDITING, isEdit)
             putBoolean(FOR_ADDING, forAdding)
@@ -283,17 +341,21 @@ class HabitDetails : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_habit_details)
 
+        lbm = LocalBroadcastManager.getInstance(this)
+
         val toolbar:  Toolbar= findViewById(R.id.habitToolbar)
 
         tabsPager = findViewById(R.id.habitDetailsViewPager)
         val tabs: TabLayout = findViewById(R.id.habitTabs)
+        val tabBack: ImageButton = findViewById(R.id.tabBackButton)
+        val tabNext: ImageButton = findViewById(R.id.tabNextButton)
 
         fun recoverSavedState() {
             savedInstanceState?.run {
                 isUnfinished = getBoolean(UNFINISHED_EDITING, false)
                 habitId = getLong(HABIT_ID, Constants.IGNORE_ID_AS_LONG)
                 goalId = getLong(GOAL_ID, Constants.IGNORE_ID_AS_LONG)
-                lastTabId = getInt(LAST_TAB_ID, TEXTS_TAB_ID)
+                lastTabIdx = getInt(LAST_TAB_IDX, 0)
                 forAdding = getBoolean(FOR_ADDING, false)
             }
         }
@@ -313,25 +375,64 @@ class HabitDetails : AppCompatActivity() {
             viewModel = ViewModelProvider(this,
                 HabitViewModelFactory(databaseObject, habitId, goalId)
             )[HabitViewModel::class.java]
+
+            reloadUIBroadcastReceiver = ShouldRefreshUIBroadcastReceiver(
+                hashSetOf(Pair(habitId, RefreshTypes.HABIT))
+            ) { lifecycleScope.launch { if (! forAdding) viewModel.getEverything() } }
+            lbm.registerReceiver(reloadUIBroadcastReceiver!!, IntentFilter(
+                ShouldRefreshUIBroadcastReceiver.INTENT_FILTER) )
         }
 
         fun prepareUI() {
 
+            viewModel.exceptionMutable.observe(this) {
+                ErrorHandling.showExceptionDialog(this, it)
+            }
+
+            tabs.tabMode = TabLayout.MODE_SCROLLABLE
+            tabs.tabGravity = TabLayout.GRAVITY_FILL
+
+            tabBack.setOnClickListener {
+                var curIdx = tabs.selectedTabPosition
+                if (curIdx == -1) return@setOnClickListener
+                if (curIdx - 1 < 0) return@setOnClickListener
+                if (tabs.tabCount < 1 || curIdx -1 >= tabs.tabCount)
+                    return@setOnClickListener
+                tabs.selectTab(tabs.getTabAt(curIdx - 1))
+            }
+            tabNext.setOnClickListener {
+                var curIdx = tabs.selectedTabPosition
+                if (curIdx == -1) return@setOnClickListener
+                if (curIdx + 1 >= tabs.tabCount) return@setOnClickListener
+                if (tabs.tabCount < 1) return@setOnClickListener
+                tabs.selectTab(tabs.getTabAt(curIdx + 1))
+            }
+
             tabsPager.isUserInputEnabled = false
 
-            tabsPager.adapter = HabitDetailsPageAdapter(this)
+            tabsPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                override fun onPageSelected(position: Int) {
+                    super.onPageSelected(position)
+                    viewModel.currentTabIdx = position
+                }
+            })
+            viewModel.setTabEvent.observe(this) {
+                it?.handleIfNotHandledWith { tabsPager.currentItem = viewModel.currentTabIdx }
+            }
 
-            TabLayoutMediator(tabs, tabsPager) {
-                tab, position -> tab.text = when (position) {
+            tabLayoutMediator = TabLayoutMediator(tabs, tabsPager) {
+                tab, position -> tab.text = when (getTabIdOfPosition(position, forAdding)) {
                     TEXTS_TAB_ID -> getString(R.string.name_and_description)
                     REMINDER_TAB_ID -> getString(R.string.reminders_reminder)
                     IMP_INTS_TAB_ID -> getString(R.string.impints_name_plural)
                     TARGETS_TAB_ID -> getString(R.string.habits_targets)
+                    STATS_TAB_ID -> getString(R.string.stats_name)
                     else -> Constants.EMPTY_STRING
                 }
-            }.attach()
+            }
+            recreatePagerAdapter()
 
-            tabsPager.currentItem = lastTabId
+            tabsPager.currentItem = lastTabIdx
 
             setSupportActionBar(toolbar)
 
@@ -368,12 +469,12 @@ class HabitDetails : AppCompatActivity() {
 
                 if (forAdding) {
                     if (viewModel.mutableHabitData.value != null)
-                    { lifecycleScope.launch {
+                    { lifecycleScope.launch(viewModel.exceptionHandler) {
                         viewModel.deleteWholeHabit()
                         doWhenAlmostDone()
                     } } else {  doWhenAlmostDone() }
                 }
-                else { lifecycleScope.launch {
+                else { lifecycleScope.launch(viewModel.exceptionHandler) {
                     viewModel.deleteAddedData()
                     doWhenAlmostDone()
                 } }
@@ -387,6 +488,21 @@ class HabitDetails : AppCompatActivity() {
             onBackPressedDispatcher.addCallback(doubleTapCallback)
             onBackPressedDispatcher.addCallback(refreshRequesterCallback)
 
+            habitQuestioningLauncher = registerForActivityResult(HabitQuestioningContract()) {
+                if (it != Constants.IGNORE_ID_AS_LONG) {
+                    lifecycleScope.launch(viewModel.exceptionHandler) {
+                        viewModel.getEverything()
+                        recreatePagerAdapter()
+                    }
+                }
+            }
+
+            viewModel.assureOfExistingHabitHandleableMutable.observe(this) {
+                if (it != null && ! it.handled) {
+                    addHabitIfNotPresentAndThenDoUnit { it.handle() }
+                }
+            }
+
             if (isEdit) {
                 doubleTapCallback.isEnabled = true
                 refreshRequesterCallback.isEnabled = false
@@ -396,12 +512,12 @@ class HabitDetails : AppCompatActivity() {
                 refreshRequesterCallback.isEnabled = true
             }
 
-            habitQuestioningLauncher = registerForActivityResult(HabitQuestioningContract()) {
-                if (it != Constants.IGNORE_ID_AS_LONG) {
-                    lifecycleScope.launch { viewModel.getEverything() }
-                }
+            viewModel.canShowHabitStatsAtAll.observe(this) {
+                recreatePagerAdapter()
             }
         }
+
+
 
         fun doInThisOrder() {
 
@@ -431,12 +547,12 @@ class HabitDetails : AppCompatActivity() {
 
     private inner class HabitDetailsPageAdapter(fragAct: FragmentActivity):
         FragmentStateAdapter(fragAct) {
-        override fun getItemCount(): Int = TAB_COUNT
+        override fun getItemCount(): Int = getTabCount(forAdding)
 
         override fun createFragment(position: Int): Fragment {
             if (classNumber == null) return Fragment()
 
-            return when (position) {
+            return when (getTabIdOfPosition(position, forAdding)) {
                 TEXTS_TAB_ID ->
                     TextsFragment.newInstance(isEdit, classNumber)
                 IMP_INTS_TAB_ID ->
@@ -449,8 +565,13 @@ class HabitDetails : AppCompatActivity() {
                             classNumber,
                             ! isEdit
                         )
-                REMINDER_TAB_ID -> ReminderSetting.newInstance(OwnerType.TYPE_HABIT, habitId, isEdit)
+                REMINDER_TAB_ID -> HabitReminderSetting.newInstance(isEdit)
+                STATS_TAB_ID -> if (viewModel.canShowHabitStatsAtAll.value == true)
+                                    HabitStatsFragment.newInstance(habitId)
+                                else OneTextFragment
+                                    .newInstance(getString(R.string.habits_no_params_or_no_values))
                 TARGETS_TAB_ID -> HabitTargets.newInstance(isEdit)
+
                 else -> Fragment()
             }
         }

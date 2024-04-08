@@ -1,6 +1,7 @@
 <resources>
     <string name="app_name" translatable="false">Towards Goals</string>
-
+    <string name="reminders_name">Reminders</string>
+    <string name="pomidoro_name">Pomidoro Technique</string>
     <string name="name_and_description">Name and description</string>
     <string name="default_description">Some description. Some description. Some descriptiondescriptiondescription. Some description.</string>
     <string name="default_title">A title</string>
@@ -14,4 +15,50 @@
     <string name="edit_save_did_not_fail">This edit is now saved.</string>
     <string name="edit_save_did_fail">Failed to save this edit.</string>
     <string name="adding">"Adding: %s"</string>
+    <string name="no_questions">No questions</string>
+    <string name="tasks_mt_view_type">View type</string>
+    <string name="tasks_full_list">List with details</string>
+    <string name="elipsis">…</string>
+    <string name="tasks_short_break_in_minutes">Short break time (in minutes)</string>
+    <string name="tasks_long_break_in_minutes">Long break time (in minutes)</string>
+    <string name="tasks_decide">Choose accordingly to how well you have accomplished your task</string>
+    <string name="tasks_end_task_and_proceed">End task and proceed</string>
+    <string name="tasks_time_format" translatable="false">%s:%s</string>
+    <string name="tasks_work">Work</string>
+    <string name="tasks_pomidoro_timer">Pomidoro timer</string>
+    <string name="on">On</string>
+    <string name="off">Off</string>
+    <string name="text_and_description">Text and description</string>
+    <string name="habits_description">Description of habit</string>
+    <string name="tasks_pomidoro_work_time">It\'s work time!</string>
+    <string name="tasks_pomidoro_long_break">Take a longer break</string>
+    <string name="tasks_pomidoro_short_break">Take a short break</string>
+    <string name="tasks_pomidoro_work_time_state">Work</string>
+    <string name="tasks_pomidoro_long_break_state">Longer break</string>
+    <string name="tasks_pomidoro_minutes">%s minutes</string>
+    <string name="extra">extra</string>
+    <string name="tasks_take_a_break">Take a break</string>
+    <string name="tasks_get_to_work">Get to work</string>
+    <string name="tasks_doing_summary_if_not_pomidoro">Total time spent on doing task: %s minutes</string>
+    <string name="tasks_no_task_data">Not enough task data</string>
+    <string name="habits_reminder_will_be_fired_on">You will be reminded on</string>
+    <string name="reminders_not_set">Reminder is not set</string>
+    <string name="reminders_pick_time">Pick time</string>
+    <string name="reminders_pick_date">Pick date</string>
+    <string name="reminders_reminder_about">"It is time to %s %s %s. Click this notification to proceed. "</string>
+    <string name="habits_mark">mark</string>
+    <string name="goals_no_stats_to_show">There is not enough stats data of tasks or habits</string>
+    <string name="pick">Pick:</string>
+    <string name="error_occured">An error occured</string>
+    <string name="ok">OK</string>
+    <string name="detailed_error_description">Detailed error description:</string>
+    <string name="unknown_cause">Unknown cause</string>
+    <string name="adding_data_failed">Unable to add data</string>
+    <string name="reminders_unable_to_set_reminder">Reminder couldn\'t be set</string>
+    <string name="failed_to_save_data">Failed to save data</string>
+    <string name="failed_to_save_data_cancelling">Failed to save data; cancelling</string>
+    <string name="tasks_name_description_priority">Name, description and priority</string>
+    <string name="zoom_in">Zoom in</string>
+    <string name="zoom_out">Zoom out</string>
+    <string name="help">Help</string>
 </resources>

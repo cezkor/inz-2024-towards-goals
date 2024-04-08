@@ -2,4 +2,7 @@
 <resources>
     <string name="reminders_reminder">Reminder</string>
     <string name="reminders_reminder_plural">Reminders</string>
+    <string name="reminders_notification_reasoning">This app controls reminder firing</string>
+    <string name="reminders_wont_work">App cannot schedule reminders</string>
+    <string name="reminders_cant_set_before">You can\'t set reminder in the past</string>
 </resources>

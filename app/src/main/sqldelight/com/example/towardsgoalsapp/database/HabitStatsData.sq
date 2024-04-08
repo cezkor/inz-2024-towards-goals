@@ -3,28 +3,21 @@ import java.time.Instant;
 
 CREATE TABLE HabitStatsData (
     hStatId INTEGER PRIMARY KEY AUTOINCREMENT,
-    goalId INTEGER NOT NULL REFERENCES GoalData(goalId) ON DELETE CASCADE,
-    habitId INTEGER NOT NULL,
-    -- data may persist after habit being deleted as what counts is what has happened
+    goalId INTEGER NOT NULL REFERENCES GoalData(goalId),
+    habitId INTEGER NOT NULL REFERENCES HabitData(habitId) ON DELETE CASCADE,
     addedOn TEXT AS Instant NOT NULL,
     doneWell INTEGER AS Boolean DEFAULT 0 NOT NULL,
     doneNotWell INTEGER AS Boolean DEFAULT 1 NOT NULL,
 
-    CONSTRAINT eitherDoneWellOrNotWell CHECK (
-        (doneWell != 0 AND doneNotWell == 0)
-            OR
-        (doneWell == 0 AND doneNotWell != 0)
-    )
+    -- doneWell = 0 and doneNotWell = 0 => skipped
+    -- both doneWell and doneNotWell equal to non zero number is not allowed
+    CONSTRAINT properMarking CHECK ( (doneWell != 1 OR doneNotWell != 1) )
 );
 
-selectAllHabitStats:
-SELECT * FROM HabitStatsData;
-
-selectAllHabitStatsOf:
-SELECT * FROM HabitStatsData WHERE goalId = ?;
+selectAllHabitStatsOfHabit:
+SELECT * FROM HabitStatsData WHERE habitId = ?;
 
 insertData:
-INSERT INTO HabitStatsData VALUES ?;
+INSERT INTO HabitStatsData(goalId, habitId, doneWell, doneNotWell, addedOn)
+VALUES (?, ? ,? ,?, ?);
 
-clearStats:
-DELETE FROM HabitStatsData;

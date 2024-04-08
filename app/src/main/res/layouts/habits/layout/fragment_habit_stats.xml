@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fillViewport="true"
+    android:baselineAligned="false"
+                                    >
+    <RadioGroup
+        android:layout_weight="0"
+        android:id="@+id/pickRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="1"
+            android:id="@+id/generalStatsRadioButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/stats_general_stats_name" />
+
+        <RadioButton
+            android:layout_gravity="center_horizontal"
+            android:id="@+id/paramStatsRadioButton"
+            android:layout_weight="1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/habits_param_stats_name" />
+
+    </RadioGroup>
+
+    <View
+        android:layout_weight="0"
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="?android:attr/listDivider"/>
+
+    <androidx.core.widget.NestedScrollView
+        android:minHeight="200dp"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fadeScrollbars="false"
+        >
+
+        <FrameLayout
+            android:id="@+id/statsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            />
+
+    </androidx.core.widget.NestedScrollView>
+
+
+
+</LinearLayout>

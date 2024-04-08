@@ -45,6 +45,7 @@ class TaskRepositoryTests {
                 "descr 1",
                 ownerGoalId,
                 null,
+                0,
                 0
             )
             val taskId1 = taskIdAndIsDepthBadPair1.first
@@ -77,6 +78,7 @@ class TaskRepositoryTests {
             assertThat(taskList[0].taskDone).isEqualTo(false)
             assertThat(taskList[0].taskFailed).isEqualTo(false)
             assertThat(taskList[0].taskProgress).isEqualTo(0.0)
+            assertThat(taskList[0].taskPriority).isEqualTo(0)
 
             mainRepo.deleteById(taskId1)
             taskList = mainRepo.getAllByGoalId(ownerGoalId)
@@ -87,7 +89,8 @@ class TaskRepositoryTests {
                 "descr 2",
                 ownerGoalId,
                 null,
-                0
+                0,
+                1
             )
             val taskId2 = taskIdAndIsDepthBadPair2.first
             assertThat(taskIdAndIsDepthBadPair2.second).isEqualTo(false)
@@ -103,6 +106,7 @@ class TaskRepositoryTests {
             assertThat(hab2OrNull.taskDone).isEqualTo(false)
             assertThat(hab2OrNull.taskFailed).isEqualTo(false)
             assertThat(hab2OrNull.taskProgress).isEqualTo(0.0)
+            assertThat(taskList[0].taskPriority).isEqualTo(1)
 
             arrayOfMutableTasks.addAll(
                 arrayListOf(
@@ -117,7 +121,8 @@ class TaskRepositoryTests {
                         1,
                         0,
                         taskDone = false,
-                        taskFailed = false
+                        taskFailed = false,
+                        0
                     ),
                     TaskData(
                         Constants.IGNORE_ID_AS_LONG,
@@ -130,7 +135,8 @@ class TaskRepositoryTests {
                         1,
                         0,
                         taskDone = false,
-                        taskFailed = false
+                        taskFailed = false ,
+                        2
                     ),
                     TaskData(
                         Constants.IGNORE_ID_AS_LONG,
@@ -143,7 +149,8 @@ class TaskRepositoryTests {
                         1,
                         0,
                         taskDone = false,
-                        taskFailed = false
+                        taskFailed = false,
+                        3
                     ),
                     TaskData(
                         Constants.IGNORE_ID_AS_LONG,
@@ -156,7 +163,8 @@ class TaskRepositoryTests {
                         1,
                         0,
                         taskDone = false,
-                        taskFailed = false
+                        taskFailed = false,
+                        1
                     )
                 ).map { MutableLiveData(it) }
             )
@@ -179,15 +187,19 @@ class TaskRepositoryTests {
                 null, taskId2, taskId2, taskId2, taskId2
             )
 
+            assertThat(taskList.map {it.taskPriority}).containsExactly(
+                0, 2, 3, 1
+            )
+
             val taskIdAndIsDepthBadPair3 = mainRepo.addTask(
                 "subsubtask 15", "descr 15",
-                ownerGoalId, taskList[3].taskId, 2
+                ownerGoalId, taskList[3].taskId, 2, 0
             )
             assertThat(taskIdAndIsDepthBadPair3.second).isEqualTo(false)
 
             val shouldNotBeMade = mainRepo.addTask(
                 "_____", "_____",
-                ownerGoalId, taskList[3].taskId, Constants.MAX_TASK_DEPTH
+                ownerGoalId, taskList[3].taskId, Constants.MAX_TASK_DEPTH, 0
             )
             assertThat(shouldNotBeMade.second).isEqualTo(true)
 
@@ -205,6 +217,12 @@ class TaskRepositoryTests {
             assertThat(taskList.map { it.taskOwnerId }).containsExactly(
                 null, taskId2, taskId2, taskId2, taskId2, taskList[3].taskId
             )
+
+            mainRepo.updatePriority(taskId2, 100) // database should not correct this value
+                // as it is applications duty to interpret and correct it
+            val taskWithUpdatedPriority = mainRepo.getOneById(taskId2)
+            assertThat(taskWithUpdatedPriority).isNotNull()
+            assertThat(taskWithUpdatedPriority!!.taskPriority).isEqualTo(100)
 
             mainRepo.deleteById(taskId2) // trigger should delete also all subtasks
 
@@ -232,6 +250,7 @@ class TaskRepositoryTests {
             "descr 1",
             ownerGoalId,
             null,
+            0,
             0
         )
         val taskId1 = taskIdAndIsDepthBadPair1.first
@@ -241,6 +260,7 @@ class TaskRepositoryTests {
             "descr 2",
             ownerGoalId,
             null,
+            0,
             0
         )
         val taskId2 = taskIdAndIsDepthBadPair2.first
@@ -258,10 +278,11 @@ class TaskRepositoryTests {
             taskList[0].taskProgress,
             taskList[0].taskOwnerId,
             taskList[0].goalId,
-            taskList[0].taskDepth,
+            taskList[0].taskPriority,
             taskList[0].subtasksCount,
             taskList[0].taskDone,
-            taskList[0].taskFailed
+            taskList[0].taskFailed,
+            taskList[0].taskPriority
         )
         mainRepo.markEditing(taskId1, true)
         mainRepo.putAsUnfinished(editedTask)
@@ -320,37 +341,37 @@ class TaskRepositoryTests {
 
         val hTaskPair1 = mainRepo.addTask(
             "highest task 1", "descr 1",
-            ownerGoalId, null, 0
+            ownerGoalId, null, 0, 0
         )
         assertThat(hTaskPair1.second).isEqualTo(false)
 
         val hTaskPair2 = mainRepo.addTask(
             "highest task 2", "descr 2",
-            ownerGoalId, null, 0
+            ownerGoalId, null, 0, 0
         )
         assertThat(hTaskPair2.second).isEqualTo(false)
 
         val sTaskPair1 = mainRepo.addTask(
             "sub task 3", "descr 3",
-            ownerGoalId, hTaskPair1.first, 0 + 1
+            ownerGoalId, hTaskPair1.first, 0 + 1, 0
         )
         assertThat(sTaskPair1.second).isEqualTo(false)
 
         val sTaskPair2 = mainRepo.addTask(
             "sub task 4", "descr 4",
-            ownerGoalId, hTaskPair1.first, 0 + 1
+            ownerGoalId, hTaskPair1.first, 0 + 1, 0
         )
         assertThat(sTaskPair2.second).isEqualTo(false)
 
         val ssTaskPair1 = mainRepo.addTask(
             "sub task 5", "descr 5",
-            ownerGoalId, sTaskPair1.first, 0 + 1 + 1
+            ownerGoalId, sTaskPair1.first, 0 + 1 + 1, 0
         )
         assertThat(ssTaskPair1.second).isEqualTo(false)
 
         val ssTaskPair2 = mainRepo.addTask(
             "sub task 6", "descr 6",
-            ownerGoalId, sTaskPair1.first, 0 + 1 + 1
+            ownerGoalId, sTaskPair1.first, 0 + 1 + 1, 0
         )
         assertThat(ssTaskPair2.second).isEqualTo(false)
 
