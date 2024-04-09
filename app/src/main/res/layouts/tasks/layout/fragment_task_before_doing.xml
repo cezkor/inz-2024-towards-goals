@@ -34,7 +34,7 @@
         android:orientation="horizontal">
 
         <TextView
-            android:text="@string/tasks_do_with_pomidoro_technique"
+            android:text="@string/tasks_do_with_pomodoro_technique"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"/>
@@ -45,7 +45,7 @@
             android:layout_weight="1" />
 
         <ToggleButton
-            android:id="@+id/togglePomidoro"
+            android:id="@+id/togglePomodoro"
             android:layout_width="wrap_content"
             android:layout_height="50dp"
             android:layout_gravity="center_vertical"

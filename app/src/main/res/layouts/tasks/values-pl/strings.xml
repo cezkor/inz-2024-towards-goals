@@ -32,10 +32,10 @@
     <string name="tasks_doing_summary">Podsumowanie pracy nad zadaniem:\n   Całkowity czas poświęcony na zadanie:  %s\n   Sumaryczny czas pracy nad zadaniem:  %s\n  Sumaryczny czas przerw:  %s</string>
     <string name="tasks_pause">Pause</string>
     <string name="tasks_switch_to">Switch to %s</string>
-    <string name="tasks_do_with_pomidoro_technique">Do with pomidoro technique</string>
+    <string name="tasks_do_with_pomodoro_technique">Do with pomodoro technique</string>
     <string name="tasks_description">Description of task</string>
-    <string name="tasks_pomidoro_stage_is_over">%s is over; click the button below when you feel ready to proceed or end this task</string>
-    <string name="tasks_pomidoro_short_break_state">Short brake</string>
+    <string name="tasks_pomodoro_stage_is_over">%s is over; click the button below when you feel ready to proceed or end this task</string>
+    <string name="tasks_pomodoro_short_break_state">Short brake</string>
     <string name="tasks_time_is_up">Time is up. Click this notification to see what to do next in your task.</string>
     <string name="tasks_do">do</string>
     <string name="tasks_no_data">There is not enough task data to show</string>
@@ -46,4 +46,5 @@
     <string name="tasks_tasks_not_failed">"Tasks done and not failed "</string>
     <string name="tasks_tasks_failed">Tasks done and failed</string>
     <string name="tap_back_to_leave_and_not_save">Tap Back button to leave without saving task data or try saving again.</string>
+    <string name="tasks_total_time">"Time in total: %s"</string>
 </resources>

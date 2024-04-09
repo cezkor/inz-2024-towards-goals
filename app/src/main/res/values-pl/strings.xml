@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="reminders_name">Przypomnienia</string>
-    <string name="pomidoro_name">Technika Pomidoro</string>
+    <string name="pomodoro_name">Technika Pomodoro</string>
     <string name="default_description">Jakiś opis. Jakiś opis. Jakiś opisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopisopis. Jakiś opis.</string>
     <string name="default_title">Tytuł</string>
     <string name="add_end_name">Dodaj</string>
@@ -24,21 +24,21 @@
     <string name="tasks_decide">Choose accordingly to how well you have accomplished your task</string>
     <string name="tasks_end_task_and_proceed">End task and proceed</string>
     <string name="tasks_work">Work</string>
-    <string name="tasks_pomidoro_timer">Pomidoro timer</string>
+    <string name="tasks_pomodoro_timer">Pomodoro timer</string>
     <string name="on">On</string>
     <string name="off">Off</string>
     <string name="text_and_description">Text and description</string>
     <string name="habits_description">Description of habit</string>
-    <string name="tasks_pomidoro_work_time">It\'s work time!</string>
-    <string name="tasks_pomidoro_long_break">Take a longer break</string>
-    <string name="tasks_pomidoro_short_break">Take a short break</string>
-    <string name="tasks_pomidoro_work_time_state">Work</string>
-    <string name="tasks_pomidoro_long_break_state">Longer break</string>
-    <string name="tasks_pomidoro_minutes">%s minutes</string>
+    <string name="tasks_pomodoro_work_time">It\'s work time!</string>
+    <string name="tasks_pomodoro_long_break">Take a longer break</string>
+    <string name="tasks_pomodoro_short_break">Take a short break</string>
+    <string name="tasks_pomodoro_work_time_state">Work</string>
+    <string name="tasks_pomodoro_long_break_state">Longer break</string>
+    <string name="tasks_pomodoro_minutes">%s minutes</string>
     <string name="extra">extra</string>
     <string name="tasks_take_a_break">Take a break</string>
     <string name="tasks_get_to_work">Get to work</string>
-    <string name="tasks_doing_summary_if_not_pomidoro">Total time spent on doing task: %s minutes</string>
+    <string name="tasks_doing_summary_if_not_pomodoro">Total time spent on doing task: %s minutes</string>
     <string name="tasks_no_task_data">Not enough task data</string>
     <string name="habits_reminder_will_be_fired_on">You will be reminded on</string>
     <string name="reminders_not_set">Reminder is not set</string>
@@ -60,5 +60,8 @@
     <string name="zoom_in">Zoom in</string>
     <string name="zoom_out">Zoom out</string>
     <string name="help">Help</string>
+    <string name="no_description">No description</string>
+    <string name="check_for_test_data">Checking for test data...</string>
+    <string name="test_data_not_loaded">Test data was not loaded</string>
 </resources>
 

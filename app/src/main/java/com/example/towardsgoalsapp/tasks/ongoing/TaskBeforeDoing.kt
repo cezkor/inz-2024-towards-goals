@@ -1,6 +1,7 @@
 package com.example.towardsgoalsapp.tasks.ongoing
 
 import android.content.Context
+import android.graphics.Typeface
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -23,7 +24,7 @@ class TaskBeforeDoing : Fragment() {
     companion object {
         const val LOG_TAG = "TBDFrag"
 
-        const val FRAG_TAG = "TBDPomidoro_FRAG_TAG_4124371"
+        const val FRAG_TAG = "TBDPomodoro_FRAG_TAG_4124371"
     }
 
     private lateinit var viewModel: TaskOngoingViewModel
@@ -44,23 +45,30 @@ class TaskBeforeDoing : Fragment() {
 
         val descriptionTextView = view.findViewById<TextView>(R.id.descriptionTextView)
         viewModel.descriptionOfData.observe(viewLifecycleOwner) {
-            descriptionTextView.text = it
+            if (it == null || it.isBlank()) {
+                descriptionTextView.typeface = Typeface.defaultFromStyle(Typeface.ITALIC)
+                descriptionTextView.text = getString(R.string.no_description)
+            }
+            else {
+                descriptionTextView.typeface = Typeface.defaultFromStyle(Typeface.NORMAL)
+                descriptionTextView.text = it
+            }
         }
 
-        val pomidoroContainerId = R.id.questionListContainer
-        val pomidoroSettingsFragment =
+        val pomodoroContainerId = R.id.questionListContainer
+        val pomodoroSettingsFragment =
             DoubleValueQuestionItemList.newInstance(classNum, true)
 
-        val pomidoroToggleButton: ToggleButton = view.findViewById(R.id.togglePomidoro)
-        pomidoroToggleButton.setOnCheckedChangeListener { buttonView, isChecked ->
-            viewModel.pomidoroIsOn = isChecked
+        val pomodoroToggleButton: ToggleButton = view.findViewById(R.id.togglePomodoro)
+        pomodoroToggleButton.setOnCheckedChangeListener { buttonView, isChecked ->
+            viewModel.pomodoroIsOn = isChecked
             val fragment: Fragment = if (isChecked) {
-                pomidoroSettingsFragment
+                pomodoroSettingsFragment
             } else
                 Fragment()
             childFragmentManager.beginTransaction()
                 .setReorderingAllowed(true)
-                .replace(pomidoroContainerId, fragment, FRAG_TAG)
+                .replace(pomodoroContainerId, fragment, FRAG_TAG)
                 .commitNow()
         }
 
@@ -79,13 +87,13 @@ class TaskBeforeDoing : Fragment() {
             it.requestFocusFromTouch()
             if (taskNextPushed) return@setOnClickListener
             taskNextPushed = true
-            if (viewModel.pomidoroIsOn) {
+            if (viewModel.pomodoroIsOn) {
                 // force fragment to save questions
                 val f = childFragmentManager.findFragmentByTag(FRAG_TAG)
                 if (f is DoubleValueQuestionItemList)
                     f.forceSavingQuestions()
                 // listen to questions being saved
-                viewModel.pomidoroSettingsReadyToSave.observe(viewLifecycleOwner) {
+                viewModel.pomodoroSettingsReadyToSave.observe(viewLifecycleOwner) {
                     it?.handleIfNotHandledWith {
                         lifecycleScope.launch(viewModel.exceptionHandler) {
                             viewModel.saveMainData()

@@ -29,7 +29,7 @@ class Constants {
         const val RV_ITEM_CACHE_SIZE: Int = 20
         const val MAX_TASK_DEPTH = 3
         const val MAX_HABIT_PARAM_COUNT_PER_HABIT = 12
-        const val TASK_POMIDORO_NOTIFICATION_CHANNEL = "TowardsGoals_Pomidoro"
+        const val TASK_POMODORO_NOTIFICATION_CHANNEL = "TowardsGoals_Pomodoro"
         const val REMINDER_NOTIFICATION_CHANNEL = "TowardsGoals_Reminder"
         const val CLASS_NUMBER_NOT_RECOGNIZED: Int = -1000
         const val X_BIAS_FLOAT : Float = 0f

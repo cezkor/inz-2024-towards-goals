@@ -83,7 +83,6 @@ class DatabaseGeneration {
 
             putMutex.withLock {
 
-
                 try {
 
                     val g1 = gRepo.addOneGoal(

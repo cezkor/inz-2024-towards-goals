@@ -10,7 +10,9 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import com.example.towardsgoalsapp.R
+import com.example.towardsgoalsapp.etc.AndroidContextTranslation
 import com.example.towardsgoalsapp.etc.OneTimeEvent
+import com.example.towardsgoalsapp.etc.SecondsFormatting
 import com.example.towardsgoalsapp.etc.errors.ErrorHandling
 import kotlinx.coroutines.launch
 import java.time.Duration
@@ -37,27 +39,37 @@ class TaskMarking : Fragment() {
 
         viewModel = ViewModelProvider(requireActivity())[TaskOngoingViewModel::class.java]
 
-        val summaryTextView = view.findViewById<TextView>(R.id.taskDoingSummaryTV)
-        if (viewModel.pomidoroIsOn) {
-            val totalMinutes = viewModel.pomidoroState.sumTotalAndCurrentTimes()  / 60
-            val totalWork = viewModel.pomidoroState.totalTimeOfWorkInSeconds / 60
-            val totalBreak = viewModel.pomidoroState.totalTimeOfBreaksInSeconds / 60
+        val translation = AndroidContextTranslation(requireContext())
 
-            summaryTextView.text = getString(
-                R.string.tasks_doing_summary,
-                totalMinutes.toString(),
-                totalWork.toString(),
-                totalBreak.toString()
-            )
+        val summaryTextView = view.findViewById<TextView>(R.id.taskDoingSummaryTV)
+        if (viewModel.pomodoroIsOn) {
+            lifecycleScope.launch {
+                val totalTime = viewModel.pomodoroState.sumTotalAndCurrentTimes()
+                var totalWork = viewModel.pomodoroState.getTotalTimeOfWork()
+                var totalBreak = viewModel.pomodoroState.getTotalTimeOfBreaks()
+                if (viewModel.pomodoroState.isBreak()) {
+                    totalBreak += viewModel.pomodoroState.getTimeOfCurrentState()
+                }
+                else {
+                    totalWork += viewModel.pomodoroState.getTimeOfCurrentState()
+                }
+
+                summaryTextView.text = getString(
+                    R.string.tasks_doing_summary,
+                    SecondsFormatting.formatSeconds(translation, totalTime),
+                    SecondsFormatting.formatSeconds(translation, totalWork),
+                    SecondsFormatting.formatSeconds(translation, totalBreak)
+                )
+            }
         } else {
             val start = viewModel.startedDoingTaskOn
             val end = viewModel.endedDoingTaskOn
-            val minutes =
-                if (start != null && end != null) Duration.between(end, start).toMinutes() else 0L
-            val totalTimeInMinutes = if (minutes >= 0) minutes else 0L
+            val seconds =
+                if (start != null && end != null) Duration.between(end, start).seconds else 0L
+            val totalTimeInSeconds = if (seconds >= 0L) seconds else 0L
             summaryTextView.text = getString(
-                R.string.tasks_doing_summary_if_not_pomidoro,
-                totalTimeInMinutes.toString()
+                R.string.tasks_doing_summary_if_not_pomodoro,
+                SecondsFormatting.formatSeconds(translation, totalTimeInSeconds)
             )
         }
 

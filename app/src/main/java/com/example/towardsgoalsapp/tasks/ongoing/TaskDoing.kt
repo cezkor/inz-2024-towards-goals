@@ -61,11 +61,11 @@ class TaskDoing : Fragment() {
                     .commit()
             }
 
-            if (viewModel.pomidoroIsOn) {
-                val pomidoroFragment = PomidoroFragment()
+            if (viewModel.pomodoroIsOn) {
+                val pomodoroFragment = PomodoroFragment()
                 childFragmentManager.beginTransaction()
                     .setReorderingAllowed(true)
-                    .replace(R.id.pomidoroContainer, pomidoroFragment)
+                    .replace(R.id.pomodoroContainer, pomodoroFragment)
                     .commit()
             }
         }

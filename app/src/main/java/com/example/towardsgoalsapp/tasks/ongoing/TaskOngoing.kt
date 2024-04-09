@@ -45,10 +45,13 @@ import com.example.towardsgoalsapp.tasks.ongoing.TaskDoingContract.Companion.TAS
 import com.example.towardsgoalsapp.tasks.ongoing.TaskOngoingViewModel.Companion.LONG_BREAK_ID
 import com.example.towardsgoalsapp.tasks.ongoing.TaskOngoingViewModel.Companion.WORK_TIME_ID
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
 import java.lang.NullPointerException
 import java.time.Instant
 import java.time.format.DateTimeParseException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 
 class TaskOngoingViewModelFactory(private val dbo: TGDatabase,
@@ -89,76 +92,23 @@ class TaskOngoingViewModel(private val dbo: TGDatabase,
     val onFailedToSaveData: MutableLiveData<OneTimeEvent> = MutableLiveData()
     val taskNotPresent: MutableLiveData<OneTimeEvent> = MutableLiveData()
 
-    var pomidoroIsOn: Boolean = false
-    val pomidoroIsReady = MutableLiveData(false)
-    var pomidoroQuestions: ArrayList<RangedDoubleQuestion?> = arrayListOf(null, null, null)
+    var pomodoroIsOn: Boolean = false
+    val pomodoroIsReady = MutableLiveData(false)
+    var pomodoroQuestions: ArrayList<RangedDoubleQuestion?> = arrayListOf(null, null, null)
 
-    val pomidoroSettingsReadyToSave = MutableLiveData<OneTimeEventWithValue<Boolean>>()
+    val pomodoroSettingsReadyToSave = MutableLiveData<OneTimeEventWithValue<Boolean>>()
     override fun getQuestionsReadyToSave(): MutableLiveData<OneTimeEventWithValue<Boolean>>
-            = pomidoroSettingsReadyToSave
-    class PomidoroState(
-        totalWorkTime: Long = 0,
-        currentTime: Long = 0,
-        totalTime: Long = 0,
-        totalBreakTime: Long = 0,
-        breakCount: Long = 0,
-        isBreak: Boolean = false
-    ) {
+            = pomodoroSettingsReadyToSave
 
-        fun determineIndexBasedOnState() : Int {
-            if (! isBreak) return WORK_TIME_ID
-            return if (isBreakLong && isBreak) LONG_BREAK_ID
-            else SHORT_BREAK_ID
-        }
-        var totalTimeInSeconds: Long = totalTime
-            private set
+    var pomodoroState = PomodoroState()
+    var pomodoroSettings = PomodoroSettings()
+    val pomodoroTimeUpdate: MutableLiveData<OneTimeEventWithValue<Long>> = MutableLiveData(null)
+    var pomodoroTimerTickingForTheSameState = AtomicBoolean(false)
+    var pomodoroStateChangedByUser = AtomicBoolean(false)
+    val pomodoroStateChangeRequired: MutableLiveData<OneTimeEvent> = MutableLiveData()
+    val pomodoroStartTicking: MutableLiveData<OneTimeEvent> = MutableLiveData()
 
-        fun sumTotalAndCurrentTimes() : Long = totalTimeInSeconds + timeOfCurrentStateInSeconds
-
-        var timeOfCurrentStateInSeconds: Long = currentTime
-            private set
-        var totalTimeOfWorkInSeconds: Long = totalWorkTime
-            private set
-        var totalTimeOfBreaksInSeconds: Long = totalBreakTime
-            private set
-
-        var breakCount: Long = 0
-            private set
-
-        var isBreak: Boolean = isBreak
-            private set
-        var isBreakLong: Boolean = if (breakCount > 0) ((breakCount % 4).toInt() == 0) else false
-            private set
-        fun switchState() {
-            totalTimeInSeconds += timeOfCurrentStateInSeconds
-            if (isBreak) {
-                isBreak = false
-                totalTimeOfBreaksInSeconds += timeOfCurrentStateInSeconds
-            }
-            else {
-                isBreak = true
-                breakCount += 1
-                isBreakLong = ((breakCount % 4).toInt() == 0)
-                totalTimeOfWorkInSeconds += timeOfCurrentStateInSeconds
-            }
-            timeOfCurrentStateInSeconds = 0
-        }
-
-        fun moveTimeBy(seconds: Long) {
-            timeOfCurrentStateInSeconds += seconds
-        }
-    }
-    var pomidoroState = PomidoroState()
-    class PomidoroSettings(
-        var workTimeInMinutes: Int = Constants.DEFAULT_WORK_TIME,
-        var shortBreakInMinutes: Int = Constants.DEFAULT_SHORT_BREAK_TIME,
-        var longBreakInMinutes: Int = Constants.DEFAULT_LONG_BREAK_TIME
-    )
-    var pomidoroSettings = PomidoroSettings()
-    val pomidoroTimeUpdate: MutableLiveData<OneTimeEventWithValue<Long>> = MutableLiveData(null)
-    var pomidoroTimerServiceStartedForTheSameStateAgain = false
-    val pomidoroStateChangeRequired: MutableLiveData<OneTimeEvent> = MutableLiveData()
-    val pomidoroStateChanged: MutableLiveData<OneTimeEvent> = MutableLiveData()
+    val lastTick = AtomicLong(0L)
 
     override suspend fun getEverything() = getMutex.withLock  {
         val task = taskRepo.getOneById(taskId)
@@ -200,13 +150,13 @@ class TaskOngoingViewModel(private val dbo: TGDatabase,
                 return true
             }
             TaskOngoingStates.BEFORE_DOING_TASK -> {
-                if (pomidoroIsOn) {
-                    val wT = pomidoroQuestions[WORK_TIME_ID]?.answer?.toInt()
-                    wT?.run { pomidoroSettings.workTimeInMinutes = this }
-                    val sB = pomidoroQuestions[SHORT_BREAK_ID]?.answer?.toInt()
-                    sB?.run { pomidoroSettings.shortBreakInMinutes = this }
-                    val lB = pomidoroQuestions[LONG_BREAK_ID]?.answer?.toInt()
-                    lB?.run { pomidoroSettings.longBreakInMinutes = this }
+                if (pomodoroIsOn) {
+                    val wT = pomodoroQuestions[WORK_TIME_ID]?.answer?.toInt()
+                    wT?.run { pomodoroSettings.workTimeInMinutes = this }
+                    val sB = pomodoroQuestions[SHORT_BREAK_ID]?.answer?.toInt()
+                    sB?.run { pomodoroSettings.shortBreakInMinutes = this }
+                    val lB = pomodoroQuestions[LONG_BREAK_ID]?.answer?.toInt()
+                    lB?.run { pomodoroSettings.longBreakInMinutes = this }
                 }
                 return true
             }
@@ -215,7 +165,7 @@ class TaskOngoingViewModel(private val dbo: TGDatabase,
     }
 
     override fun getQuestionList(): ArrayList<Question<Double>?>
-        = pomidoroQuestions.map { q -> q }.toCollection(ArrayList())
+        = pomodoroQuestions.map { q -> q }.toCollection(ArrayList())
 }
 
 typealias TaskDoingLauncher = ActivityResultLauncher<Long>
@@ -254,7 +204,7 @@ class TaskOngoing : AppCompatActivity() {
         const val LOG_TAG = "TaskOngoing"
         const val TASK_ID = "togtid"
         const val VIEW_STATE_ORDINAL = "togso"
-        const val POMIDORO_IS_ON = "togpom"
+        const val POMODORO_IS_ON = "togpom"
         const val TOTAL_TIME = "togtot"
         const val TOTAL_WORK_TIME = "togtow"
         const val TOTAL_BREAK_TIME = "togtob"
@@ -264,9 +214,11 @@ class TaskOngoing : AppCompatActivity() {
         const val STARTED_ON = "togso"
         const val ENDED_ON = "togeo"
 
-        const val TICK_RCV_INTENT_FILTER = "pomidorotasktick"
-        const val END_TIME_MEASUREMENT_INTENT_FILTER = "pomidoropauseorworkend"
+        const val TICK_RCV_INTENT_FILTER = "pomodorotasktick"
+        const val END_TIME_MEASUREMENT_INTENT_FILTER = "pomodoropauseorworkend"
         const val ACTIVITY_VISIBLE_INTENT_FILTER = "activityvisible"
+        const val START_TICKER_INTENT_FILTER = "starttimerintentfilter"
+        const val SERVICE_READY_INTENT_FILTER = "timingserviceready"
     }
 
     private lateinit var lbm: LocalBroadcastManager
@@ -279,11 +231,12 @@ class TaskOngoing : AppCompatActivity() {
     private var lastState: TaskOngoingViewModel.TaskOngoingStates
         = TaskOngoingViewModel.TaskOngoingStates.NOT_INITIALIZED
 
-    private var recoveredPomidoroState : TaskOngoingViewModel.PomidoroState? = null
-    private var isPomidoro = false
+    private var recoveredPomodoroState : PomodoroState? = null
+    private var isPomodoro = false
 
     private lateinit var tickBroadcastReceiver: BroadcastReceiver
     private lateinit var currentTimePassedReceiver: BroadcastReceiver
+    private lateinit var timingServiceReadyReceiver: BroadcastReceiver
     private var serviceRun: Boolean = false
 
     private var informedServiceOnLeaving = false
@@ -301,17 +254,19 @@ class TaskOngoing : AppCompatActivity() {
                 TaskOngoingViewModel.TaskOngoingStates.NOT_INITIALIZED.ordinal
             putInt(VIEW_STATE_ORDINAL, ordinal)
 
-            putBoolean(POMIDORO_IS_ON, viewModel.pomidoroIsOn)
+            putBoolean(POMODORO_IS_ON, viewModel.pomodoroIsOn)
             viewModel.startedDoingTaskOn?.run { putString(STARTED_ON, this.toString()) }
             viewModel.endedDoingTaskOn?.run { putString(ENDED_ON, this.toString()) }
 
-            val pState = viewModel.pomidoroState
-            putLong(TOTAL_TIME, pState.totalTimeInSeconds)
-            putLong(TOTAL_WORK_TIME, pState.totalTimeOfWorkInSeconds)
-            putLong(TOTAL_BREAK_TIME, pState.totalTimeOfBreaksInSeconds)
-            putLong(CURRENT_TIME, pState.timeOfCurrentStateInSeconds)
-            putBoolean(IS_BREAK, pState.isBreak)
-            putLong(BREAK_COUNT, pState.breakCount)
+            val pState = viewModel.pomodoroState
+            runBlocking {
+                putLong(TOTAL_TIME, pState.getTotalTime())
+                putLong(TOTAL_WORK_TIME, pState.getTotalTimeOfWork())
+                putLong(TOTAL_BREAK_TIME, pState.getTotalTimeOfBreaks())
+                putLong(CURRENT_TIME, pState.getTimeOfCurrentState())
+                putBoolean(IS_BREAK, pState.isBreak())
+                putLong(BREAK_COUNT, pState.getCountOfBreaks())
+            }
         }
 
         super.onSaveInstanceState(outState)
@@ -368,35 +323,11 @@ class TaskOngoing : AppCompatActivity() {
     private fun createAndRunService(addDuration: Boolean = false) {
         Log.i(LOG_TAG, "service creation and run")
         serviceRun = true
-        val idx = viewModel.pomidoroState.determineIndexBasedOnState()
-        val textToDisplay : String
-        val duration: Long
-        when (idx) {
-            WORK_TIME_ID -> {
-                textToDisplay = getString(R.string.tasks_pomidoro_work_time)
-                duration = if (addDuration) Constants.ADDITIONAL_TIME.toLong() else
-                    viewModel.pomidoroSettings.workTimeInMinutes.toLong()
-            }
-            LONG_BREAK_ID -> {
-                textToDisplay = getString(R.string.tasks_pomidoro_long_break)
-                duration =
-                    if (addDuration) Constants.ADDITIONAL_TIME.toLong() else
-                        viewModel.pomidoroSettings.longBreakInMinutes.toLong()
-            }
-            else -> {
-                textToDisplay = getString(R.string.tasks_pomidoro_short_break)
-                duration =
-                    if (addDuration) Constants.ADDITIONAL_TIME.toLong() else
-                        viewModel.pomidoroSettings.shortBreakInMinutes.toLong()
-            }
-        }
-        Log.i(LOG_TAG, "text: $textToDisplay, duration $duration ")
         val serviceIntent = TaskDoingTimingService.createIntent(
-            this,
-            duration,
-            textToDisplay,
+            this@TaskOngoing,
             getString(R.string.tasks_time_is_up),
-            taskId
+            taskId,
+            Constants.ADDITIONAL_TIME.toLong()
         )
         startForegroundService(serviceIntent)
     }
@@ -410,9 +341,14 @@ class TaskOngoing : AppCompatActivity() {
             currentTimePassedReceiver,
             IntentFilter(END_TIME_MEASUREMENT_INTENT_FILTER)
         )
+        lbm.registerReceiver(
+            timingServiceReadyReceiver,
+            IntentFilter(SERVICE_READY_INTENT_FILTER)
+        )
     }
 
     private fun unregisterReceivers() {
+        lbm.unregisterReceiver(timingServiceReadyReceiver)
         lbm.unregisterReceiver(tickBroadcastReceiver)
         lbm.unregisterReceiver(currentTimePassedReceiver)
     }
@@ -436,7 +372,7 @@ class TaskOngoing : AppCompatActivity() {
             lastState =
                 TaskOngoingViewModel.TaskOngoingStates.entries[stateOrd]
 
-            isPomidoro = getBoolean(POMIDORO_IS_ON, isPomidoro)
+            isPomodoro = getBoolean(POMODORO_IS_ON, isPomodoro)
             try {
                 val endInstant = Instant.parse(getString(ENDED_ON))
                 viewModel.endedDoingTaskOn?.run { viewModel.endedDoingTaskOn = endInstant }
@@ -450,22 +386,24 @@ class TaskOngoing : AppCompatActivity() {
             catch (_: NullPointerException) { /* ignore */ }
             catch (_: DateTimeParseException) { /* ignore */ }
 
-            if (isPomidoro) {
+            if (isPomodoro) {
                 val totalTime = getLong(TOTAL_TIME, -1L)
-                if (totalTime != -1L && viewModel.pomidoroState.totalTimeInSeconds < totalTime) {
-                    val totalBreakTime = getLong(TOTAL_BREAK_TIME, 0)
-                    val totalWorkTime = getLong(TOTAL_WORK_TIME, 0)
-                    val curTime = getLong(CURRENT_TIME, 0)
-                    val breakCount = getLong(BREAK_COUNT, 0)
-                    val isBreak = getBoolean(IS_BREAK, false)
-                    recoveredPomidoroState = TaskOngoingViewModel.PomidoroState(
-                        totalWorkTime,
-                        curTime,
-                        totalTime,
-                        totalBreakTime,
-                        breakCount,
-                        isBreak)
-                    viewModel.pomidoroState = recoveredPomidoroState!!
+                runBlocking {
+                    if (totalTime != -1L && viewModel.pomodoroState.getTotalTime() < totalTime) {
+                        val totalBreakTime = getLong(TOTAL_BREAK_TIME, 0)
+                        val totalWorkTime = getLong(TOTAL_WORK_TIME, 0)
+                        val curTime = getLong(CURRENT_TIME, 0)
+                        val breakCount = getLong(BREAK_COUNT, 0)
+                        val isBreak = getBoolean(IS_BREAK, false)
+                        recoveredPomodoroState = PomodoroState(
+                            totalWorkTime,
+                            curTime,
+                            totalTime,
+                            totalBreakTime,
+                            breakCount,
+                            isBreak)
+                        viewModel.pomodoroState = recoveredPomodoroState!!
+                    }
                 }
             }
         }
@@ -507,7 +445,7 @@ class TaskOngoing : AppCompatActivity() {
                 lastState =
                     TaskOngoingViewModel.TaskOngoingStates.entries[stateOrd]
 
-                isPomidoro = getBoolean(POMIDORO_IS_ON, isPomidoro)
+                isPomodoro = getBoolean(POMODORO_IS_ON, isPomodoro)
                 try {
                     endInstant = Instant.parse(getString(ENDED_ON))
                 }
@@ -519,7 +457,7 @@ class TaskOngoing : AppCompatActivity() {
                 catch (_: NullPointerException) { /* ignore */ }
                 catch (_: DateTimeParseException) { /* ignore */ }
 
-                if (isPomidoro) {
+                if (isPomodoro) {
                     val totalTime = getLong(TOTAL_TIME, -1L)
                     if (totalTime != -1L) {
                         val totalBreakTime = getLong(TOTAL_BREAK_TIME, 0)
@@ -527,7 +465,7 @@ class TaskOngoing : AppCompatActivity() {
                         val curTime = getLong(CURRENT_TIME, 0)
                         val breakCount = getLong(BREAK_COUNT, 0)
                         val isBreak = getBoolean(IS_BREAK, false)
-                        recoveredPomidoroState = TaskOngoingViewModel.PomidoroState(
+                        recoveredPomodoroState = PomodoroState(
                             totalWorkTime,
                             curTime,
                             totalTime,
@@ -559,9 +497,9 @@ class TaskOngoing : AppCompatActivity() {
             startInstant?.run { viewModel.startedDoingTaskOn = this }
             endInstant?.run { viewModel.endedDoingTaskOn = this }
 
-            if (isPomidoro) {
-                viewModel.pomidoroIsOn = true
-                viewModel.pomidoroState = recoveredPomidoroState!!
+            if (isPomodoro) {
+                viewModel.pomodoroIsOn = true
+                viewModel.pomodoroState = recoveredPomodoroState!!
             }
         }
 
@@ -581,19 +519,19 @@ class TaskOngoing : AppCompatActivity() {
             val toolbar: androidx.appcompat.widget.Toolbar = findViewById(R.id.taskToolbar)
             setSupportActionBar(toolbar)
 
-            viewModel.pomidoroQuestions[TaskOngoingViewModel.WORK_TIME_ID]= RangedDoubleQuestion(
+            viewModel.pomodoroQuestions[TaskOngoingViewModel.WORK_TIME_ID]= RangedDoubleQuestion(
                 getString(R.string.tasks_work_time_in_minutes),
                 1.0,
                 Constants.MAX_WORK_TIME.toDouble(),
                 Constants.DEFAULT_WORK_TIME.toDouble()
             )
-            viewModel.pomidoroQuestions[TaskOngoingViewModel.SHORT_BREAK_ID]= RangedDoubleQuestion(
+            viewModel.pomodoroQuestions[TaskOngoingViewModel.SHORT_BREAK_ID]= RangedDoubleQuestion(
                 getString(R.string.tasks_short_break_in_minutes),
                 1.0,
                 Constants.MAX_SHORT_BREAK_TIME.toDouble(),
                 Constants.DEFAULT_SHORT_BREAK_TIME.toDouble()
             )
-            viewModel.pomidoroQuestions[TaskOngoingViewModel.LONG_BREAK_ID]= RangedDoubleQuestion(
+            viewModel.pomodoroQuestions[TaskOngoingViewModel.LONG_BREAK_ID]= RangedDoubleQuestion(
                 getString(R.string.tasks_long_break_in_minutes),
                 1.0,
                 Constants.MAX_LONG_BREAK_TIME.toDouble(),
@@ -670,16 +608,17 @@ class TaskOngoing : AppCompatActivity() {
                     }
                     TaskOngoingViewModel.TaskOngoingStates.DOING_TASK -> {
 
-                        Log.i(LOG_TAG, "task pomidoro on: ${viewModel.pomidoroIsOn};" +
+                        Log.i(LOG_TAG, "task pomodoro on: ${viewModel.pomodoroIsOn};" +
                                 "times (work, short, long): " +
-                                "${viewModel.pomidoroQuestions[WORK_TIME_ID]?.answer}, " +
-                        "${viewModel.pomidoroQuestions[TaskOngoingViewModel.SHORT_BREAK_ID]?.answer}," +
-                                "${viewModel.pomidoroQuestions[LONG_BREAK_ID]?.answer}")
+                                "${viewModel.pomodoroQuestions[WORK_TIME_ID]?.answer}, " +
+                        "${viewModel.pomodoroQuestions[TaskOngoingViewModel.SHORT_BREAK_ID]?.answer}," +
+                                "${viewModel.pomodoroQuestions[LONG_BREAK_ID]?.answer}")
 
                         if (viewModel.startedDoingTaskOn == null)
                             viewModel.startedDoingTaskOn = Instant.now()
 
-                        if (! serviceRun && viewModel.pomidoroIsOn) createAndRunService()
+                        if (! serviceRun && viewModel.pomodoroIsOn)
+                            createAndRunService()
 
                         fm.beginTransaction().apply {
                             setReorderingAllowed(true)
@@ -730,6 +669,14 @@ class TaskOngoing : AppCompatActivity() {
 
         fun prepareReceiversAndObjectsRelatedToThem() {
 
+            fun calculateShiftFor(tickCount: Long): Long {
+                val lastTick = viewModel.lastTick.get()
+                if (lastTick > tickCount) return 0L
+                val shift = if (lastTick < tickCount) tickCount - lastTick else 0L
+                viewModel.lastTick.set(tickCount)
+                return shift
+            }
+
             tickBroadcastReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     // by "ticks" it is implied they're seconds - OneSecondTicker
@@ -737,9 +684,9 @@ class TaskOngoing : AppCompatActivity() {
                     if (intent.action != TICK_RCV_INTENT_FILTER) return
                     // one tick - roughly one second
                     val tickCount = intent.extras?.getLong(TaskDoingTimingService.TICK_COUNT) ?: 0
-                    val currentSeconds = viewModel.pomidoroState.timeOfCurrentStateInSeconds
-                    val shift = if (tickCount > currentSeconds) tickCount - currentSeconds else 0
-                    viewModel.pomidoroTimeUpdate.value = OneTimeEventWithValue<Long>(shift)
+
+                    viewModel.pomodoroTimeUpdate.value =
+                        OneTimeEventWithValue(calculateShiftFor(tickCount))
                 }
             }
 
@@ -747,19 +694,59 @@ class TaskOngoing : AppCompatActivity() {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     if (intent == null) return
                     if (intent.action != END_TIME_MEASUREMENT_INTENT_FILTER) return
-                    viewModel.pomidoroTimerServiceStartedForTheSameStateAgain = true
-                    createAndRunService()
-                    viewModel.pomidoroStateChangeRequired.value = OneTimeEvent()
+                    val finalTicks =
+                        intent.extras?.getLong(TaskDoingTimingService.FINAL_TICK) ?: return
+                    viewModel.pomodoroTimeUpdate.value =
+                        OneTimeEventWithValue(calculateShiftFor(finalTicks))
+                    viewModel.pomodoroStateChangeRequired.value = OneTimeEvent()
                 }
+            }
+
+            timingServiceReadyReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    if (intent == null) return
+                    if (intent.action != SERVICE_READY_INTENT_FILTER) return
+                    viewModel.pomodoroIsReady.value = (viewModel.pomodoroIsOn)
+                }
+            }
+
+            viewModel.pomodoroStartTicking.observe(this) {
+                it?.handleIfNotHandledWith { lifecycleScope.launch {
+                    val addDuration = viewModel.pomodoroTimerTickingForTheSameState.get()
+                    val idx = viewModel.pomodoroState.determineIndexBasedOnState()
+                    val textToDisplay : String
+                    val duration: Long
+                    when (idx) {
+                        WORK_TIME_ID -> {
+                            textToDisplay = getString(R.string.tasks_pomodoro_work_time)
+                            duration = if (addDuration) Constants.ADDITIONAL_TIME.toLong() else
+                                viewModel.pomodoroSettings.workTimeInMinutes.toLong()
+                        }
+                        LONG_BREAK_ID -> {
+                            textToDisplay = getString(R.string.tasks_pomodoro_long_break)
+                            duration =
+                                if (addDuration) Constants.ADDITIONAL_TIME.toLong() else
+                                    viewModel.pomodoroSettings.longBreakInMinutes.toLong()
+                        }
+                        else -> {
+                            textToDisplay = getString(R.string.tasks_pomodoro_short_break)
+                            duration =
+                                if (addDuration) Constants.ADDITIONAL_TIME.toLong() else
+                                    viewModel.pomodoroSettings.shortBreakInMinutes.toLong()
+                        }
+                    }
+                    Log.i(LOG_TAG, "text: $textToDisplay, duration $duration ")
+                    lbm.sendBroadcast(
+                        Intent(START_TICKER_INTENT_FILTER).apply {
+                            putExtra(TaskDoingTimingService.DURATION_IN_MINUTES, duration)
+                            putExtra(TaskDoingTimingService.TEXT_FOR_BRING_UP_NOTIFICATION,
+                                textToDisplay)
+                        }
+                    )
+                } }
             }
             registerReceivers()
 
-            viewModel.pomidoroStateChanged.observe(this) {
-                it?.handleIfNotHandledWith {
-                    stopService(Intent(this, TaskDoingTimingService::class.java))
-                    viewModel.pomidoroTimerServiceStartedForTheSameStateAgain = false
-                    createAndRunService()
-            } }
         }
 
         fun doInThisOrder() {

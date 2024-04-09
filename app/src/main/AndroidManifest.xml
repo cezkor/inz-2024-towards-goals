@@ -39,7 +39,7 @@
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="Pomidoro Timer" />
+                android:value="Pomodoro Timer" />
         </service>
 
         <activity

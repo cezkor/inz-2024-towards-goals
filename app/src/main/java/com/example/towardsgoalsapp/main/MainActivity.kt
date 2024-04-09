@@ -111,104 +111,114 @@ class MainActivity : AppCompatActivity() {
             databaseObject = DatabaseObjectFactory.newDatabaseObject(this.driver)
         }
 
+        Log.i(LOG_TAG, "application should be running on test data: " +
+                "${BuildConfig.SHOULD_USE_TEST_DATA}")
+
         sharedViewModelForAllPages =
             ViewModelProvider(this,
         GoalSynopsisesViewModelFactory(databaseObject))[GoalSynopsisesViewModel::class.java]
-                                                                //  match everything
-        externalUIRefreshReceiver = ShouldRefreshUIBroadcastReceiver(null) {
-            lifecycleScope.launch {
-                Log.i(LOG_TAG, "Getting goals because of refresh request")
-                sharedViewModelForAllPages.getEverything()
-            }
-        }
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-            externalUIRefreshReceiver!!,
-            IntentFilter(ShouldRefreshUIBroadcastReceiver.INTENT_FILTER)
-        )
-
-        Log.i(LOG_TAG, "application should be running on test data: " +
-                "${BuildConfig.SHOULD_USE_TEST_DATA}")
-        if (BuildConfig.SHOULD_USE_TEST_DATA) {
-            lifecycleScope.launch(sharedViewModelForAllPages.exceptionHandler) {
-            if (DatabaseGeneration.assureDatabaseHasTestData(databaseObject)) {
-                Log.i(LOG_TAG, "getEverything because filled out test data")
-                Toast.makeText(this@MainActivity,
-                    getString(R.string.put_test_data), Toast.LENGTH_SHORT).show()
-                sharedViewModelForAllPages.getEverything()
-            }
-        } }
+        Log.i(LOG_TAG, "created viewmodel")
 
         sharedViewModelForAllPages.exceptionMutable.observe(this) {
             ErrorHandling.showExceptionDialog(this, it)
         }
 
-        Log.i(LOG_TAG, "created viewmodel: $sharedViewModelForAllPages")
-
-        goalPager = findViewById(R.id.goalPager)
-
-        // position in page is the same as position in the goal data states array
-        fun recreatePagerAdapter() {
-            goalPager.adapter = GoalPagesAdapter(
-                this,
-                sharedViewModelForAllPages.arrayOfGoalDataStates
-            )
-        }; recreatePagerAdapter()
-
-        var pageNum = 0
-        while (pageNum < Constants.MAX_GOALS_AMOUNT){
-            Log.i(LOG_TAG, "Creating observer for page $pageNum")
-
-            val currentPageNum = pageNum
-            val observer = Observer<GoalSynopsisesViewModel.MutableGoalDataStates> {
-                when (it) {
-                    GoalSynopsisesViewModel.MutableGoalDataStates.NOT_READY,
-                    GoalSynopsisesViewModel.MutableGoalDataStates.INITIALIZED_EMPTY,
-                    GoalSynopsisesViewModel.MutableGoalDataStates.INITIALIZED_POPULATED
-                        -> { /* ignore */ }
-                    GoalSynopsisesViewModel.MutableGoalDataStates.REFRESHED -> {
-                        // goal synopsis will refresh itself as it is observing Mutable of GoalData
-                        goalPager.setCurrentItem(currentPageNum, false)
-                    }
-                    else -> { // POPULATED, EMPTIED
-                        // i am unable currently to come up with better
-                        // solution to making ViewPager2 replace entire page fragment
-                        // other than to remake its whole adapter
-                        recreatePagerAdapter()
-                        goalPager.setCurrentItem(currentPageNum, false)
-                    }
+        fun prepareActivity() {
+            //  match everything
+            externalUIRefreshReceiver = ShouldRefreshUIBroadcastReceiver(null) {
+                lifecycleScope.launch {
+                    Log.i(LOG_TAG, "Getting goals because of refresh request")
+                    sharedViewModelForAllPages.getEverything()
                 }
             }
-
-            sharedViewModelForAllPages.arrayOfGoalDataStates[pageNum].observe(
-                this@MainActivity, observer
+            LocalBroadcastManager.getInstance(this).registerReceiver(
+                externalUIRefreshReceiver!!,
+                IntentFilter(ShouldRefreshUIBroadcastReceiver.INTENT_FILTER)
             )
 
-            pageNum += 1
-        }
+            goalPager = findViewById(R.id.goalPager)
 
-        sharedViewModelForAllPages.allReady.observe(this) {
-            it.handleIfNotHandledWith {
-                if (! it.value) return@handleIfNotHandledWith
-                // if all ready -> create the adapter as everything that could be
+            // position in page is the same as position in the goal data states array
+            fun recreatePagerAdapter() {
                 goalPager.adapter = GoalPagesAdapter(
                     this,
                     sharedViewModelForAllPages.arrayOfGoalDataStates
                 )
+            }; recreatePagerAdapter()
+
+            var pageNum = 0
+            while (pageNum < Constants.MAX_GOALS_AMOUNT){
+                Log.i(LOG_TAG, "Creating observer for page $pageNum")
+
+                val currentPageNum = pageNum
+                val observer = Observer<GoalSynopsisesViewModel.MutableGoalDataStates> {
+                    when (it) {
+                        GoalSynopsisesViewModel.MutableGoalDataStates.NOT_READY,
+                        GoalSynopsisesViewModel.MutableGoalDataStates.INITIALIZED_EMPTY,
+                        GoalSynopsisesViewModel.MutableGoalDataStates.INITIALIZED_POPULATED
+                        -> { /* ignore */ }
+                        GoalSynopsisesViewModel.MutableGoalDataStates.REFRESHED -> {
+                            // goal synopsis will refresh itself as it is observing Mutable of GoalData
+                            goalPager.setCurrentItem(currentPageNum, false)
+                        }
+                        else -> { // POPULATED, EMPTIED
+                            // i am unable currently to come up with better
+                            // solution to making ViewPager2 replace entire page fragment
+                            // other than to remake its whole adapter
+                            recreatePagerAdapter()
+                            goalPager.setCurrentItem(currentPageNum, false)
+                        }
+                    }
+                }
+
+                sharedViewModelForAllPages.arrayOfGoalDataStates[pageNum].observe(
+                    this@MainActivity, observer
+                )
+
+                pageNum += 1
+            }
+
+            sharedViewModelForAllPages.allReady.observe(this) {
+                it.handleIfNotHandledWith {
+                    if (! it.value) return@handleIfNotHandledWith
+                    // if all ready -> create the adapter as everything that could be
+                    goalPager.adapter = GoalPagesAdapter(
+                        this,
+                        sharedViewModelForAllPages.arrayOfGoalDataStates
+                    )
+                }
+            }
+
+            lifecycleScope.launch(sharedViewModelForAllPages.exceptionHandler) {
+                repeatOnLifecycle(Lifecycle.State.CREATED) {
+                    Log.i(LOG_TAG, "Getting goals")
+                    sharedViewModelForAllPages.getEverything()
+                }
+            }
+
+            savedInstanceState?.run {
+                val i: Int = this.getInt(PAGE_NUMBER)
+                if ( (i > 0) and (i < Constants.MAX_GOALS_AMOUNT) ) { goalPager.currentItem = i }
             }
         }
 
-        lifecycleScope.launch(sharedViewModelForAllPages.exceptionHandler) {
-            repeatOnLifecycle(Lifecycle.State.CREATED) {
-                Log.i(LOG_TAG, "Getting goals")
-                sharedViewModelForAllPages.getEverything()
-            }
-        }
-
-        savedInstanceState?.run {
-            val i: Int = this.getInt(PAGE_NUMBER)
-            if ( (i > 0) and (i < Constants.MAX_GOALS_AMOUNT) ) { goalPager.currentItem = i }
-        }
-
+        if (BuildConfig.SHOULD_USE_TEST_DATA) {
+            lifecycleScope.launch(sharedViewModelForAllPages.exceptionHandler) {
+                Toast.makeText(this@MainActivity,
+                    getString(R.string.check_for_test_data), Toast.LENGTH_SHORT).show()
+                if (DatabaseGeneration.assureDatabaseHasTestData(databaseObject)) {
+                    Log.i(LOG_TAG, "getEverything because filled out test data")
+                    Toast.makeText(this@MainActivity,
+                        getString(R.string.put_test_data), Toast.LENGTH_SHORT).show()
+                }
+                else {
+                    Log.w(LOG_TAG, "test data not loaded")
+                    Toast.makeText(this@MainActivity,
+                        getString(R.string.test_data_not_loaded), Toast.LENGTH_SHORT).show()
+                }
+                prepareActivity()
+        } }
+        else prepareActivity()
     }
 
     override fun onRestoreInstanceState(
