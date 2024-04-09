@@ -1,5 +1,6 @@
 package com.example.towardsgoalsapp.habits.questioning
 
+import android.graphics.Typeface
 import androidx.lifecycle.ViewModelProvider
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -44,6 +45,7 @@ class HabitMarking : Fragment() {
         val markDoneWellButton = view.findViewById<Button>(R.id.habitMarkDoneWell)
         val markDoneNotWellButton = view.findViewById<Button>(R.id.habitMarkNotDoneWell)
         val skipButton = view.findViewById<Button>(R.id.habitSkipButton)
+        val descriptionTextView: TextView = view.findViewById(R.id.descriptionTextView)
 
         var buttonPushed: Boolean = false
 
@@ -75,6 +77,17 @@ class HabitMarking : Fragment() {
 
         viewModel.mutableHabitData.observe(viewLifecycleOwner) { h ->
             if (h == null) return@observe
+
+            val description = h.habitDescription
+            if (description.isBlank()) {
+                descriptionTextView.typeface = Typeface.defaultFromStyle(Typeface.ITALIC)
+                descriptionTextView.text = getString(R.string.no_description)
+            }
+            else {
+                descriptionTextView.typeface = Typeface.defaultFromStyle(Typeface.NORMAL)
+                descriptionTextView.text = description
+            }
+
             targetText.text = getString(
                 R.string.habits_about_target,
                 h.habitTotalCount + 1, h.habitTargetPeriod

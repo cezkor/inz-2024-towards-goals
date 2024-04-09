@@ -1,6 +1,7 @@
 package com.example.towardsgoalsapp.etc
 
 import com.example.towardsgoalsapp.Constants
+import com.example.towardsgoalsapp.R
 
 abstract class TextFixer {
     abstract fun fix(textToFix: String?) : String
@@ -67,4 +68,21 @@ val EisenhowerTaskNameFixer = object : TextFixer() {
         return textTrimmed.substring(0, upTo) + addition
     }
 
+}
+
+class SecondsFormatting private constructor() {
+    companion object {
+
+        // formats non-negative seconds number to MM:SS
+        fun formatSeconds(translation: Translation, seconds: Long) : String {
+            if (seconds < 0L) return "00:00"
+            val lMM = seconds / 60
+            val lSS = seconds % 60
+            return translation.getString(
+                R.string.tasks_time_format).format(
+                String.format("%02d", lMM),
+                String.format("%02d", lSS)
+            )
+        }
+    }
 }
