@@ -48,15 +48,11 @@ class HabitParamsRepository(private val db: TGDatabase) : OwnedByOneTypeOnlyOwne
     }
 
     override suspend fun updateTexts(id:Long, firstText: String, secondText: String) {
-        return withContext(Dispatchers.IO) {
-            db.habitParametersQueries.updateHabitParamTexts(firstText, secondText, id)
-        }
+        // not used
     }
 
     override suspend fun markEditing(id: Long, isUnfinished: Boolean) {
-        return withContext(Dispatchers.IO) {
-            db.habitParametersQueries.markHabitParamEdit(isUnfinished, id)
-        }
+        // not used
     }
 
     suspend fun putValueOfParam(paramId: Long, value: Double, addedOn: Instant) {
@@ -69,12 +65,6 @@ class HabitParamsRepository(private val db: TGDatabase) : OwnedByOneTypeOnlyOwne
         return withContext(Dispatchers.IO) {
             db.habitParametersQueries.selectAllValuesOfParameter(paramId)
                 .executeAsList().toCollection(ArrayList())
-        }
-    }
-
-    suspend fun updateTargetValue(id:Long, value: Double) {
-        return withContext(Dispatchers.IO) {
-            db.habitParametersQueries.updateHabitParamTargetValue(value, id)
         }
     }
 
@@ -131,31 +121,51 @@ class HabitParamsRepository(private val db: TGDatabase) : OwnedByOneTypeOnlyOwne
         return withContext(Dispatchers.IO) {
             db.habitParametersQueries.transaction {
                 for (hp in hps) hp.value?.run {
+
                     val isMarkedAsUnfinished =
                         db.habitParametersQueries.getHabitParamUnfinished(this.paramId)
                             .executeAsOneOrNull() ?: rollback()
 
+                    val hasUnfinishedParam = db.habitParametersQueries
+                        .selectGivenUnfinishedHabitParam(this.paramId).executeAsOneOrNull() != null
+
                     if (asUnfinished) {
                         if (! isMarkedAsUnfinished)
-                            db.habitParametersQueries.markHabitParamEdit(true, this.paramId)
-                        db.habitParametersQueries.updateUnfinishedHabitParam(
-                            this.name,
-                            this.unit,
-                            this.targetVal,
-                            this.paramId
-                        )
+                            db.habitParametersQueries.markHabitParamEdit(true,
+                                this.paramId)
+
+                        if (hasUnfinishedParam) {
+                            db.habitParametersQueries.updateUnfinishedHabitParam(
+                                this.name,
+                                this.unit,
+                                this.targetVal,
+                                this.paramId
+                            )
+                        }
+                        else {
+                            db.habitParametersQueries.insertOneEditUnfinishedHabitParam(
+                                this.paramId,
+                                this.name,
+                                this.unit,
+                                this.targetVal,
+                            )
+                        }
                     }
                     else {
-                        if (! isMarkedAsUnfinished)
+                        if (hasUnfinishedParam) {
                             db.habitParametersQueries.markHabitParamEdit(false, this.paramId)
+                            db.habitParametersQueries.deleteEditUnfinishedHabitParam(this.paramId)
+                        }
                         db.habitParametersQueries.updateHabitParamTexts(
                             this.name,
                             this.unit,
                             this.paramId
                         )
-                        db.habitParametersQueries.updateHabitParamTargetValue(this.targetVal, this.paramId)
+                        db.habitParametersQueries
+                            .updateHabitParamTargetValue(this.targetVal, this.paramId)
                     }
                 }
+
             }
         }
     }

@@ -20,13 +20,6 @@ CREATE TABLE UnfinishedImpIntData (
     ownerType TEXT AS OwnerType NOT NULL
 );
 
-CREATE TRIGGER deleteNowFinishedImpInt
-AFTER UPDATE ON ImpIntData
-WHEN new.impIntEditUnfinished = 0
-BEGIN
-	DELETE FROM UnfinishedImpIntData WHERE impIntId = new.impIntId;
-END;
-
 selectAllFinishedImpIntsOf:
 SELECT * FROM ImpIntData WHERE ownerId = ? AND ownerType = ? AND impIntEditUnfinished = 0 ORDER BY impIntId ASC;
 
@@ -58,13 +51,16 @@ updateUnfinishedImpIntTexts:
 UPDATE UnfinishedImpIntData SET impIntIfText = ?, impIntThenText = ? WHERE impIntId = ?;
 
 markImpIntEdit:
-UPDATE ImpIntData  SET impIntEditUnfinished = ? WHERE impIntId = ?;
+UPDATE ImpIntData SET impIntEditUnfinished = ? WHERE impIntId = ?;
 
 deleteImpInt:
 DELETE FROM ImpIntData WHERE impIntId = ?;
 
 getImpIntUnfinished:
 SELECT impIntEditUnfinished FROM ImpIntData WHERE impIntId = ?;
+
+deleteEditUnfinishedImpInt:
+DELETE FROM UnfinishedImpIntData WHERE impIntId = ?;
 
 lastInsertRowId:
 SELECT last_insert_rowid();

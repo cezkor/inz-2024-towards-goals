@@ -23,7 +23,6 @@ abstract class TextsViewModel : ErrorHandlingViewModel() {
 
     val descriptionOfData: MutableLiveData<String> = MutableLiveData(Constants.EMPTY_STRING)
 
-    val addMainDataDenier = BooleanWorkDenier()
     var addedAnyData: Boolean = false
         protected set
 

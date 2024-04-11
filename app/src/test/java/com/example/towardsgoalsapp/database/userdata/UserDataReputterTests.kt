@@ -1,15 +1,13 @@
-package com.example.towardsgoalsapp.etc
+package com.example.towardsgoalsapp.database.userdata
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
-import com.example.towardsgoalsapp.database.userdata.MutablesArrayContentState
-import com.example.towardsgoalsapp.database.userdata.UserDataReputter
 import org.junit.Test
 import java.util.ArrayList
 import com.google.common.truth.Truth.*
 import org.junit.Rule
 
-class UserDataReputterTest {
+class UserDataReputterTests {
 
     @Rule
     @JvmField
@@ -33,16 +31,20 @@ class UserDataReputterTest {
         mutArray.clear()
         var reputter: DClassReputter = DClassReputter(mutArray)
 
-        var array = arrayListOf<DClass>(DClass("t1", 1),
-            DClass("t2", 2), DClass("t3", 3))
+        var array = arrayListOf<DClass>(
+            DClass("t1", 1),
+            DClass("t2", 2), DClass("t3", 3)
+        )
 
         reputter.setWholeBasedOnArrayList(array)
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).isInOrder()
 
         mutArray.clear()
         reputter = DClassReputter(mutArray)
-        array = arrayListOf<DClass>(DClass("t1", 3),
-            DClass("t2", 2), DClass("t3", 1))
+        array = arrayListOf<DClass>(
+            DClass("t1", 3),
+            DClass("t2", 2), DClass("t3", 1)
+        )
         reputter.setWholeBasedOnArrayList(array)
 
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).isInOrder(
@@ -60,17 +62,25 @@ class UserDataReputterTest {
         mutArray.add(MutableLiveData())
         mutArray.add(MutableLiveData())
 
-        var array1 = arrayListOf<DClass>(DClass("t1", 1),
-            DClass("t2", 2), DClass("t3", 3))
+        var array1 = arrayListOf<DClass>(
+            DClass("t1", 1),
+            DClass("t2", 2), DClass("t3", 3)
+        )
 
-        var array2 = arrayListOf<DClass>(DClass("t1", 4),
-            DClass("t2", 5), DClass("t3", 6))
+        var array2 = arrayListOf<DClass>(
+            DClass("t1", 4),
+            DClass("t2", 5), DClass("t3", 6)
+        )
 
-        var array3 = arrayListOf<DClass>(DClass("t1", 10),
-            DClass("t2", 11), DClass("t3", 12))
+        var array3 = arrayListOf<DClass>(
+            DClass("t1", 10),
+            DClass("t2", 11), DClass("t3", 12)
+        )
 
-        var array4 = arrayListOf<DClass>(DClass("t1", 20),
-            DClass("t2", 21), DClass("t3", 22))
+        var array4 = arrayListOf<DClass>(
+            DClass("t1", 20),
+            DClass("t2", 21), DClass("t3", 22)
+        )
 
         val aloneData = DClass("alone", 9)
 
@@ -80,9 +90,27 @@ class UserDataReputterTest {
         assertThat(mutArray[3].value).isNull()
         assertThat(mutArray[4].value).isNull()
 
-        assertThat(reputter.reputBasedOnInsertOfArrayList(array2).first)
+        var p = reputter.reputBasedOnInsertOf(array2[0])
+        assertThat(p.first)
+            .isEqualTo(MutablesArrayContentState.REPUTTED)
+        assertThat(p.second)
+            .isEqualTo(0)
+        assertThat(mutArray.map { m -> m.value })
+            .containsExactly(array1[0], array1[1], array1[2], array2[0], null)
+        p = reputter.reputBasedOnInsertOf(array2[1])
+        assertThat(p.first)
+            .isEqualTo(MutablesArrayContentState.REPUTTED)
+        assertThat(p.second)
+            .isEqualTo(0)
+        assertThat(mutArray.map { m -> m.value })
+            .containsExactly(array1[0], array1[1], array1[2], array2[0], array2[1])
+        p = reputter.reputBasedOnInsertOf(array2[2])
+        assertThat(p.first)
             .isEqualTo(MutablesArrayContentState.ADDED_NEW)
-        assertThat(mutArray.size).isEqualTo(6)
+        assertThat(p.second)
+            .isEqualTo(1)
+        assertThat(mutArray.map { m -> m.value })
+            .containsExactly(array1[0], array1[1], array1[2], array2[0], array2[1], array2[2])
 
         assertThat(reputter.reputBasedOnDeleteOf(array1[2]).first)
             .isEqualTo(MutablesArrayContentState.REPUTTED)
@@ -107,8 +135,13 @@ class UserDataReputterTest {
             1L, 2L, 3L, 4L, 5L, 6L, 9L
         )
 
-        assertThat(reputter.reputBasedOnInsertOfArrayList(array3).first)
-            .isEqualTo(MutablesArrayContentState.ADDED_NEW)
+        assertThat(array3.map{ d -> reputter.reputBasedOnInsertOf(d) })
+            .containsExactly(
+                Pair(MutablesArrayContentState.ADDED_NEW, 1),
+                Pair(MutablesArrayContentState.ADDED_NEW, 1),
+                Pair(MutablesArrayContentState.ADDED_NEW, 1)
+            )
+
         assertThat(mutArray.size).isEqualTo(3 + 3 + 1 + 3)
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).isInOrder()
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).containsExactly(
@@ -120,8 +153,12 @@ class UserDataReputterTest {
         assertThat(mutArray.size).isEqualTo(10)
         assertThat(mutArray[mutArray.lastIndex].value).isNull()
 
-        assertThat(reputter.reputBasedOnInsertOfArrayList(array4).first)
-            .isEqualTo(MutablesArrayContentState.ADDED_NEW)
+        assertThat(array4.map{ d -> reputter.reputBasedOnInsertOf(d) })
+            .containsExactly(
+                Pair(MutablesArrayContentState.REPUTTED, 0),
+                Pair(MutablesArrayContentState.ADDED_NEW, 1),
+                Pair(MutablesArrayContentState.ADDED_NEW, 1)
+            )
         assertThat(mutArray.size).isEqualTo(3 + 3 + 3 + 3)
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).isInOrder()
         assertThat(mutArray.map{ it.value?.orderNumber ?: 0 }).containsExactly(

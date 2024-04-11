@@ -206,26 +206,26 @@ class TaskDetailsViewModel(private val dbo: TGDatabase, private var taskId: Long
         return if (ownerTaskObject == null) null else ownerTaskObject?.goalId
     }
 
-    suspend fun saveMainDataAsUnfinished() : Boolean = addMainDataDenier.doWork {
+    suspend fun saveMainDataAsUnfinished() : Boolean {
         if (goalId == Constants.IGNORE_ID_AS_LONG)
-            goalId = getGoalIdOrNull() ?: return@doWork false
+            goalId = getGoalIdOrNull() ?: return false
         if (taskId == Constants.IGNORE_ID_AS_LONG) {
             taskId = addMainTask()
-            if (taskId == Constants.IGNORE_ID_AS_LONG) return@doWork false
+            if (taskId == Constants.IGNORE_ID_AS_LONG) return false
         }
-        var task: TaskData? = taskRepo.getOneById(taskId) ?: return@doWork false
+        var task: TaskData? = taskRepo.getOneById(taskId) ?: return false
         taskRepo.markEditing(taskId, true)
         val newUnfData = RecreatingTaskDataFactory.createUserDataBasedOnTexts(
             task!!, nameOfData.value, descriptionOfData.value
         )
         taskRepo.putAsUnfinished(newUnfData)
-        task = taskRepo.getOneById(taskId) ?: return@doWork false
+        task = taskRepo.getOneById(taskId) ?: return false
 
         updateImpInts(true)
 
         mutableTaskData.value = task
         addedAnyData = true
-        return@doWork true
+        return true
     }
     override suspend fun saveMainData(): Boolean {
 

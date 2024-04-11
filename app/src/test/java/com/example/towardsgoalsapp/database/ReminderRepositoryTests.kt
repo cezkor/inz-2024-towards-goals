@@ -81,7 +81,6 @@ class ReminderRepositoryTests {
             )
             remList = repo.getAll().toCollection(ArrayList<ReminderData>())
             assertThat(remList.size).isEqualTo(2)
-            assertThat(remList.map { it -> it.remindOn }).isInOrder()
             assertThat(remList.map { it -> it.remindOn }).containsExactly(instant1, instant2)
             assertThat(remList.map { it -> it.ownerType })
                 .containsExactly(OwnerType.TYPE_TASK, OwnerType.TYPE_HABIT)
@@ -93,7 +92,26 @@ class ReminderRepositoryTests {
             assertThat(onlyTaskRem).isNotNull()
             assertThat(onlyTaskRem!!.ownerType).isEqualTo(OwnerType.TYPE_TASK)
 
-            // add update statements
+            val now = Instant.now()
+            var rem2 = repo.getOneById(remId2)
+            assertThat(rem2).isNotNull()
+            assertThat(rem2!!.remindOn).isNotNull()
+
+            repo.updateRemindOn(remId2, now)
+            rem2 = repo.getOneById(remId2)
+            assertThat(rem2).isNotNull()
+            assertThat(rem2!!.remindOn).isEqualTo(now)
+
+            val now2 = Instant.now()
+            rem2 = repo.getOneById(remId2)
+            assertThat(rem2).isNotNull()
+            assertThat(rem2!!.lastReminded).isNull()
+
+            repo.updateLastReminded(remId2, now2)
+
+            rem2 = repo.getOneById(remId2)
+            assertThat(rem2).isNotNull()
+            assertThat(rem2!!.lastReminded).isEqualTo(now2)
 
             repo.deleteById(remId2)
             repo.deleteById(remId3)

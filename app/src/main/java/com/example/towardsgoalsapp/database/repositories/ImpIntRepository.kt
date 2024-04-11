@@ -100,18 +100,36 @@ class ImpIntRepository(private val db: TGDatabase) : OwnedByTypedOwnerUserData {
                         db.impIntsDataQueries.getImpIntUnfinished(this.impIntId)
                             .executeAsOneOrNull() ?: rollback()
 
+                    val isThereAnUnfinishedImpInt = db.impIntsDataQueries
+                        .selectGivenUnfinishedImpInt(this.impIntId)
+                        .executeAsOneOrNull() != null
+
                     if (asUnfinished) {
+
                         if (! isMarkedAsUnfinished)
                             db.impIntsDataQueries.markImpIntEdit(true, this.impIntId)
-                        db.impIntsDataQueries.updateUnfinishedImpIntTexts(
-                            this.impIntIfText,
-                            this.impIntThenText,
-                            this.impIntId
-                        )
+                        if (! isThereAnUnfinishedImpInt) {
+                            db.impIntsDataQueries.insertOneEditUnfinishedImpInt(
+                                this.impIntId,
+                                this.impIntIfText,
+                                this.impIntThenText,
+                                this.ownerId,
+                                this.ownerType
+                            )
+                        }
+                        else {
+                            db.impIntsDataQueries.updateUnfinishedImpIntTexts(
+                                this.impIntIfText,
+                                this.impIntThenText,
+                                this.impIntId
+                            )
+                        }
                     }
                     else {
-                        if (! isMarkedAsUnfinished)
+                        if (isThereAnUnfinishedImpInt) {
                             db.impIntsDataQueries.markImpIntEdit(false, this.impIntId)
+                            db.impIntsDataQueries.deleteEditUnfinishedImpInt(this.impIntId)
+                        }
                         db.impIntsDataQueries.updateImpIntTexts(
                             this.impIntIfText,
                             this.impIntThenText,
@@ -123,40 +141,8 @@ class ImpIntRepository(private val db: TGDatabase) : OwnedByTypedOwnerUserData {
         }
     }
 
-
-    // TODO: remove these methods safely as they won't be probably used
-
-    suspend fun putAllImpInts(iis: ArrayList<MutableLiveData<ImpIntData>>) {
-        return withContext(Dispatchers.IO) {
-            db.impIntsDataQueries.transaction {
-                for (ii in iis) ii.value?.run {
-                    db.impIntsDataQueries.insertOneImpInt(
-                        null,
-                        this.impIntIfText,
-                        this.impIntThenText,
-                        this.ownerId,
-                        this.ownerType
-                    )
-                }
-            }
-        }
-    }
-
     override suspend fun markEditing(id:Long, isUnfinished: Boolean) {
-        return withContext(Dispatchers.IO) {
-            db.impIntsDataQueries.markImpIntEdit(isUnfinished, id)
-        }
+        // not used
     }
 
-    suspend fun putAsUnfinished(impInt: ImpIntData) {
-        return withContext(Dispatchers.IO) {
-            db.impIntsDataQueries.insertOneEditUnfinishedImpInt(
-                impInt.impIntId,
-                impInt.impIntIfText,
-                impInt.impIntThenText,
-                impInt.ownerId,
-                impInt.ownerType,
-            )
-        }
-    }
 }

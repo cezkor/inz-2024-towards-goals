@@ -3,7 +3,7 @@ import java.time.Instant;
 
 CREATE TABLE HabitStatsData (
     hStatId INTEGER PRIMARY KEY AUTOINCREMENT,
-    goalId INTEGER NOT NULL REFERENCES GoalData(goalId),
+    goalId INTEGER NOT NULL REFERENCES GoalData(goalId) ON DELETE CASCADE,
     habitId INTEGER NOT NULL REFERENCES HabitData(habitId) ON DELETE CASCADE,
     addedOn TEXT AS Instant NOT NULL,
     doneWell INTEGER AS Boolean DEFAULT 0 NOT NULL,

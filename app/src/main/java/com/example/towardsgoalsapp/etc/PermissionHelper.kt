@@ -13,12 +13,6 @@ import androidx.core.app.NotificationManagerCompat
 
 class PermissionHelper {
     companion object {
-        fun canScheduleExactAlarms(context: Context) : Boolean {
-            val am = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return false
-            return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                am.canScheduleExactAlarms()
-            } else true
-        }
 
         fun canPostNotifications(context: Context) : Boolean {
             val canEmit = NotificationManagerCompat.from(context).areNotificationsEnabled()

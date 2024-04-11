@@ -61,6 +61,8 @@ class HabitRepositoryTests {
             assertThat(habList[0].habitEditUnfinished).isEqualTo(false)
             assertThat(habList[0].habitDoneWellCount).isEqualTo(0)
             assertThat(habList[0].habitDoneNotWellCount).isEqualTo(0)
+            assertThat(habList[0].habitMarkCount).isEqualTo(0)
+            assertThat(habList[0].habitLastMarkedOn).isNull()
 
             mainRepo.updateTexts(
                 habId1, "super text 1", "super descr 1"
@@ -81,6 +83,8 @@ class HabitRepositoryTests {
             assertThat(habList[0].habitEditUnfinished).isEqualTo(false)
             assertThat(habList[0].habitDoneWellCount).isEqualTo(0)
             assertThat(habList[0].habitDoneNotWellCount).isEqualTo(0)
+            assertThat(habList[0].habitMarkCount).isEqualTo(0)
+            assertThat(habList[0].habitLastMarkedOn).isNull()
 
             mainRepo.deleteById(habId1)
             habList = mainRepo.getAllByGoalId(ownerGoalId)
@@ -105,6 +109,8 @@ class HabitRepositoryTests {
             assertThat(hab2OrNull.habitEditUnfinished).isEqualTo(false)
             assertThat(hab2OrNull.habitDoneWellCount).isEqualTo(0)
             assertThat(hab2OrNull.habitDoneNotWellCount).isEqualTo(0)
+            assertThat(hab2OrNull.habitMarkCount).isEqualTo(0)
+            assertThat(hab2OrNull.habitLastMarkedOn).isNull()
 
             arrayOfMutableHabits.addAll(
                 arrayListOf(
@@ -253,6 +259,9 @@ class HabitRepositoryTests {
         assertThat(hopefullyUnfinishedHabit.habitDescription).isEqualTo("edited h descr 1")
         assertThat(hopefullyUnfinishedHabit.habitTargetPeriod).isEqualTo(28L)
         assertThat(hopefullyUnfinishedHabit.habitTargetCount).isEqualTo(2L)
+        assertThat(hopefullyUnfinishedHabit.habitMarkCount).isEqualTo(habList[0].habitMarkCount)
+        assertThat(hopefullyUnfinishedHabit.habitLastMarkedOn)
+            .isEqualTo(habList[0].habitLastMarkedOn)
         assertThat(hopefullyUnfinishedHabit.habitId).isNotEqualTo(habId2)
         assertThat(hopefullyUnfinishedHabit.habitId).isEqualTo(habId1)
 
@@ -270,6 +279,9 @@ class HabitRepositoryTests {
         assertThat(hopefullyFinishedHabit.habitDescription).isEqualTo("descr 1")
         assertThat(hopefullyFinishedHabit.habitTargetPeriod).isEqualTo(14L)
         assertThat(hopefullyFinishedHabit.habitTargetCount).isEqualTo(7L)
+        assertThat(hopefullyFinishedHabit.habitMarkCount).isEqualTo(habList[0].habitMarkCount)
+        assertThat(hopefullyFinishedHabit.habitLastMarkedOn)
+            .isEqualTo(habList[0].habitLastMarkedOn)
         assertThat(hopefullyFinishedHabit.habitId).isNotEqualTo(habId2)
         assertThat(hopefullyFinishedHabit.habitId).isEqualTo(habId1)
 

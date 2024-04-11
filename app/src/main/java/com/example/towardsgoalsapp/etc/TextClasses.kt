@@ -19,7 +19,7 @@ val NameFixer = object : TextFixer() {
     override fun fix(textToFix: String?) : String {
         val textTrimmed = textToFix?.trim()?.replace("\n","")
         val upTo = upTo(textTrimmed, Constants.NAME_LENGTH)
-        return textTrimmed?.substring(0, upTo)
+        return textTrimmed?.substring(0, upTo)?.trim()
             ?: Constants.EMPTY_STRING
     }
 
@@ -30,7 +30,7 @@ val VeryShortNameFixer = object : TextFixer() {
     override fun fix(textToFix: String?) : String {
         val textTrimmed = textToFix?.trim()?.replace("\n","")
         val upTo = upTo(textTrimmed, Constants.VERY_SHORT_NAME_LENGTH)
-        return textTrimmed?.substring(0, upTo)
+        return textTrimmed?.substring(0, upTo)?.trim()
             ?: Constants.EMPTY_STRING
     }
 
@@ -39,9 +39,9 @@ val VeryShortNameFixer = object : TextFixer() {
 val ParamUnitFixer = object : TextFixer() {
 
     override fun fix(textToFix: String?) : String {
-        val textTrimmed = textToFix?.trim()
+        val textTrimmed = textToFix?.trim()?.replace("\n","")
         val upTo = upTo(textTrimmed, Constants.UNIT_NAME_LENGTH)
-        return textTrimmed?.substring(0, upTo)
+        return textTrimmed?.substring(0, upTo)?.trim()
             ?: Constants.EMPTY_STRING
     }
 
@@ -52,7 +52,7 @@ val DescriptionFixer = object : TextFixer() {
     override fun fix(textToFix: String?) : String {
         val textTrimmed = textToFix?.trim()
         val upTo = upTo(textTrimmed, Constants.DESCRIPTION_LENGTH)
-        return textTrimmed?.substring(0, upTo)
+        return textTrimmed?.substring(0, upTo)?.trim()
             ?: Constants.EMPTY_STRING
     }
 

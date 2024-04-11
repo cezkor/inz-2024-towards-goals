@@ -227,15 +227,15 @@ class GoalViewModel(private val dbo: TGDatabase,
         )
     }
 
-    suspend fun saveMainDataAsUnfinished() : Boolean = addMainDataDenier.doWork {
-        if (pageNumber == Constants.IGNORE_PAGE_AS_INT) return@doWork false
+    suspend fun saveMainDataAsUnfinished() : Boolean  {
+        if (pageNumber == Constants.IGNORE_PAGE_AS_INT) return false
         if (goalId == Constants.IGNORE_ID_AS_LONG) {
 
             val newGoalId = addGoal()
-            if (newGoalId == Constants.IGNORE_ID_AS_LONG) return@doWork false
+            if (newGoalId == Constants.IGNORE_ID_AS_LONG) return false
             goalId = newGoalId
         }
-        var goal: GoalData? = goalRepo.getOneById(goalId) ?: return@doWork false
+        var goal: GoalData? = goalRepo.getOneById(goalId) ?: return false
         goalRepo.markEditing(goalId, true)
         val newUnfGoalData = RecreatingGoalDataFactory.createUserDataBasedOnTexts(
             goal!!, nameOfData.value, descriptionOfData.value
@@ -244,7 +244,7 @@ class GoalViewModel(private val dbo: TGDatabase,
         mutableGoalData.value = goalRepo.getOneById(goalId)
 
         addedAnyData = true
-        return@doWork true
+        return true
     }
 
     override suspend fun saveMainData() : Boolean {

@@ -26,13 +26,13 @@ class ImpIntRepositoryTests {
 
     private val repo: ImpIntRepository = ImpIntRepository(db)
 
-    private val arrayOfMutableImpInts: ArrayList<MutableLiveData<ImpIntData>>
+    private val arrayOfImpInts: ArrayList<ImpIntData>
         = java.util.ArrayList()
 
     @Test
     fun `basic database interaction`() {
         runBlocking {
-            arrayOfMutableImpInts.clear()
+            arrayOfImpInts.clear()
 
             val impId1 = repo.addImpInt(
                 "if 1",
@@ -90,7 +90,7 @@ class ImpIntRepositoryTests {
             val goal3OrNull = repo.getOneById(impId3)
             assertThat(goal3OrNull).isNotNull()
 
-            arrayOfMutableImpInts.addAll(
+            arrayOfImpInts.addAll(
                 arrayListOf<ImpIntData>(
                     ImpIntData(
                         Constants.IGNORE_ID_AS_LONG,
@@ -124,10 +124,16 @@ class ImpIntRepositoryTests {
                         100,
                         OwnerType.TYPE_HABIT
                     )
-                ).map { MutableLiveData(it) }
+                )
             )
-
-            repo.putAllImpInts(arrayOfMutableImpInts)
+            arrayOfImpInts.map {
+                repo.addImpInt(
+                    it.impIntIfText,
+                    it.impIntThenText,
+                    it.ownerType,
+                    it.ownerId
+                )
+            }
 
             iiList = repo.getAllByOwnerTypeAndId(OwnerType.TYPE_TASK, 100)
             assertThat(iiList.size).isEqualTo(3)
@@ -196,8 +202,8 @@ class ImpIntRepositoryTests {
             100,
             OwnerType.TYPE_TASK
         )
-        repo.markEditing(impId1, true)
-        repo.putAsUnfinished(editedII)
+        val ar1: ArrayList<MutableLiveData<ImpIntData>> = arrayListOf(MutableLiveData(editedII))
+        repo.updateImpIntsBasedOn(ar1, true)
         val hopefullyUnfinishedImpInt = repo.getOneById(impId1)
         assertThat(hopefullyUnfinishedImpInt).isNotNull()
         assertThat(hopefullyUnfinishedImpInt!!).isInstanceOf(ImpIntData::class.java)
@@ -207,7 +213,16 @@ class ImpIntRepositoryTests {
         assertThat(hopefullyUnfinishedImpInt.impIntId).isNotEqualTo(impId2)
         assertThat(hopefullyUnfinishedImpInt.impIntId).isEqualTo(impId1)
 
-        repo.markEditing(impId1, false)
+        ar1[0].value = ImpIntData (
+            impId1,
+            true, // should be ignored
+            "new edited if 1",
+            "new edited then 1",
+            100,
+            OwnerType.TYPE_TASK
+        )
+
+        repo.updateImpIntsBasedOn(ar1, false)
 
         assertThat(
             db.impIntsDataQueries.selectGivenUnfinishedImpInt(impId1).executeAsOneOrNull()
@@ -217,8 +232,8 @@ class ImpIntRepositoryTests {
         assertThat(hopefullyFinishedImpInt).isNotNull()
         assertThat(hopefullyFinishedImpInt!!).isInstanceOf(ImpIntData::class.java)
         assertThat(hopefullyFinishedImpInt.impIntEditUnfinished).isEqualTo(false)
-        assertThat(hopefullyFinishedImpInt.impIntIfText).isEqualTo("if 1")
-        assertThat(hopefullyFinishedImpInt.impIntThenText).isEqualTo("then 1")
+        assertThat(hopefullyFinishedImpInt.impIntIfText).isEqualTo("new edited if 1")
+        assertThat(hopefullyFinishedImpInt.impIntThenText).isEqualTo("new edited then 1")
 
         repo.deleteById(impId2)
         repo.deleteById(impId1)
