@@ -21,6 +21,7 @@ import com.example.towardsgoalsapp.etc.OneTextFragment
 import com.example.towardsgoalsapp.tasks.TaskItemListFragment
 import com.google.android.material.tabs.TabLayout
 import com.example.towardsgoalsapp.database.*
+import com.example.towardsgoalsapp.etc.ShortenedDescriptionFixer
 import com.example.towardsgoalsapp.etc.errors.ErrorHandling
 
 class GoalSynopsis: Fragment() {
@@ -106,7 +107,7 @@ class GoalSynopsis: Fragment() {
             synopsisTitle.text = data.goalName
             synopsisGoalPageNumber.text =
                 getString(R.string.goals_goal_page, data.pageNumber+1, Constants.MAX_GOALS_AMOUNT)
-            synopsisDescription.text = data.goalDescription
+            synopsisDescription.text = ShortenedDescriptionFixer.fix(data.goalDescription)
             synopsisProgress.progress = (100 * data.goalProgress).toInt()
             if (data.goalEditUnfinished)
                 goalDetailsButton

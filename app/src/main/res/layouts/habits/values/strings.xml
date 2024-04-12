@@ -49,4 +49,8 @@
     <string name="habits_abandon_habit">"Tap Back button again to cancel marking habit; note that if reminder ought to remind the user before the current time, it won't fire until the next day</string>
     <string name="habits_no_params_to_question">No habit parameters to provide values for this habit</string>
     <string name="habits_skip_not_enforced">Note: count of days the user want to skip is not enforced on the user; the app requires the user to only mark this habit well by the count of days given by the user</string>
+    <string name="habits_target_marked_well">Count of days done well in this period</string>
+    <string name="habits_target_marked_not_well">Count of days marked not well in this period</string>
+    <string name="habits_target_skipped">Count of days skipped in this period</string>
+    <string name="habits_target_current_day">Current day in period</string>
 </resources>

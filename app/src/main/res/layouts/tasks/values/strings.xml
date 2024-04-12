@@ -47,4 +47,5 @@
     <string name="tasks_tasks_failed">Tasks done and failed</string>
     <string name="tap_back_to_leave_and_not_save">Tap Back button to leave without saving task data or try saving again.</string>
     <string name="tasks_total_time">"Time in total: %s"</string>
+    <string name="tasks_pomodoro_disabled">User chose not to do task with pomidoro timer</string>
 </resources>

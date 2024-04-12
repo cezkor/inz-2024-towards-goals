@@ -7,26 +7,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.lifecycleScope
 import com.example.towardsgoalsapp.Constants
 import com.example.towardsgoalsapp.OwnerType
 import com.example.towardsgoalsapp.R
-import com.example.towardsgoalsapp.database.userdata.MutablesArrayContentState
 import com.example.towardsgoalsapp.etc.OneTextFragment
-import com.example.towardsgoalsapp.etc.OneTimeEvent
 import com.example.towardsgoalsapp.impints.ImpIntItemList
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.math.sign
 
 
 class TaskDoing : Fragment() {
 
     companion object {
         const val LOG_TAG = "TaskDoing"
+        const val FRAG_TAG = "taskdoing_FRAG_TAG_23231445"
     }
 
     private lateinit var viewModel: TaskOngoingViewModel
@@ -61,13 +53,14 @@ class TaskDoing : Fragment() {
                     .commit()
             }
 
-            if (viewModel.pomodoroIsOn) {
-                val pomodoroFragment = PomodoroFragment()
-                childFragmentManager.beginTransaction()
-                    .setReorderingAllowed(true)
-                    .replace(R.id.pomodoroContainer, pomodoroFragment)
-                    .commit()
-            }
+            val pomoFrag = if (viewModel.pomodoroIsOn) PomodoroFragment()
+                        else
+                            OneTextFragment.newInstance(getString(R.string.tasks_pomodoro_disabled))
+
+            childFragmentManager.beginTransaction()
+                .setReorderingAllowed(true)
+                .replace(R.id.pomodoroContainer, pomoFrag, FRAG_TAG)
+                .commit()
         }
 
         pButton.setOnClickListener {

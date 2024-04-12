@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="reminders_reminder">Przypomnienie</string>
-    <string name="reminders_reminder_plural">Przypomnienia</string>
-    <string name="reminders_notification_reasoning">This app controls reminder firing</string>
-    <string name="reminders_wont_work">App cannot schedule reminders</string>
-    <string name="reminders_cant_set_before">You can\'t set reminder in the past</string>
-</resources>

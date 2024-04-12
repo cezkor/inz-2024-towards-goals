@@ -47,6 +47,18 @@ val ParamUnitFixer = object : TextFixer() {
 
 }
 
+val ShortenedDescriptionFixer = object : TextFixer() {
+
+    override fun fix(textToFix: String?) : String {
+        val textTrimmed = textToFix?.trim()?.replace("\n"," ")
+        val upTo = upTo(textTrimmed, Constants.SHORTENED_DESCRIPTION_LENGTH)
+        if (textTrimmed == null) return Constants.EMPTY_STRING
+        val addition = if (upTo < textTrimmed.length) "…" else ""
+        return textTrimmed.substring(0, upTo) + addition
+    }
+
+}
+
 val DescriptionFixer = object : TextFixer() {
 
     override fun fix(textToFix: String?) : String {

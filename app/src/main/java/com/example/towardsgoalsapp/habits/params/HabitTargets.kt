@@ -261,6 +261,25 @@ class HabitTargets : Fragment() {
             }
         }
 
+        viewModel.mutableHabitData.observe(viewLifecycleOwner) {
+            if (it != null) {
+                if (! isEdit) {
+                    val currentTV = view.findViewById<TextView>(R.id.targetCurrentROTV)
+                    val markedWellTV = view.findViewById<TextView>(R.id.targetDoneWellROTV)
+                    val markedNotWellTV = view.findViewById<TextView>(R.id.targetDoneNotWellROTV)
+                    val skippedTV = view.findViewById<TextView>(R.id.targetSkippedROTV)
+                    val current = (it.habitTotalCount + 1)
+                    currentTV?.run { text = current.toString() }
+                    markedWellTV?.run { text = it.habitDoneWellCount.toString() }
+                    markedNotWellTV?.run { text = it.habitDoneNotWellCount.toString() }
+                    var skipped =
+                        it.habitTotalCount - it.habitDoneWellCount - it.habitDoneNotWellCount
+                    if (skipped < 0) skipped = 0
+                    skippedTV?.run { text = skipped.toString() }
+                }
+            }
+        }
+
         if (! isEdit) {
             periodSeekBar.isEnabled = false
             addParameterButton.isEnabled = false

@@ -133,6 +133,7 @@ class HabitDetails : AppCompatActivity() {
     private var isEdit: Boolean = false
     private var forAdding: Boolean = false
     private var isUnfinished: Boolean = false
+    private var isMarkable: Boolean = false
 
     private var lastTabIdx: Int = 0
     private lateinit var tabsPager: ViewPager2
@@ -162,7 +163,7 @@ class HabitDetails : AppCompatActivity() {
             else
                 menu?.findItem(R.id.editHabitItem)?.title = getString(R.string.edit_end_name)
         }
-        if (!canQuestionAboutThisHabit || isEdit) {
+        if ( ! canQuestionAboutThisHabit || isEdit || ! isMarkable) {
             menu?.removeItem(R.id.habitMarkDoneItem)
         }
         return true
@@ -446,10 +447,14 @@ class HabitDetails : AppCompatActivity() {
                     toolbar.title = name
                 }
 
+                isMarkable = if (! forAdding)
+                                 HabitLogic.checkIfHabitIsMarkable(it?.habitLastMarkedOn)
+                            else false
                 if (canQuestionAboutThisHabit != ! isEdit) {
                     canQuestionAboutThisHabit = ! isEdit
-                    invalidateMenu()
                 }
+
+                invalidateMenu()
 
                 habitId = viewModel.mutableHabitData.value?.habitId
                     ?: Constants.IGNORE_ID_AS_LONG

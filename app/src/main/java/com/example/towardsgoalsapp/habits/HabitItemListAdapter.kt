@@ -74,21 +74,7 @@ class HabitItemListAdapter(
 
             viewOfItem.setOnClickListener { onItemClickListener?.invoke(habitData) }
 
-            // we can't mark habit on the same day it was marked (if it was recorded)
-            val canMarkHabit: Boolean = if (habitData.habitLastMarkedOn == null) true
-            else {
-                val now = LocalDateTime.now()
-                val lastMarkedOn = LocalDateTime.ofInstant(
-                    habitData.habitLastMarkedOn,
-                    ZoneId.systemDefault()
-                )
-                if (now <= lastMarkedOn) false
-                else {
-                    val lMODate = lastMarkedOn.toLocalDate()
-                    val nowDate = now.toLocalDate()
-                    nowDate > lMODate
-                }
-            }
+            val canMarkHabit = HabitLogic.checkIfHabitIsMarkable(habitData.habitLastMarkedOn)
             if (canMarkHabit) {
                 habitMarkButton.isEnabled = true
                 habitMarkButton.setOnClickListener{
