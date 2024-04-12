@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.towardsgoalsapp"
+    namespace = "org.cezkor.towardsgoalsapp"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.towardsgoalsapp"
+        applicationId = "org.cezkor.towardsgoalsapp"
         minSdk = 29
         targetSdk = 34
         versionCode = 1
@@ -69,7 +69,7 @@ android {
 sqldelight {
     databases {
         create("TGDatabase") {
-            packageName.set("com.example.towardsgoalsapp.database")
+            packageName.set("org.cezkor.towardsgoalsapp.database")
             srcDirs.from("src/main/sqldelight")
 
         }
