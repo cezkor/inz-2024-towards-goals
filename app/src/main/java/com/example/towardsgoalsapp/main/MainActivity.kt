@@ -34,6 +34,7 @@ import com.example.towardsgoalsapp.goals.GoalSynopsisesViewModel
 import com.example.towardsgoalsapp.goals.GoalSynopsisesViewModelFactory
 import com.example.towardsgoalsapp.reminders.ReminderService
 import kotlinx.coroutines.launch
+import java.lang.IllegalArgumentException
 
 class MainActivity : AppCompatActivity() {
 
