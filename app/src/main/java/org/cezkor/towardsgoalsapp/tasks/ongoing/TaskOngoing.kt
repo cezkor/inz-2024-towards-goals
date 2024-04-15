@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.PersistableBundle
 import android.util.Log
 import android.view.Menu
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
@@ -126,6 +127,8 @@ class TaskOngoingViewModel(private val dbo: TGDatabase,
         descriptionOfData.value =
             mutableTaskData.value?.taskDescription ?: descriptionOfData.value
 
+        nameOfData.value = mutableTaskData.value?.taskName ?: nameOfData.value
+
         val reminder = reminderRepo.getOneByOwnerTypeAndId(org.cezkor.towardsgoalsapp.OwnerType.TYPE_TASK, taskId)
         reminder?.run { reminderId = reminder.remId }
         return@withLock
@@ -148,13 +151,20 @@ class TaskOngoingViewModel(private val dbo: TGDatabase,
                 return true
             }
             TaskOngoingStates.BEFORE_DOING_TASK -> {
+                fun getAnswerOrDefault(question: RangedDoubleQuestion?) : Int {
+                    val ans = question?.answer
+                    val ret = ans?.toInt() ?: question?.defaultValue?.toInt() ?: 1
+                    question?.answerWith(ret.toDouble())
+                    return ret
+                }
+
                 if (pomodoroIsOn) {
-                    val wT = pomodoroQuestions[WORK_TIME_ID]?.answer?.toInt()
-                    wT?.run { pomodoroSettings.workTimeInMinutes = this }
-                    val sB = pomodoroQuestions[SHORT_BREAK_ID]?.answer?.toInt()
-                    sB?.run { pomodoroSettings.shortBreakInMinutes = this }
-                    val lB = pomodoroQuestions[LONG_BREAK_ID]?.answer?.toInt()
-                    lB?.run { pomodoroSettings.longBreakInMinutes = this }
+                    val wT = getAnswerOrDefault(pomodoroQuestions[WORK_TIME_ID])
+                    wT.run { pomodoroSettings.workTimeInMinutes = this }
+                    val sB = getAnswerOrDefault(pomodoroQuestions[SHORT_BREAK_ID])
+                    sB.run { pomodoroSettings.shortBreakInMinutes = this }
+                    val lB = getAnswerOrDefault(pomodoroQuestions[LONG_BREAK_ID])
+                    lB.run { pomodoroSettings.longBreakInMinutes = this }
                 }
                 return true
             }
@@ -429,6 +439,8 @@ class TaskOngoing : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_task_ongoing)
 
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
         lbm = LocalBroadcastManager.getInstance(this)
 
         var endInstant: Instant? = null
@@ -608,9 +620,9 @@ class TaskOngoing : AppCompatActivity() {
 
                         Log.i(LOG_TAG, "task pomodoro on: ${viewModel.pomodoroIsOn};" +
                                 "times (work, short, long): " +
-                                "${viewModel.pomodoroQuestions[WORK_TIME_ID]?.answer}, " +
-                        "${viewModel.pomodoroQuestions[TaskOngoingViewModel.SHORT_BREAK_ID]?.answer}," +
-                                "${viewModel.pomodoroQuestions[LONG_BREAK_ID]?.answer}")
+                                "${viewModel.pomodoroSettings.workTimeInMinutes}, " +
+                        "${viewModel.pomodoroSettings.shortBreakInMinutes}," +
+                                "${viewModel.pomodoroSettings.longBreakInMinutes}")
 
                         if (viewModel.startedDoingTaskOn == null)
                             viewModel.startedDoingTaskOn = Instant.now()

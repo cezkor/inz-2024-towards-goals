@@ -5,10 +5,10 @@
     >
 
     <item
-        android:id="@+id/habitMarkDoneItem"
+        android:id="@+id/habitMarkItem"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:title="@string/habits_mark_done" />
+        android:title="@string/habits_mark_2" />
 
     <item
         android:id="@+id/addImpIntItem"

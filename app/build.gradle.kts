@@ -36,6 +36,8 @@ android {
 
         debug {
             buildConfigField("Boolean", "SHOULD_USE_TEST_DATA", "true")
+            buildConfigField("Boolean", "WITH_EXAMPLE_DATA", "true")
+
             kotlinOptions {
                 freeCompilerArgs = listOf("-Xdebug")
             }
@@ -43,6 +45,8 @@ android {
 
         release {
             buildConfigField("Boolean", "SHOULD_USE_TEST_DATA", "false")
+            buildConfigField("Boolean", "WITH_EXAMPLE_DATA", "false")
+
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

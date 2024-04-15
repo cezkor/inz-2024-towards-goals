@@ -2,9 +2,9 @@ package org.cezkor.towardsgoalsapp.database
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
-import com.example.towardsgoalsapp.database.ReminderData
-import com.example.towardsgoalsapp.database.TGDatabase
-import com.example.towardsgoalsapp.database.repositories.ReminderRepository
+import org.cezkor.towardsgoalsapp.database.ReminderData
+import org.cezkor.towardsgoalsapp.database.TGDatabase
+import org.cezkor.towardsgoalsapp.database.repositories.ReminderRepository
 import com.google.common.truth.Truth.*
 import kotlinx.coroutines.runBlocking
 import org.junit.Rule

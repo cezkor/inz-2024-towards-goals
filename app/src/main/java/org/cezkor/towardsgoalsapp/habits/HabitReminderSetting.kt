@@ -17,6 +17,7 @@ import org.cezkor.towardsgoalsapp.etc.errors.ErrorHandling
 import com.google.android.material.timepicker.MaterialTimePicker
 import com.google.android.material.timepicker.TimeFormat.CLOCK_24H
 import kotlinx.coroutines.launch
+import org.cezkor.towardsgoalsapp.etc.OneTimeHandleable
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
@@ -108,17 +109,20 @@ class HabitReminderSetting : Fragment() {
             val minute = timePicker.minute
             val lTime = LocalTime.of(hour, minute, 0, 0)
 
-            lifecycleScope.launch(viewModel.exceptionHandler) {
-                val maybeInstant = viewModel.setReminder(lTime)
-                if (maybeInstant == null) {
-                    ErrorHandling.showThrowableAsToast(
-                        requireActivity(),
-                        Throwable(getString(R.string.reminders_unable_to_set_reminder))
-                    )
-                    return@launch
+            viewModel.assureOfExistingHabitHandleableMutable.value = OneTimeHandleable {
+                lifecycleScope.launch(viewModel.exceptionHandler) {
+                    val maybeInstant = viewModel.setReminder(lTime)
+                    if (maybeInstant == null) {
+                        ErrorHandling.showThrowableAsToast(
+                            requireActivity(),
+                            Throwable(getString(R.string.reminders_unable_to_set_reminder))
+                        )
+                        return@launch
+                    }
+                    viewModel.currentlyRemindOn.value = maybeInstant
                 }
-                viewModel.currentlyRemindOn.value = maybeInstant
             }
+
         }
         timePickerButton.setOnClickListener {
             val tabIdx = viewModel.currentTabIdx

@@ -38,7 +38,7 @@
     <string name="stats_one_quarter">One quarter</string>
     <string name="stats_include_constant_if_rank_is_low"><![CDATA[Include a constant term in prediction (only for integration rank < 2)]]></string>
     <string name="stats_lower_confidence_for_prediction">Lower bound of confidence interval</string>
-    <string name="stats_upper_confidence_for_prediction">Upper bound of confidenc interval for prediction</string>
+    <string name="stats_upper_confidence_for_prediction">Upper bound of confidence interval for prediction</string>
     <string name="stats_confidence_interval">Confidence interval</string>
     <string name="stats_arima_name">ARIMA</string>
     <string name="stats_show_extra_data">Show extra data</string>

@@ -30,6 +30,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatterBuilder
 import java.time.format.FormatStyle
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 class TaskReminderSetting : Fragment() {
@@ -127,8 +128,13 @@ class TaskReminderSetting : Fragment() {
             val newInstant : Instant = if (viewModel.currentlyRemindOn.value == null) {
                 val localDate = LocalDate.now()
                 val localTime = LocalTime.of(hour, minute, 0, 0)
-                LocalDateTime.of(localDate, localTime).atZone(ZoneId.systemDefault())
+                val anInstant = LocalDateTime.of(localDate, localTime).atZone(ZoneId.systemDefault())
                     .toInstant()
+                if (anInstant < Instant.now())
+                    // move instant by a day
+                    anInstant.plus(1, ChronoUnit.DAYS)
+                else
+                    anInstant
             } else {
                 val curRemindOn = LocalDateTime.ofInstant(viewModel.currentlyRemindOn.value!!,
                     ZoneId.systemDefault())
@@ -190,7 +196,9 @@ class TaskReminderSetting : Fragment() {
                 var localDate = LocalDateTime.ofInstant(instant, ZoneId.systemDefault()).toLocalDate()
                 val localTimeNow = LocalTime.now()
                 if (localTimeNow.hour == 23) localDate = localDate.plusDays(1)
-                val localTime = localTimeNow.plusHours(1)
+                val localTime = if (localTimeNow.minute == 59)
+                                    localTimeNow.plusHours(2)
+                                else localTimeNow.plusHours(1)
                 LocalDateTime.of(localDate, localTime)
                     .toInstant(ZoneOffset.UTC)
             } else {

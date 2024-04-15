@@ -43,6 +43,7 @@ import com.github.mikephil.charting.data.ScatterData
 import com.github.mikephil.charting.data.ScatterDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import kotlinx.coroutines.launch
+import org.cezkor.towardsgoalsapp.Constants
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -199,6 +200,16 @@ class TasksOfGoalGeneralStatsFragment : Fragment() {
         rAxis.setDrawTopYLabelEntry(false)
         rAxis.gridColor = transparent
         lAxis.setDrawLabels(true)
+        lAxis.valueFormatter = object : ValueFormatter() {
+            override fun getFormattedValue(value: Float): String {
+                if (value < 1f) return Constants.EMPTY_STRING
+                if (value >= 6f) return Constants.EMPTY_STRING
+                if (value == 1f) return translation.getString(R.string.tasks_ninu)
+                if (value <= 2f) return translation.getString(R.string.tasks_niu)
+                if (value <= 3f) return translation.getString(R.string.tasks_inu)
+                return translation.getString(R.string.tasks_iu)
+            }
+        }
         lAxis.setDrawZeroLine(false)
         lAxis.setDrawTopYLabelEntry(false)
         
@@ -245,9 +256,10 @@ class TasksOfGoalGeneralStatsFragment : Fragment() {
             // to make "Today" bar visible, extend chart by 1 hour ahead of
             xAxis.axisMaximum = diff.toFloat() + Duration.ofHours(1).seconds.toFloat()
             rAxis.axisMaximum = extraData.maxTaskPriorityPlotValue.toFloat() + 0.5f
-            rAxis.axisMinimum = 0f
-            lAxis.axisMaximum = extraData.maxTaskPriorityPlotValue.toFloat() + 0.5f
+            rAxis.axisMinimum = 0.5f
+            lAxis.axisMaximum = extraData.maxTaskPriorityPlotValue.toFloat() + 1f
             lAxis.axisMinimum = 0f
+            lAxis.granularity = 1f
             valueFormatter.pushForwardBySeconds = beginAtEpochSec
 
             // "Today" bar
@@ -271,10 +283,10 @@ class TasksOfGoalGeneralStatsFragment : Fragment() {
                 modelData.second.getString(translation)
             )
 
-            // set ranges so that only the biggest priority (+ 0.5f for aesthetics purposes)
+            // set ranges so that only the biggest priority
             // will be seen
-            val r = extraData.maxTaskPriorityPlotValue.toFloat() + 0.5f
-            chart.setVisibleYRange(r,r,lAxis.axisDependency)
+            val r = extraData.maxTaskPriorityPlotValue.toFloat()
+            chart.setVisibleYRange(1f,r,lAxis.axisDependency)
             chart.setVisibleYRange(r,r,rAxis.axisDependency)
             // zoom out
             chart.zoom(0.1f, 0.1f, 0f, 0f)

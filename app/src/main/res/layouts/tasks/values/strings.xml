@@ -41,11 +41,16 @@
     <string name="tasks_no_data">There is not enough task data to show</string>
     <string name="tasks_no_reminders_for_done_tasks">You can\'t set reminder to task that has been done</string>
     <string name="tasks_general_stats_text">In this period:\nUser has marked %s tasks, of which %s marked as done well</string>
-    <string name="tasks_stats_info">This chart represents every marked task that didn\'t have a subtasks (you can directly do such task). Task with subtasks are either marked automatically if all their subtasks are done and not failed or never complete. \nHeight of points represent priority of tasks.</string>
+    <string name="tasks_stats_info">This chart represents every marked task that didn\'t have subtasks (you can directly do such task). Task with subtasks are either marked automatically if all their subtasks are done and not failed or never complete. \nHeight of points represent priority of tasks.</string>
     <string name="tasks_history_of_markable_tasks">Chart of tasks marked by the user</string>
     <string name="tasks_tasks_not_failed">"Tasks done and not failed "</string>
     <string name="tasks_tasks_failed">Tasks done and failed</string>
     <string name="tap_back_to_leave_and_not_save">Tap Back button to leave without saving task data or try saving again.</string>
     <string name="tasks_total_time">"Time in total: %s"</string>
-    <string name="tasks_pomodoro_disabled">User chose not to do task with pomidoro timer</string>
+    <string name="tasks_pomodoro_disabled">User chose not to do task with pomodoro timer</string>
+    <string name="tasks_name_of">Full name of task</string>
+    <string name="tasks_ninu"><![CDATA[N I & N U]]></string>
+    <string name="tasks_niu"><![CDATA[N I & U]]></string>
+    <string name="tasks_inu"><![CDATA[I & N U]]></string>
+    <string name="tasks_iu"><![CDATA[I & U]]></string>
 </resources>

@@ -89,7 +89,7 @@ open class HabitViewModel(
     val canShowHabitStatsAtAll: MutableLiveData<Boolean> = MutableLiveData(false)
     suspend fun checkIfCanShowHabitStats() {
         canShowHabitStatsAtAll.value =
-            StatsShowing.canShowHabitGeneralStats(statsDataRepo, habitId) &&
+            StatsShowing.canShowHabitGeneralStats(statsDataRepo, habitId) ||
             StatsShowing.canShowHabitParamsStats(habitParamsRepo, habitId)
     }
 
@@ -270,7 +270,7 @@ open class HabitViewModel(
     var reminderExisted: MutableLiveData<Boolean> = MutableLiveData()
     private var addedReminder = false
     var reminderShouldBeRemoved = false
-    val currentlyRemindOn : MutableLiveData<Instant> = MutableLiveData()
+    val currentlyRemindOn : MutableLiveData<Instant?> = MutableLiveData()
     private var oldRemindOn : Instant? = null
 
     var reminderId: Long = org.cezkor.towardsgoalsapp.Constants.IGNORE_ID_AS_LONG
@@ -407,6 +407,7 @@ open class HabitViewModel(
                 val lt = this.atZone(ZoneId.systemDefault()).toLocalTime()
                 setReminder(lt)
             }
+            currentlyRemindOn.value = remind
         }
 
         mutableHabitData.value = habit!!

@@ -6,7 +6,6 @@ import android.util.Log
 import androidx.sqlite.db.SupportSQLiteDatabase
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
-import org.cezkor.towardsgoalsapp.database.TGDatabase
 import org.cezkor.towardsgoalsapp.database.repositories.GoalRepository
 import org.cezkor.towardsgoalsapp.database.repositories.HabitParamsRepository
 import org.cezkor.towardsgoalsapp.database.repositories.HabitRepository
@@ -16,8 +15,12 @@ import org.cezkor.towardsgoalsapp.database.repositories.StatsDataRepository
 import org.cezkor.towardsgoalsapp.database.repositories.TaskRepository
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.cezkor.towardsgoalsapp.BuildConfig
+import org.cezkor.towardsgoalsapp.OwnerType
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.math.sin
@@ -79,9 +82,316 @@ class DatabaseGeneration {
 
             var putData = false
 
+            suspend fun example() {
+                Log.i(LOG_TAG, "generating example data")
+
+                val g0 = gRepo.addOneGoal(
+                    "Loosing 30 kg of weight",
+                    "I have been slacking off by quite a while. " +
+                            "I know I should take care of myself but I'm not quite sure of the " +
+                            "consequences of being overweight.\n\nI may have to learn more about " +
+                            "healthy lifestyle and get to live by it.",
+                    0
+                )
+
+                val t0 = tRepo.addTask(
+                    "Creating this goal page",
+                    "For starters",
+                    g0,
+                    null,
+                    0,
+                    2
+                )
+
+                val t1 = tRepo.addTask(
+                    "Learning about healthy lifestyle",
+                    "I want to know why to loose weight.",
+                    g0,
+                    null,
+                    0,
+                    3
+                )
+                val t2 = tRepo.addTask(
+                    "Read anything on the topic of healthy lifestyle",
+                    "I should use a web search engine for finding " +
+                            " a blog or an article",
+                    g0,
+                    t1.first,
+                    1,
+                    3
+                )
+                val t3 = tRepo.addTask(
+                    "Read anything on the topic of good diet",
+                    "Bad diet won't be helping me in losing weight",
+                    g0,
+                    t1.first,
+                    1,
+                    2
+                )
+                val t4 = tRepo.addTask(
+                    "Read five articles on healthy sleeping habits",
+                    "I learned that you have to also sleep well to" +
+                            " loose weight effectively",
+                    g0,
+                    t1.first,
+                    1,
+                    2
+                )
+                val tOft4 = arrayListOf<Pair<Long, Boolean>>()
+                for (i in 1..5) {
+                    tOft4.add(
+                        tRepo.addTask(
+                            "Read an article article",
+                            "",
+                            g0,
+                            t4.first,
+                            2,
+                            2
+                        )
+                    )
+                }
+                val t5 = tRepo.addTask(
+                    "Create a diet plan",
+                    "I should plan my diet",
+                    g0,
+                    null,
+                    0,
+                    3
+                )
+                val t6 = tRepo.addTask(
+                    "Buy a soda",
+                    "A little treat for creating diet plan",
+                    g0,
+                    null,
+                    0,
+                    0
+                )
+                val t7 = tRepo.addTask(
+                    "Buy a new knife",
+                    "Might be useful for cutting vegetables",
+                    g0,
+                    null,
+                    0,
+                    1
+                )
+
+                val h0 = hRepo.addHabit(
+                    "Weighing myself at 08:00",
+                    "Measuring my weight at 8 AM, before a breakfast",
+                    14,
+                    14,
+                    g0
+                )
+                val r0 = remRepo.addReminder(
+                    LocalDateTime.of(
+                        LocalDate.now().plus(1, ChronoUnit.DAYS),
+                        LocalTime.of(8, 0)
+                    ).atZone(ZoneId.systemDefault()).toInstant(),
+                    OwnerType.TYPE_HABIT,
+                    h0
+                )
+                val hPar1 = hParRepo.addHabitParam(
+                    h0,
+                    "Weight",
+                    65.0,
+                    "kg"
+                )
+                val h1 = hRepo.addHabit(
+                    "Waking up before 08:00",
+                    "I want to wake up just before weighting myself",
+                    20,
+                    28,
+                    g0
+                )
+                val h2 = hRepo.addHabit(
+                    "Not eating snacks in between meals",
+                    "I shouldn't eat snacks before dinner or supper.\n\n" +
+                            "Otherwise... I might never loose weight." +
+                            "\nIf it has to be a snack, it better be a healthy one!\n\n" +
+                            "I will track how many healthy and unhealthy snacks I have eaten" +
+                            "with parameters \"Healthy\" and \"Unhealthy\"",
+                    35,
+                    2*28,
+                    g0
+                )
+                val hPar2 = hParRepo.addHabitParam(
+                    h2,
+                    "Healthy",
+                    2.0,
+                    null
+                )
+                val hPar3 = hParRepo.addHabitParam(
+                    h2,
+                    "Unhealthy",
+                    0.0,
+                    null
+                )
+                val h3 = hRepo.addHabit(
+                    "Going to bed before midnight",
+                    "I should not go to bed after midnight (12 AM)",
+                    20,
+                    28,
+                    g0
+                )
+                val h4 = hRepo.addHabit(
+                    "Weighing myself at 22:00",
+                    "Measuring my weight at 10 PM, before going to bed",
+                    14,
+                    14,
+                    g0
+                )
+                val r1 = remRepo.addReminder(
+                    LocalDateTime.of(
+                        LocalDate.now().plus(1, ChronoUnit.DAYS),
+                        LocalTime.of(22, 0)
+                    ).atZone(ZoneId.systemDefault()).toInstant(),
+                    OwnerType.TYPE_HABIT,
+                    h4
+                )
+                val r2 = remRepo.addReminder(
+                    LocalDateTime.of(
+                        LocalDate.now().plus(1, ChronoUnit.DAYS),
+                        LocalTime.of(23, 0)
+                    ).atZone(ZoneId.systemDefault()).toInstant(),
+                    OwnerType.TYPE_HABIT,
+                    h3
+                )
+                val r3 = remRepo.addReminder(
+                    LocalDateTime.of(
+                        LocalDate.now().plus(3, ChronoUnit.DAYS),
+                        LocalTime.of(14, 0)
+                    ).atZone(ZoneId.systemDefault()).toInstant(),
+                    OwnerType.TYPE_TASK,
+                    t7.first
+                )
+
+                impIntRepo.addImpInt(
+                    "If I don't find anything helpful on the topic of good dietary habits",
+                    "I will ask a friend",
+                    OwnerType.TYPE_TASK,
+                    t3.first
+                )
+                impIntRepo.addImpInt(
+                    "If a friend will offer to me a chip on commute to work",
+                    "I will refuse and ask them for an apple slice or a banana",
+                    OwnerType.TYPE_HABIT,
+                    h2
+                )
+                impIntRepo.addImpInt(
+                    "If I see a bag of popcorn on the table in my kitchen",
+                    "I will put it in the cabinet",
+                    OwnerType.TYPE_HABIT,
+                    h2
+                )
+                impIntRepo.addImpInt(
+                    "If I'm offered a glass of a beverage on a party",
+                    "I will refuse and ask for a glass of water",
+                    OwnerType.TYPE_HABIT,
+                    h2
+                )
+                impIntRepo.addImpInt(
+                    "If I feel very hungry just after dinner",
+                    "I will take an apple from the cabinet in my kitchen and eat it",
+                    OwnerType.TYPE_HABIT,
+                    h2
+                )
+                impIntRepo.addImpInt(
+                    "If I feel very hungry just after dinner and can't find any fruit in my" +
+                            "kitchen",
+                    "I will drink two glasses of water",
+                    OwnerType.TYPE_HABIT,
+                    h2
+                )
+
+                val now = Instant.now()
+                val now7daysAgo = now.minus(7, ChronoUnit.DAYS)
+                val now3MonthsAgo = now.minus(3*28, ChronoUnit.DAYS)
+                tRepo.markTaskCompletion(t0.first, false)
+                statRepo.putNewMarkableTaskStatsData(
+                    t0.first,
+                    g0,
+                    false,
+                    now3MonthsAgo
+                )
+
+                tRepo.markTaskCompletion(t2.first, false)
+                statRepo.putNewMarkableTaskStatsData(
+                    t2.first,
+                    g0,
+                    false,
+                    now3MonthsAgo.plus(28, ChronoUnit.DAYS)
+                )
+                tRepo.markTaskCompletion(t5.first, true)
+                statRepo.putNewMarkableTaskStatsData(
+                    t5.first,
+                    g0,
+                    true,
+                    now7daysAgo.plus(5, ChronoUnit.DAYS)
+                )
+                tRepo.markTaskCompletion(tOft4[0].first, false)
+                statRepo.putNewMarkableTaskStatsData(
+                    tOft4[0].first,
+                    g0,
+                    false,
+                    now7daysAgo.plus(3, ChronoUnit.DAYS)
+                )
+                tRepo.markTaskCompletion(tOft4[1].first, false)
+                statRepo.putNewMarkableTaskStatsData(
+                    tOft4[1].first,
+                    g0,
+                    false,
+                    now7daysAgo
+                        .plus(3, ChronoUnit.DAYS).plus(1, ChronoUnit.HOURS)
+                )
+                tRepo.markTaskCompletion(tOft4[2].first, false)
+                statRepo.putNewMarkableTaskStatsData(
+                    tOft4[2].first,
+                    g0,
+                    false,
+                    now7daysAgo
+                        .plus(3, ChronoUnit.DAYS).plus(3, ChronoUnit.HOURS)
+                )
+
+                val eightAM = LocalDateTime.of(LocalDate.now(), LocalTime.of(8, 0))
+                    .atZone(ZoneId.systemDefault()).toInstant()
+                val eightAMThreeMonthsAgo = eightAM.minus(3*28, ChronoUnit.DAYS)
+                for (i in 1..3*28) {
+                    val p1 = eightAMThreeMonthsAgo.plus(i.toLong(), ChronoUnit.DAYS)
+                    val minute = 15 + random.nextInt(-10, 10)
+                    val pf = p1.plus(minute.toLong(), ChronoUnit.MINUTES)
+
+                    if (random.nextDouble() < 0.7) { // 70% chance for well done habit
+                        hRepo.markHabitDoneWell(h0, pf)
+                        statRepo.putNewHabitStatsData(
+                            h0, g0,
+                            true, false, pf
+                        )
+                    }
+                    else {
+                        hRepo.markHabitDoneNotWell(h0, pf)
+                        statRepo.putNewHabitStatsData(
+                            h4, g0,
+                            false, true, pf
+                        )
+                    }
+
+                    val weight = 85 - 30.0 * 0.9 * (i)/(3*28) + Random.nextDouble(-3.0, 3.0)
+                    hParRepo.putValueOfParam(
+                        hPar1,
+                        weight,
+                        pf
+                    )
+                }
+
+            }
+
             putMutex.withLock {
 
                 try {
+
+                    if (BuildConfig.WITH_EXAMPLE_DATA) {
+                        example()
+                    }
 
                     val g1 = gRepo.addOneGoal(
                         "Goal 1",

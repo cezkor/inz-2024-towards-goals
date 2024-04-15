@@ -19,6 +19,7 @@ import org.cezkor.towardsgoalsapp.etc.OneTimeHandleable
 import org.cezkor.towardsgoalsapp.etc.errors.ErrorHandling
 import org.cezkor.towardsgoalsapp.habits.HabitViewModel
 import kotlinx.coroutines.launch
+import org.cezkor.towardsgoalsapp.habits.HabitLogic
 
 
 class HabitTargets : Fragment() {
@@ -243,11 +244,11 @@ class HabitTargets : Fragment() {
         viewModel.targetNumbers.observe(viewLifecycleOwner) {
             if (it == null) return@observe
             val count = it.first
-            dayCount = count
             val period = it.second
             var periodIdx = org.cezkor.towardsgoalsapp.Constants.periodsArray.indexOf(period)
             if (periodIdx == -1) periodIdx = 0 // period not found => set to first period
             periodSeekBar.setProgress(periodIdx, false)
+            setCounts(count)
 
             if (isEdit) {
                 // check if should warn user about counts
@@ -267,7 +268,12 @@ class HabitTargets : Fragment() {
                     val markedWellTV = view.findViewById<TextView>(R.id.targetDoneWellROTV)
                     val markedNotWellTV = view.findViewById<TextView>(R.id.targetDoneNotWellROTV)
                     val skippedTV = view.findViewById<TextView>(R.id.targetSkippedROTV)
-                    val current = (it.habitTotalCount + 1)
+                    val hasBeenMarked = ! HabitLogic.checkIfHabitIsMarkable(it.habitLastMarkedOn)
+                    // until the user can't mark habit, they should not see it as for the next day
+                    val current = if (hasBeenMarked)
+                                    if (it.habitTotalCount == 0L) 1 // if period reset
+                                    else (it.habitTotalCount)
+                    else (it.habitTotalCount + 1)
                     currentTV?.run { text = current.toString() }
                     markedWellTV?.run { text = it.habitDoneWellCount.toString() }
                     markedNotWellTV?.run { text = it.habitDoneNotWellCount.toString() }

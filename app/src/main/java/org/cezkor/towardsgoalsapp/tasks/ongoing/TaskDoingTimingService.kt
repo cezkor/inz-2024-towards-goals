@@ -15,6 +15,7 @@ import android.media.RingtoneManager
 import android.os.IBinder
 import android.os.PowerManager
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
@@ -287,6 +288,7 @@ class TaskDoingTimingService : LifecycleService() {
             .setOngoing(false)
             .setAutoCancel(true)
             .setSmallIcon(icon)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
             .setContentIntent(
                 PendingIntent
                     .getActivity(this, 0, bringUpIntent,

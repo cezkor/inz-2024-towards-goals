@@ -3,8 +3,8 @@
     <string name="reminders_name">Reminders</string>
     <string name="pomodoro_name">Pomodoro Technique</string>
     <string name="name_and_description">Name and description</string>
-    <string name="default_description">Some description. Some description. Some descriptiondescriptiondescription. Some description.</string>
-    <string name="default_title">A title</string>
+    <string name="default_description">Some description.\nYou can write it in multiple lines.</string>
+    <string name="default_title">A name</string>
     <string name="add_end_name">Add</string>
     <string name="edit_end_name">End editing</string>
     <string name="enable_edit">Enable editing</string>
@@ -64,4 +64,7 @@
     <string name="no_description">No description</string>
     <string name="check_for_test_data">Checking for test data...</string>
     <string name="test_data_not_loaded">Test data was not loaded</string>
+    <string name="habits_mark_2">Mark</string>
+    <string name="habits_name_of">Full name of habit</string>
+    <string name="goals_name">Goal</string>
 </resources>

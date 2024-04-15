@@ -70,8 +70,6 @@ class GoalSynopsis: Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // todo: generating page from this fragment causes frame skips - fix it
-
         try {
             requireActivity()
             requireContext()
@@ -108,14 +106,21 @@ class GoalSynopsis: Fragment() {
                 getString(R.string.goals_goal_page, data.pageNumber+1, org.cezkor.towardsgoalsapp.Constants.MAX_GOALS_AMOUNT)
             synopsisDescription.text = ShortenedDescriptionFixer.fix(data.goalDescription)
             synopsisProgress.progress = (100 * data.goalProgress).toInt()
-            if (data.goalEditUnfinished)
-                goalDetailsButton
-                    .setCompoundDrawables(
-                        null,
-                        null,
-                        AppCompatResources.getDrawable(requireContext(), R.drawable.white_alert),
-                        null
-                    )
+            if (data.goalEditUnfinished) {
+                val drawable = AppCompatResources
+                    .getDrawable(requireContext(), R.drawable.white_alert)
+                drawable?.run {
+                    drawable.setBounds(0, 0,
+                        drawable.intrinsicWidth, drawable.intrinsicHeight)
+                    goalDetailsButton
+                        .setCompoundDrawables(
+                            drawable,
+                            null,
+                            drawable,
+                            null
+                        )
+                }
+            }
 
             // recreate fragment at current position, reset selection then select its tab
             val curTab

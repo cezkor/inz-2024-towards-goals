@@ -12,6 +12,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import org.cezkor.towardsgoalsapp.R
 import org.cezkor.towardsgoalsapp.database.*
+import org.cezkor.towardsgoalsapp.etc.ShortenedNameFixer
 
 
 class TaskItemListAdapter(
@@ -134,7 +135,7 @@ class TaskItemListAdapter(
             viewOfItem.setOnClickListener {
                 onItemClickListener?.invoke(taskData)
             }
-            taskNameTextView.text = taskData.taskName
+            taskNameTextView.text = ShortenedNameFixer.fix(taskData.taskName)
             taskSubtasksCountView.text =
                 viewOfItem.context
                     .getString(R.string.tasks_subtasks_beginning_text, taskData.subtasksCount)

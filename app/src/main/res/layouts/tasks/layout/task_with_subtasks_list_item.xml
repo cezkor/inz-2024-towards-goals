@@ -35,9 +35,10 @@
         <TextView
             android:layout_marginStart="1dp"
             android:id="@+id/taskNameForItem"
+            android:maxLines="1"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="34"
+            android:layout_weight="38"
             android:gravity="center_vertical"
             android:text="@string/tasks_name" />
 
@@ -50,7 +51,7 @@
             android:id="@+id/taskSubtasksTextview"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="20"
+            android:layout_weight="16"
             android:gravity="center_vertical"
             android:text="@string/tasks_subtasks_beginning_text" />
 

@@ -62,8 +62,8 @@ class TaskTextsAndPriority : Fragment() {
 
         val priorityToLabelMap = mapOf<Int, String>(
             0 to getString(R.string.tasks_priority_least),
-            1 to getString(R.string.tasks_priority_quite),
-            2 to getString(R.string.tasks_priority_significant),
+            1 to getString(R.string.tasks_priority_significant),
+            2 to getString(R.string.tasks_priority_quite),
             3 to getString(R.string.tasks_priority_most)
         )
 

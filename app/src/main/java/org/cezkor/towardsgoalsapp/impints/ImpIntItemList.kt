@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import org.cezkor.towardsgoalsapp.database.ImpIntData
 import org.cezkor.towardsgoalsapp.Constants.Companion.CLASS_NUMBER_NOT_RECOGNIZED
 import org.cezkor.towardsgoalsapp.R

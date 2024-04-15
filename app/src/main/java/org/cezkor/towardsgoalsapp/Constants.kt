@@ -45,9 +45,10 @@ class Constants {
         val periodsArray: Array<Long> = arrayOf(1, 7, 14, 28, 2*28, 3*28, 6*28, 365)
 
         const val NAME_LENGTH: Int = 100
-        const val SHORTENED_DESCRIPTION_LENGTH: Int = 499 // + 1 for '…' if needed
-        const val EISENHOWER_MATRIX_NAME_LENGTH: Int = 19 // + 1 for '…' if needed
-        const val VERY_SHORT_NAME_LENGTH: Int = 10
+        const val SHORTENED_NAME_LENGTH: Int = 30 - 1 // + 1 for '…' if needed
+        const val SHORTENED_DESCRIPTION_LENGTH: Int = 350 - 1 // + 1 for '…' if needed
+        const val EISENHOWER_MATRIX_NAME_LENGTH: Int = 18 - 1 // + 1 for '…' if needed
+        const val VERY_SHORT_NAME_LENGTH: Int = 20
         const val DESCRIPTION_LENGTH: Int = 2000
         const val UNIT_NAME_LENGTH: Int = 5
         const val MINIMUM_SAMPLE: Int = 5

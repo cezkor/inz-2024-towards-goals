@@ -123,7 +123,7 @@ class GoalViewModel(private val dbo: TGDatabase,
             }
             else {
                 if (! hadSuchTask) {
-                    addedTasksSet.plus(userDataId)
+                    addedTasksSet = addedTasksSet.plus(userDataId)
                 }
                 manager.updateOneUserData(taskData)
             }
@@ -612,10 +612,10 @@ class GoalDetails : AppCompatActivity() {
 
             // sadly, mediator on attach() deletes all tabs defined in xml
             tabLayoutMediator = TabLayoutMediator(tabs, tabsPager) {
-                tab, position -> tab.text = when (position) {
+                tab, position -> tab.text = when (getTabIdOfPosition(position, forAdding)) {
                     TEXTS_TAB_ID -> getString(R.string.name_and_description)
-                    TASKS_TAB_ID ->  getString(R.string.habits_name_plural)
-                    HABITS_TAB_ID -> getString(R.string.tasks_name_plural)
+                    TASKS_TAB_ID -> getString(R.string.tasks_name_plural)
+                    HABITS_TAB_ID -> getString(R.string.habits_name_plural)
                     STATS_TAB_ID -> getString(R.string.stats_name)
                     else -> org.cezkor.towardsgoalsapp.Constants.EMPTY_STRING
                 }
@@ -628,8 +628,7 @@ class GoalDetails : AppCompatActivity() {
 
             viewModel.mutableGoalData.observe(this) {
                 val name = viewModel.mutableGoalData.value?.goalName
-                    ?: getString(R.string.default_title)
-                    // to change it with proper call and string !!!
+                    ?: getString(R.string.goals_name)
                 if (forAdding) {
                     toolbar.title = getString(R.string.adding, name)
                 }

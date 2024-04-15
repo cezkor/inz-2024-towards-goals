@@ -160,7 +160,7 @@ class HabitDetails : AppCompatActivity() {
                 menu?.findItem(R.id.editHabitItem)?.title = getString(R.string.edit_end_name)
         }
         if ( ! canQuestionAboutThisHabit || isEdit || ! isMarkable) {
-            menu?.removeItem(R.id.habitMarkDoneItem)
+            menu?.removeItem(R.id.habitMarkItem)
         }
         return true
     }
@@ -254,7 +254,7 @@ class HabitDetails : AppCompatActivity() {
                 invalidateMenu()
                 true
             }
-            R.id.habitMarkDoneItem -> {
+            R.id.habitMarkItem -> {
                 if (! isEdit) {
                     habitQuestioningLauncher.launch(habitId)
                 } else {
@@ -570,7 +570,7 @@ class HabitDetails : AppCompatActivity() {
                 STATS_TAB_ID -> if (viewModel.canShowHabitStatsAtAll.value == true)
                                     HabitStatsFragment.newInstance(habitId)
                                 else OneTextFragment
-                                    .newInstance(getString(R.string.habits_no_params_or_no_values))
+                                    .newInstance(getString(R.string.habits_no_data))
                 TARGETS_TAB_ID -> HabitTargets.newInstance(isEdit)
 
                 else -> Fragment()

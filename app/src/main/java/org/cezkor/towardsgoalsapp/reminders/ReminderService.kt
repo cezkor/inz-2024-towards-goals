@@ -42,6 +42,8 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.PriorityQueue
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
+
 class ReminderService : LifecycleService() {
 
     inner class ReminderToFire (
@@ -83,12 +85,13 @@ class ReminderService : LifecycleService() {
     private var ntThreadShouldLeave: AtomicBoolean = AtomicBoolean(false)
     private var alThreadShouldLeave: AtomicBoolean = AtomicBoolean(false)
     private var notificationThreadStarted = false
+    private val ongoingCount = AtomicLong(0)
 
     private lateinit var icon: Icon
 
     companion object {
         const val LOG_TAG = "RemService"
-        const val ID = 1002
+        const val FNID = 1002
         const val NID = 1003
 
         const val REMINDER_ID = "rsrmid"
@@ -125,7 +128,7 @@ class ReminderService : LifecycleService() {
 
         val current = Instant.now().toEpochMilli()
         if (current > timeInMilis) {
-            Log.e(LOG_TAG, "alarming thread alarms now reminder $reminderId")
+            Log.i(LOG_TAG, "alarming thread alarms now reminder $reminderId")
             broadcastAlarm(reminderId)
         }
         else {
@@ -182,11 +185,23 @@ class ReminderService : LifecycleService() {
             var leave = ntThreadShouldLeave.get()
             while (! leave) {
 
+                suspend fun getFirstInDatabaseAndQueue() : ReminderToFire? {
+                    while (true) {
+                        val reminderToFireFromQueue = queueMutex.withLock {
+                            remindersRequiringFiringQueue.poll()
+                        } ?: return null
+                        databaseMutex.withLock {
+                            reminderRepo.getOneById(reminderToFireFromQueue.rData.remId)
+                        } ?: continue // skip as it is not in database (deleted)
+                        return reminderToFireFromQueue
+                    }
+                }
+
                 if (canFireNotification.get()) { runBlocking {
                     Log.i(LOG_TAG, "notification thread polls reminder to fire")
-                    val reminderToFire : ReminderToFire? = queueMutex.withLock {
-                        remindersRequiringFiringQueue.poll()
-                    }
+
+                    val reminderToFire = getFirstInDatabaseAndQueue()
+
                     reminderToFire?.run {
                         if (PermissionHelper.canPostNotifications(this@ReminderService)) {
                             Log.i(LOG_TAG, "notification thread " +
@@ -330,10 +345,17 @@ class ReminderService : LifecycleService() {
                 if (intent == null) return
                 if (intent.action != TASK_OR_HABIT_BEING_ONGOING_INTENT_FILTER) return
                 Log.i(LOG_TAG, "task or habit is ongoing")
+                // cancel the notification - if it's not removed, will be fired again
+                // after queue recalculation
+                NotificationManagerCompat.from(this@ReminderService)
+                    .cancel(NID)
                 // don't trigger alarms if task/habit are ongoing
                 lifecycleScope.launch {
                     removeCurrentAlarm()
-                    canFireNotification.set(false)
+                    val count = ongoingCount.incrementAndGet()
+                    Log.i(LOG_TAG, "ongoing count now: $count")
+                    if (count > 0)
+                        canFireNotification.set(false)
                 }
             }
         }
@@ -353,7 +375,10 @@ class ReminderService : LifecycleService() {
                     else {
                         setAlarmForNow()
                     }
-                    canFireNotification.set(true)
+                    val count = ongoingCount.decrementAndGet()
+                    Log.i(LOG_TAG, "ongoing count now: $count")
+                    if (count <= 0)
+                        canFireNotification.set(true)
                 }
             }
         }
@@ -366,13 +391,20 @@ class ReminderService : LifecycleService() {
                 Log.i(LOG_TAG, "edit of goal/task/habit details ongoing;" +
                         "should block sending notifications: $blockNotification")
                 lifecycleScope.launch {
-                    if (blockNotification)
-                        canFireNotification.set(false)
+                    if (blockNotification) {
+                        NotificationManagerCompat.from(this@ReminderService)
+                            .cancel(NID)
+                        val count = ongoingCount.incrementAndGet()
+                        if (count > 0)
+                            canFireNotification.set(false)
+                    }
                     else {
                         // reminders might have been changed
                         recalcCurrentReminderToAlarm()
                         setAlarmForNow()
-                        canFireNotification.set(true)
+                        val count = ongoingCount.decrementAndGet()
+                        if (count <= 0)
+                            canFireNotification.set(true)
                         notifyNotificationThread()
                     }
                 }
@@ -398,8 +430,8 @@ class ReminderService : LifecycleService() {
             .setOngoing(true)
         NotificationManagerCompat
             .from(this)
-            .cancel(ID)
-        startForeground(ID, foregroundNotificationBuilder.build())
+            .cancel(FNID)
+        startForeground(FNID, foregroundNotificationBuilder.build())
 
         if (BuildConfig.SHOULD_USE_TEST_DATA) { lifecycleScope.launch {
             if (DatabaseGeneration.assureDatabaseHasTestData(databaseObj)){
@@ -455,7 +487,7 @@ class ReminderService : LifecycleService() {
                 "ownerId: ${reminder.ownerId}" +
                 "; reminder $remId;" +
                 " is marked: $marked")
-        if (! marked && now > reminder.remindOn) {
+        if (! marked && now < reminder.remindOn) {
             Log.i(LOG_TAG, "reminder $remId still valid")
             setAlarmForNow()
             return@launch
@@ -548,11 +580,18 @@ class ReminderService : LifecycleService() {
                 type = getString(R.string.tasks_name).lowercase()
                 doType = getString(R.string.tasks_do)
                 val task = taskRepo.getOneById(reminder.ownerId)
-                name = if (task == null) {
-                    getString(R.string.tasks_name)
-                } else {
-                    NameFixer.fix(task.taskName)
+                if (task == null) {
+                    Log.w(LOG_TAG, "task is null; ignoring")
+                    handleObsoleteReminder(reminder)
+                    return
                 }
+                if (task.subtasksCount > 0 || task.taskDone) {
+                    Log.w(LOG_TAG, "task is not valid for reminding; ignoring")
+                    handleObsoleteReminder(reminder)
+                    return
+                }
+                name = NameFixer.fix(task.taskName)
+
                 intent = Intent(this@ReminderService, TaskOngoing::class.java)
                     .apply {
                         action = Intent.ACTION_SEND
@@ -565,11 +604,13 @@ class ReminderService : LifecycleService() {
                 type = getString(R.string.habits_name).lowercase()
                 doType = getString(R.string.habits_mark)
                 val habit = habitRepo.getOneById(reminder.ownerId)
-                name = if (habit == null) {
-                    getString(R.string.habits_name)
-                } else {
-                    NameFixer.fix(habit.habitName)
+                if (habit == null) {
+                    Log.w(LOG_TAG, "habit is null; ignoring")
+                    handleObsoleteReminder(reminder)
+                    return
                 }
+                name = NameFixer.fix(habit.habitName)
+
                 intent = Intent(this@ReminderService, HabitQuestions::class.java)
                     .apply {
                         action = Intent.ACTION_SEND
@@ -578,7 +619,11 @@ class ReminderService : LifecycleService() {
                     }
             }
 
-            else -> return
+            else -> {
+                Log.w(LOG_TAG, "invalid type; ignoring")
+                handleObsoleteReminder(reminder)
+                return
+            }
         }
         val reminderText = getString(
             R.string.reminders_reminder_about,

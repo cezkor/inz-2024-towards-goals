@@ -81,6 +81,18 @@ val EisenhowerTaskNameFixer = object : TextFixer() {
 
 }
 
+val ShortenedNameFixer = object : TextFixer() {
+
+    override fun fix(textToFix: String?) : String {
+        val textTrimmed = textToFix?.trim()?.replace("\n","")
+        val upTo = upTo(textTrimmed, org.cezkor.towardsgoalsapp.Constants.SHORTENED_NAME_LENGTH)
+        if (textTrimmed == null) return org.cezkor.towardsgoalsapp.Constants.EMPTY_STRING
+        val addition = if (upTo < textTrimmed.length) "…" else ""
+        return textTrimmed.substring(0, upTo) + addition
+    }
+
+}
+
 class SecondsFormatting private constructor() {
     companion object {
 

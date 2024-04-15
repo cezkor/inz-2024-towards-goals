@@ -41,6 +41,7 @@ class HabitMarking : Fragment() {
         val markDoneNotWellButton = view.findViewById<Button>(R.id.habitMarkNotDoneWell)
         val skipButton = view.findViewById<Button>(R.id.habitSkipButton)
         val descriptionTextView: TextView = view.findViewById(R.id.descriptionTextView)
+        val nameTextView: TextView = view.findViewById(R.id.nameTextView)
 
         var buttonPushed: Boolean = false
 
@@ -81,6 +82,15 @@ class HabitMarking : Fragment() {
             else {
                 descriptionTextView.typeface = Typeface.defaultFromStyle(Typeface.NORMAL)
                 descriptionTextView.text = description
+            }
+            val name = h.habitName
+            if (name.isBlank()) {
+                nameTextView.typeface = Typeface.defaultFromStyle(Typeface.ITALIC)
+                nameTextView.text = getString(R.string.habits_name)
+            }
+            else {
+                nameTextView.typeface = Typeface.defaultFromStyle(Typeface.NORMAL)
+                nameTextView.text = name
             }
 
             targetText.text = getString(

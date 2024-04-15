@@ -54,6 +54,18 @@ class TaskBeforeDoing : Fragment() {
             }
         }
 
+        val nameTextView = view.findViewById<TextView>(R.id.nameTextView)
+        viewModel.nameOfData.observe(viewLifecycleOwner) {
+            if (it == null || it.isBlank()) {
+                nameTextView.typeface = Typeface.defaultFromStyle(Typeface.ITALIC)
+                nameTextView.text = getString(R.string.tasks_name)
+            }
+            else {
+                nameTextView.typeface = Typeface.defaultFromStyle(Typeface.NORMAL)
+                nameTextView.text = it
+            }
+        }
+
         val pomodoroContainerId = R.id.questionListContainer
         val pomodoroSettingsFragment =
             DoubleValueQuestionItemList.newInstance(classNum, true)

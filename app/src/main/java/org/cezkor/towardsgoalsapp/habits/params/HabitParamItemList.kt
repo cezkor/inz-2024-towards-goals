@@ -167,8 +167,8 @@ class HabitParamItemList : Fragment() {
                 viewModel.habitParamList?.run {
                     val size = this.size
                     // notify about added MutableLiveDatas
-                    adapter?.
-                      notifyItemRangeInserted(size - addedParamsCount, addedParamsCount)
+                    // I was unable to make it work like in ImpIntItemList
+                    thisAdapter.notifyDataSetChanged()
                     // add observer for new MutableLiveData in list
                     for (i in size - addedParamsCount..<size) {
                         this[i].observe( viewLifecycleOwner
@@ -181,6 +181,7 @@ class HabitParamItemList : Fragment() {
                                     view.adapter?.notifyItemChanged(i)
                                 }
                             }
+                            (view as RecyclerView).scrollTo(0, 1)
                             Log.i(LOG_TAG, "rv posted: $posted")
                         }
                     }

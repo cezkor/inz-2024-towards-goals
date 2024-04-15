@@ -23,7 +23,7 @@ class App: Application() {
         val taskPomodoroNotificationChannel = NotificationChannel(
             org.cezkor.towardsgoalsapp.Constants.TASK_POMODORO_NOTIFICATION_CHANNEL,
             "TowardsGoals: Pomodoro",
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_HIGH
         )
         notificationManager.createNotificationChannel(taskPomodoroNotificationChannel)
     }

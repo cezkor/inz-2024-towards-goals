@@ -61,6 +61,7 @@ import com.github.mikephil.charting.interfaces.datasets.IScatterDataSet
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.cezkor.towardsgoalsapp.habits.HabitLogic
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -95,6 +96,9 @@ class HabitParamsStatsViewModel(private val dbo: TGDatabase, private val habitId
     var currentDayNumber: Long = 0
         private set
 
+    var shiftPredictionLabel: Boolean = false
+        private set
+
     val paramArrayMutable: MutableLiveData<ArrayList<HabitParameter>> = MutableLiveData()
     val currentParamDataMutable: MutableLiveData<ArrayList<HabitParameterValue>> = MutableLiveData()
 
@@ -121,6 +125,7 @@ class HabitParamsStatsViewModel(private val dbo: TGDatabase, private val habitId
             val dur = Duration.between(lastMarked, now).toDays()
             val daysDiff = if (dur > 0) dur else 0
             currentDayNumber = lastHDC + daysDiff
+            shiftPredictionLabel = HabitLogic.checkIfHabitIsMarkable(this.habitLastMarkedOn)
         }
 
         currentParamId = params[0].paramId
@@ -536,6 +541,7 @@ class HabitParamsStatsFragment : Fragment() {
 
                     // setting formatter values for calculating labels
                     xValueFormatter.current = viewModel.currentDayNumber.toFloat()
+                    xValueFormatter.treatNowAsNextDay = viewModel.shiftPredictionLabel
                     val lookOutXBy = 3
                     // extend yAxis range by 10 to the log_10 of range of Y values
                     val r = abs(maxY - minY)

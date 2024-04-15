@@ -1,7 +1,8 @@
 package org.cezkor.towardsgoalsapp.etc
 
-import com.example.towardsgoalsapp.R
+import org.cezkor.towardsgoalsapp.R
 import com.google.common.truth.Truth.assertThat
+import org.cezkor.towardsgoalsapp.Constants
 import org.junit.Test
 
 class TextClassesTests {
@@ -90,24 +91,17 @@ class TextClassesTests {
 
     }
 
-    @Test
-    fun `name fixers tests`() {
-
-        testBehaviourOfNameFixer(NameFixer, org.cezkor.towardsgoalsapp.Constants.NAME_LENGTH)
-        testBehaviourOfNameFixer(ParamUnitFixer, org.cezkor.towardsgoalsapp.Constants.UNIT_NAME_LENGTH)
-        testBehaviourOfNameFixer(VeryShortNameFixer, org.cezkor.towardsgoalsapp.Constants.VERY_SHORT_NAME_LENGTH)
-
-        // test eisenhower matrix task name fixer
-        // has to be tested separately as it appends ellipsis
-        val maxAllowedLengthWithoutEllipsis = org.cezkor.towardsgoalsapp.Constants.EISENHOWER_MATRIX_NAME_LENGTH
+    private fun testBehaviourOfNameFixerWithEllipsis(tf: TextFixer,
+                                                     maxAllowedLengthWithoutEllipsis: Int) {
         val maxStringWithoutEllipsis = "a".repeat(maxAllowedLengthWithoutEllipsis)
         val maxStringWithoutEllipsisWithoutOne = "a".repeat(maxAllowedLengthWithoutEllipsis - 1)
-        val tf = EisenhowerTaskNameFixer
 
         assertThat(maxAllowedLengthWithoutEllipsis).isGreaterThan(4)
 
-        assertThat(tf.fix(null)).isEqualTo(org.cezkor.towardsgoalsapp.Constants.EMPTY_STRING)
-        assertThat(tf.fix(org.cezkor.towardsgoalsapp.Constants.EMPTY_STRING)).isEqualTo(org.cezkor.towardsgoalsapp.Constants.EMPTY_STRING)
+        assertThat(tf.fix(null))
+            .isEqualTo(org.cezkor.towardsgoalsapp.Constants.EMPTY_STRING)
+        assertThat(tf.fix(org.cezkor.towardsgoalsapp.Constants.EMPTY_STRING))
+            .isEqualTo(org.cezkor.towardsgoalsapp.Constants.EMPTY_STRING)
 
         assertThat(tf.fix("ababa")).isEqualTo("ababa")
         assertThat(tf.fix("    ababa")).isEqualTo("ababa")
@@ -133,7 +127,23 @@ class TextClassesTests {
             .isEqualTo("$maxStringWithoutEllipsisWithoutOne …")
         assertThat(tf.fix("    $maxStringWithoutEllipsisWithoutOne   abab    "))
             .isEqualTo("$maxStringWithoutEllipsisWithoutOne …")
+    }
 
+    @Test
+    fun `name fixers tests`() {
+
+        testBehaviourOfNameFixer(NameFixer, org.cezkor.towardsgoalsapp.Constants.NAME_LENGTH)
+        testBehaviourOfNameFixer(ParamUnitFixer,
+            org.cezkor.towardsgoalsapp.Constants.UNIT_NAME_LENGTH)
+        testBehaviourOfNameFixer(VeryShortNameFixer,
+            org.cezkor.towardsgoalsapp.Constants.VERY_SHORT_NAME_LENGTH)
+
+        testBehaviourOfNameFixerWithEllipsis(EisenhowerTaskNameFixer,
+            Constants.EISENHOWER_MATRIX_NAME_LENGTH)
+        testBehaviourOfNameFixerWithEllipsis(
+            ShortenedNameFixer,
+            Constants.SHORTENED_NAME_LENGTH
+        )
     }
 
     @Test

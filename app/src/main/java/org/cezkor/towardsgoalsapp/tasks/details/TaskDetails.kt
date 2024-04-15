@@ -108,20 +108,19 @@ class TaskDetails : AppCompatActivity() {
         private const val IMP_INTS_TAB_ID = 3
         private const val REMINDER_TAB_ID = 2
 
-        fun getTabIdOfPosition(position: Int, forAdding: Boolean, canDoThisTask: Boolean) : Int {
+        fun getTabIdOfPosition(position: Int,
+                               canDoThisTask: Boolean) : Int {
             return when(position) {
                 0 -> TEXTS_TAB_ID
                 1 -> TASKS_TAB_ID
-                2 -> if (forAdding) REMINDER_TAB_ID else
-                    if (canDoThisTask) REMINDER_TAB_ID else IMP_INTS_TAB_ID
-                3 -> if (forAdding) IMP_INTS_TAB_ID else
-                      if (canDoThisTask) IMP_INTS_TAB_ID else -1
+                2 -> if (canDoThisTask) REMINDER_TAB_ID else IMP_INTS_TAB_ID
+                3 -> if (canDoThisTask) IMP_INTS_TAB_ID else -1
                 else -> -1
             }
         }
 
-        fun getTabCount(forAdding: Boolean, canDoThisTask: Boolean) : Int
-            = if (! forAdding && canDoThisTask) 4 else 3
+        fun getTabCount(canDoThisTask: Boolean) : Int
+            = if (canDoThisTask) 4 else 3
     }
 
     private val classNumber = org.cezkor.towardsgoalsapp.Constants.viewModelClassToNumber[TaskDetailsViewModel::class.java]
@@ -175,6 +174,7 @@ class TaskDetails : AppCompatActivity() {
         }
         if (! canDoThisTask || taskDone) menu?.removeItem(R.id.doTaskItem)
         if (! canAddTask) menu?.removeItem(R.id.addSubtaskItem)
+        if (taskDone) menu?.removeItem(R.id.addImpIntItem)
 
         return true
     }
@@ -208,7 +208,7 @@ class TaskDetails : AppCompatActivity() {
                     invalidateMenu()
                 }
                 // set tab idx to that of imp ints
-                tabsPager.currentItem = when(getTabIdOfPosition(3, forAdding, canDoThisTask)){
+                tabsPager.currentItem = when(getTabIdOfPosition(3, forAdding)){
                     IMP_INTS_TAB_ID -> 3
                     else -> 2 // assume imp ints tab is on position 2
                 }
@@ -561,6 +561,7 @@ class TaskDetails : AppCompatActivity() {
                     viewModel.getTasksSharer()?.signalNeedOfChangeFor(it)
                     val isNowEmpty =
                         viewModel.getTasksSharer()?.isArrayConsideredEmpty() ?: false
+                    canDoThisTask = (isNowEmpty && !forAdding && ! taskDone)
                     if (wasEmpty || isNowEmpty) recreatePagerAdapter()
                 }
             }
@@ -584,7 +585,7 @@ class TaskDetails : AppCompatActivity() {
             // so it is to be done in app code
             tabLayoutMediator = TabLayoutMediator(tabs, tabsPager) {
                     tab, position -> tab.text =
-                when (getTabIdOfPosition(position, forAdding, canDoThisTask)) {
+                when (getTabIdOfPosition(position, canDoThisTask)) {
                     TASKS_TAB_ID -> getString(R.string.tasks_name_plural)
                     TEXTS_TAB_ID -> getString(R.string.tasks_name_description_priority)
                     REMINDER_TAB_ID -> getString(R.string.reminders_reminder)
@@ -601,10 +602,6 @@ class TaskDetails : AppCompatActivity() {
                 ) {
                     recreatePagerAdapter() // so user will see that there is no tasks
                 }
-            }
-
-            viewModel.canShowTasksStats.observe(this) {
-                recreatePagerAdapter()
             }
      
         }
@@ -642,12 +639,12 @@ class TaskDetails : AppCompatActivity() {
             viewModel.getTasksSharer()?.getArrayOfUserData()
                     ?.filter { md -> md.value != null }?.size?.toLong() ?: 0L
 
-        override fun getItemCount(): Int = getTabCount(forAdding, canDoThisTask)
+        override fun getItemCount(): Int = getTabCount(canDoThisTask)
 
         override fun createFragment(position: Int): Fragment {
             if (classNumber == null) return Fragment()
             val subtasksCount: Long = determineSubtaskLength()
-            return when (getTabIdOfPosition(position, forAdding, canDoThisTask)) {
+            return when (getTabIdOfPosition(position, canDoThisTask)) {
                 TASKS_TAB_ID ->
                     if (viewModel.getTaskDepth() + 1 < org.cezkor.towardsgoalsapp.Constants.MAX_TASK_DEPTH)
                         if (subtasksCount == 0L)

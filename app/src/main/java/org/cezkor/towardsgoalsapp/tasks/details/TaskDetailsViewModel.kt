@@ -130,7 +130,7 @@ class TaskDetailsViewModel(private val dbo: TGDatabase, private var taskId: Long
     var reminderExisted: MutableLiveData<Boolean> = MutableLiveData()
     private var addedReminder = false
     var reminderShouldBeRemoved = false
-    val currentlyRemindOn : MutableLiveData<Instant> = MutableLiveData()
+    val currentlyRemindOn : MutableLiveData<Instant?> = MutableLiveData()
     private var oldRemindOn : Instant? = null
     private var reminderId: Long = org.cezkor.towardsgoalsapp.Constants.IGNORE_ID_AS_LONG
 
@@ -243,9 +243,12 @@ class TaskDetailsViewModel(private val dbo: TGDatabase, private var taskId: Long
         if (task!!.taskEditUnfinished) {
             taskRepo.markEditing(taskId, false)
         }
-        task = taskRepo.getOneById(taskId)
+        task = taskRepo.getOneById(taskId) ?: return false
 
         updateImpInts(false)
+
+        if (task.subtasksCount > 0)
+            reminderShouldBeRemoved = true
 
         if (reminderShouldBeRemoved) {
             reminderRepo.deleteById(reminderId)
@@ -254,10 +257,14 @@ class TaskDetailsViewModel(private val dbo: TGDatabase, private var taskId: Long
             reminderExisted.value = false
             addedReminder = false
             reminderShouldBeRemoved = false
+            currentlyRemindOn.value = null
         }
         else {
             val remind = currentlyRemindOn.value ?: oldRemindOn
             remind?.run { setReminder(this) }
+            reminderShouldBeRemoved = false
+            oldRemindOn = null
+            currentlyRemindOn.value = remind
         }
 
         mutableTaskData.value = task
@@ -298,8 +305,6 @@ class TaskDetailsViewModel(private val dbo: TGDatabase, private var taskId: Long
             reminderId = remData.remId
             oldRemindOn = remData.remindOn
         }
-
-        checkIfCanShowTasksStats()
     }
 
 }

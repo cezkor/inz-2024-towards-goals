@@ -43,8 +43,8 @@
             android:id="@+id/goalSynopsisDescription"
             android:layout_width="fill_parent"
             android:layout_height="0dp"
-            android:layout_weight="90"
-            android:maxLines="6"
+            android:layout_weight="150"
+            android:maxLines="8"
             android:text="@string/default_description" />
 
         <ProgressBar
@@ -82,7 +82,7 @@
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="815"
+            android:layout_weight="750"
             android:id="@+id/goalSynopsisFrameLayout">
 
 
@@ -93,6 +93,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0"
+            android:gravity="center"
             android:text="@string/more_button_text"
             android:theme="@style/Widget.Theme.TowardsGoalsApp.UsualButton.Colored" />
 
