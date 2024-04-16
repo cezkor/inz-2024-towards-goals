@@ -5,7 +5,7 @@ CREATE TABLE HabitParameter (
     paramId INTEGER PRIMARY KEY AUTOINCREMENT,
     hParEditUnfinished INTEGER AS Boolean DEFAULT 0 NOT NULL,
     habitId INTEGER NOT NULL REFERENCES HabitData(habitId) ON DELETE CASCADE,
-    name TEXT NOT NULL DEFAULT "Param",
+    name TEXT NOT NULL DEFAULT "",
     targetVal REAL NOT NULL,
     unit TEXT
 );
@@ -13,7 +13,7 @@ CREATE TABLE HabitParameter (
 CREATE TABLE UnfinishedHabitParameter (
     paramId INTEGER PRIMARY KEY AUTOINCREMENT,
     habitId INTEGER NOT NULL REFERENCES HabitData(habitId) ON DELETE CASCADE,
-    name TEXT NOT NULL DEFAULT "Param",
+    name TEXT NOT NULL DEFAULT "",
     targetVal REAL NOT NULL,
     unit TEXT
 );
