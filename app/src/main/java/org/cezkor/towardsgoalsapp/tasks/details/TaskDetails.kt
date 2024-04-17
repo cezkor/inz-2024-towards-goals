@@ -37,8 +37,8 @@ import org.cezkor.towardsgoalsapp.etc.errors.SaveSuccessToastLauncher
 import org.cezkor.towardsgoalsapp.etc.TupleOfFour
 import org.cezkor.towardsgoalsapp.etc.errors.ErrorHandling
 import org.cezkor.towardsgoalsapp.main.App
-import org.cezkor.towardsgoalsapp.main.RefreshTypes
-import org.cezkor.towardsgoalsapp.main.ShouldRefreshUIBroadcastReceiver
+import org.cezkor.towardsgoalsapp.etc.RefreshTypes
+import org.cezkor.towardsgoalsapp.etc.ShouldRefreshUIBroadcastReceiver
 import org.cezkor.towardsgoalsapp.reminders.ReminderService
 import org.cezkor.towardsgoalsapp.tasks.TaskReminderSetting
 import org.cezkor.towardsgoalsapp.tasks.details.TaskInfoContract.Companion.GOAL_ID_IF_FOR_ADDING

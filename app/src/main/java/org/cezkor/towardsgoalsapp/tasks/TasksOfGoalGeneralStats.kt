@@ -1,6 +1,7 @@
 package org.cezkor.towardsgoalsapp.tasks
 
 import android.os.Bundle
+import android.os.LocaleList
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -191,7 +192,7 @@ class TasksOfGoalGeneralStatsFragment : Fragment() {
 
         xAxis.labelRotationAngle = -90f
         // as I format labels for each day, no need to duplicate labels
-        val valueFormatter = EpochFormatter()
+        val valueFormatter = EpochFormatter(LocaleList.getDefault().get(0).language)
         xAxis.valueFormatter = valueFormatter
         xAxis.setDrawLabels(true)
 

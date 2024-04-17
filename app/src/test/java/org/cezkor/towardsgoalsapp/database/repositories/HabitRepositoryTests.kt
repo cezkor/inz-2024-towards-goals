@@ -1,4 +1,4 @@
-package org.cezkor.towardsgoalsapp.database
+package org.cezkor.towardsgoalsapp.database.repositories
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
@@ -6,11 +6,10 @@ import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import org.cezkor.towardsgoalsapp.database.GoalData
 import org.cezkor.towardsgoalsapp.database.HabitData
 import org.cezkor.towardsgoalsapp.database.TGDatabase
-import org.cezkor.towardsgoalsapp.database.repositories.GoalRepository
-import org.cezkor.towardsgoalsapp.database.repositories.HabitRepository
 import com.google.common.truth.Truth.*
 import kotlinx.coroutines.runBlocking
 import org.cezkor.towardsgoalsapp.Constants
+import org.cezkor.towardsgoalsapp.database.DatabaseObjectFactory
 import org.junit.Rule
 import org.junit.Test
 import java.time.Instant
@@ -348,7 +347,6 @@ class HabitRepositoryTests {
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 0L)
         assertThat(habList.map { it.habitTotalCount }).containsExactly(1L, 0L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( false, false)
-        assertThat(habList.map { it.habitMarkCount }).containsExactly(0L, 0L)
         assertThat(habList.map { it.habitMarkCount }).containsExactly(1L, 0L)
         assertThat(habList.map { it.habitLastMarkedOn }).containsExactly(i1, null)
         goal = goalRepo.getOneById(ownerGoalId)
@@ -392,9 +390,9 @@ class HabitRepositoryTests {
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
         assertThat(habList.map { it.habitTargetPeriod }).containsExactly(3L, 3L)
-        assertThat(habList.map { it.habitDoneWellCount }).containsExactly( 4L, 0L)
+        assertThat(habList.map { it.habitDoneWellCount }).containsExactly( 1L, 0L)
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 0L)
-        assertThat(habList.map { it.habitTotalCount }).containsExactly(4L, 0L)
+        assertThat(habList.map { it.habitTotalCount }).containsExactly(1L, 0L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( true, false)
         assertThat(habList.map { it.habitMarkCount }).containsExactly(7L, 0L)
         goal = goalRepo.getOneById(ownerGoalId)
@@ -408,9 +406,9 @@ class HabitRepositoryTests {
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
         assertThat(habList.map { it.habitTargetPeriod }).containsExactly(3L, 3L)
-        assertThat(habList.map { it.habitDoneWellCount }).containsExactly( 4L, 0L)
+        assertThat(habList.map { it.habitDoneWellCount }).containsExactly( 1L, 0L)
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 1L)
-        assertThat(habList.map { it.habitTotalCount }).containsExactly(4L, 1L)
+        assertThat(habList.map { it.habitTotalCount }).containsExactly(1L, 1L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( true, false)
         assertThat(habList.map { it.habitMarkCount }).containsExactly(7L, 4L)
         goal = goalRepo.getOneById(ownerGoalId)
@@ -423,9 +421,9 @@ class HabitRepositoryTests {
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
         assertThat(habList.map { it.habitTargetPeriod }).containsExactly(3L, 3L)
-        assertThat(habList.map { it.habitDoneWellCount }).containsExactly( 4L, 0L)
+        assertThat(habList.map { it.habitDoneWellCount }).containsExactly( 1L, 0L)
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 0L)
-        assertThat(habList.map { it.habitTotalCount }).containsExactly(4L, 1L)
+        assertThat(habList.map { it.habitTotalCount }).containsExactly(1L, 1L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( true, false)
         assertThat(habList.map { it.habitMarkCount }).containsExactly(7L, 7L)
         goal = goalRepo.getOneById(ownerGoalId)
@@ -441,9 +439,9 @@ class HabitRepositoryTests {
         habList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(habList.map { it.habitTargetCount }).containsExactly(1L, 3L)
         assertThat(habList.map { it.habitTargetPeriod }).containsExactly(3L, 3L)
-        assertThat(habList.map { it.habitDoneWellCount }).containsExactly( 4L, 1L)
+        assertThat(habList.map { it.habitDoneWellCount }).containsExactly( 1L, 1L)
         assertThat(habList.map { it.habitDoneNotWellCount }).containsExactly( 0L, 0L)
-        assertThat(habList.map { it.habitTotalCount }).containsExactly(4L, 1L)
+        assertThat(habList.map { it.habitTotalCount }).containsExactly(1L, 1L)
         assertThat(habList.map { it.habitTargetCompleted }).containsExactly( true, true)
         assertThat(habList.map { it.habitMarkCount }).containsExactly(7L, 13L)
         goal = goalRepo.getOneById(ownerGoalId)

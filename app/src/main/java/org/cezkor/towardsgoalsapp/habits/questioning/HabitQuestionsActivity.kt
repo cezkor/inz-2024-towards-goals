@@ -42,8 +42,8 @@ import org.cezkor.towardsgoalsapp.etc.OneTimeEvent
 import org.cezkor.towardsgoalsapp.etc.OneTimeEventWithValue
 import org.cezkor.towardsgoalsapp.etc.errors.ErrorHandling
 import org.cezkor.towardsgoalsapp.habits.questioning.HabitQuestioningContract.Companion.HABIT_MARKING_BY_NOTIFICATION
-import org.cezkor.towardsgoalsapp.main.RefreshTypes
-import org.cezkor.towardsgoalsapp.main.ShouldRefreshUIBroadcastReceiver
+import org.cezkor.towardsgoalsapp.etc.RefreshTypes
+import org.cezkor.towardsgoalsapp.etc.ShouldRefreshUIBroadcastReceiver
 import org.cezkor.towardsgoalsapp.reminders.ReminderService
 import kotlinx.coroutines.CompletableDeferred
 import java.time.Instant

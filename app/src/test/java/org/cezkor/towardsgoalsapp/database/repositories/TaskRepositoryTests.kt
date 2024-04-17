@@ -1,4 +1,4 @@
-package org.cezkor.towardsgoalsapp.database
+package org.cezkor.towardsgoalsapp.database.repositories
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
@@ -6,11 +6,10 @@ import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import org.cezkor.towardsgoalsapp.database.GoalData
 import org.cezkor.towardsgoalsapp.database.TGDatabase
 import org.cezkor.towardsgoalsapp.database.TaskData
-import org.cezkor.towardsgoalsapp.database.repositories.GoalRepository
-import org.cezkor.towardsgoalsapp.database.repositories.TaskRepository
 import com.google.common.truth.Truth.*
 import kotlinx.coroutines.runBlocking
 import org.cezkor.towardsgoalsapp.Constants
+import org.cezkor.towardsgoalsapp.database.DatabaseObjectFactory
 import org.junit.Rule
 import org.junit.Test
 
@@ -52,7 +51,7 @@ class TaskRepositoryTests {
                 0
             )
             val taskId1 = taskIdAndIsDepthBadPair1.first
-            assertThat(taskIdAndIsDepthBadPair1.second).isEqualTo(false)
+            assertThat(taskIdAndIsDepthBadPair1.second).isEqualTo(true)
             var taskList =  mainRepo.getAllByGoalId(ownerGoalId)
             assertThat(taskList.size).isEqualTo(1)
             assertThat(taskList[0].goalId).isEqualTo(ownerGoalId)
@@ -96,7 +95,7 @@ class TaskRepositoryTests {
                 1
             )
             val taskId2 = taskIdAndIsDepthBadPair2.first
-            assertThat(taskIdAndIsDepthBadPair2.second).isEqualTo(false)
+            assertThat(taskIdAndIsDepthBadPair2.second).isEqualTo(true)
             val hab2OrNull = mainRepo.getOneById(taskId2)
             assertThat(hab2OrNull).isNotNull()
             assertThat(hab2OrNull!!.goalId).isEqualTo(ownerGoalId)
@@ -109,7 +108,7 @@ class TaskRepositoryTests {
             assertThat(hab2OrNull.taskDone).isEqualTo(false)
             assertThat(hab2OrNull.taskFailed).isEqualTo(false)
             assertThat(hab2OrNull.taskProgress).isEqualTo(0.0)
-            assertThat(taskList[0].taskPriority).isEqualTo(1)
+            assertThat(hab2OrNull.taskPriority).isEqualTo(1)
 
             arrayOfMutableTasks.addAll(
                 arrayListOf(
@@ -175,20 +174,21 @@ class TaskRepositoryTests {
             val failedToPutAll = mainRepo.putAllTasks(arrayOfMutableTasks)
             assertThat(failedToPutAll).isEqualTo(false)
 
-            taskList = mainRepo.getAllByOwnerId(ownerGoalId) // should be the same as ...ByGoalId
-            assertThat(taskList.size).isEqualTo(5)
+            taskList = mainRepo.getAllByTaskOwnerId(taskId2)
+            assertThat(taskList.size).isEqualTo(4)
             assertThat(taskList.map { it.taskName }).containsExactly(
-                "task 2", "subtask 11", "subtask 12", "subtask 13", "subtask 14"
+                "subtask 11", "subtask 12", "subtask 13", "subtask 14"
             )
             assertThat(taskList.map { it.taskDescription }).containsExactly(
-                "descr 2", "descr 11", "descr 12", "descr 13", "descr 14"
+                "descr 11", "descr 12", "descr 13", "descr 14"
             )
             assertThat(taskList.map { it.subtasksCount }).containsExactly(
-                4L, 0L, 0L, 0L, 0L
+                0L, 0L, 0L, 0L
             )
             assertThat(taskList.map { it.taskOwnerId }).containsExactly(
-                null, taskId2, taskId2, taskId2, taskId2
+                taskId2, taskId2, taskId2, taskId2
             )
+            assertThat(mainRepo.getOneById(taskId2)!!.subtasksCount).isEqualTo(4L)
 
             assertThat(taskList.map {it.taskPriority}).containsExactly(
                 0, 2, 3, 1
@@ -198,27 +198,44 @@ class TaskRepositoryTests {
                 "subsubtask 15", "descr 15",
                 ownerGoalId, taskList[3].taskId, 2, 0
             )
-            assertThat(taskIdAndIsDepthBadPair3.second).isEqualTo(false)
+            assertThat(taskIdAndIsDepthBadPair3.second).isEqualTo(true)
+
+            val taskId3 = taskList[3].taskId
 
             val shouldNotBeMade = mainRepo.addTask(
                 "_____", "_____",
-                ownerGoalId, taskList[3].taskId, org.cezkor.towardsgoalsapp.Constants.MAX_TASK_DEPTH, 0
+                ownerGoalId, taskList[3].taskId, Constants.MAX_TASK_DEPTH, 0
             )
-            assertThat(shouldNotBeMade.second).isEqualTo(true)
+            assertThat(shouldNotBeMade.second).isEqualTo(false)
 
-            taskList = mainRepo.getAllByOwnerId(ownerGoalId) // should be the same as ...ByGoalId
-            assertThat(taskList.size).isEqualTo(6)
+            taskList = mainRepo.getAllByTaskOwnerId(taskId2)
+            assertThat(taskList.size).isEqualTo(4)
             assertThat(taskList.map { it.taskName }).containsExactly(
-                "task 2", "subtask 11", "subtask 12", "subtask 13", "subtask 14", "subsubtask 15"
+                "subtask 11", "subtask 12", "subtask 13", "subtask 14"
             )
             assertThat(taskList.map { it.taskDescription }).containsExactly(
-                "descr 2", "descr 11", "descr 12", "descr 13", "descr 14", "descr 15"
+                "descr 11", "descr 12", "descr 13", "descr 14"
             )
             assertThat(taskList.map { it.subtasksCount }).containsExactly(
-                5L, 0L, 0L, 1L, 0L, 0L
+                0L, 0L, 1L, 0L
             )
             assertThat(taskList.map { it.taskOwnerId }).containsExactly(
-                null, taskId2, taskId2, taskId2, taskId2, taskList[3].taskId
+                taskId2, taskId2, taskId2, taskId2
+            )
+
+            taskList = mainRepo.getAllByTaskOwnerId(taskId3)
+            assertThat(taskList.size).isEqualTo(1)
+            assertThat(taskList.map { it.taskName }).containsExactly(
+                "subsubtask 15"
+            )
+            assertThat(taskList.map { it.taskDescription }).containsExactly(
+                "descr 15"
+            )
+            assertThat(taskList.map { it.subtasksCount }).containsExactly(
+                0L
+            )
+            assertThat(taskList.map { it.taskOwnerId }).containsExactly(
+                taskId3
             )
 
             mainRepo.updatePriority(taskId2, 100) // database should not correct this value
@@ -257,7 +274,7 @@ class TaskRepositoryTests {
             0
         )
         val taskId1 = taskIdAndIsDepthBadPair1.first
-        assertThat(taskIdAndIsDepthBadPair1.second).isEqualTo(false)
+        assertThat(taskIdAndIsDepthBadPair1.second).isEqualTo(true)
         val taskIdAndIsDepthBadPair2 = mainRepo.addTask(
             "task 2",
             "descr 2",
@@ -267,7 +284,7 @@ class TaskRepositoryTests {
             0
         )
         val taskId2 = taskIdAndIsDepthBadPair2.first
-        assertThat(taskIdAndIsDepthBadPair2.second).isEqualTo(false)
+        assertThat(taskIdAndIsDepthBadPair2.second).isEqualTo(true)
 
         taskList = mainRepo.getAllByGoalId(ownerGoalId)
         assertThat(taskList.map { it.taskEditUnfinished }).containsExactly(false, false)
@@ -346,39 +363,50 @@ class TaskRepositoryTests {
             "highest task 1", "descr 1",
             ownerGoalId, null, 0, 0
         )
-        assertThat(hTaskPair1.second).isEqualTo(false)
+        assertThat(hTaskPair1.second).isEqualTo(true)
 
         val hTaskPair2 = mainRepo.addTask(
             "highest task 2", "descr 2",
             ownerGoalId, null, 0, 0
         )
-        assertThat(hTaskPair2.second).isEqualTo(false)
+        assertThat(hTaskPair2.second).isEqualTo(true)
 
         val sTaskPair1 = mainRepo.addTask(
             "sub task 3", "descr 3",
             ownerGoalId, hTaskPair1.first, 0 + 1, 0
         )
-        assertThat(sTaskPair1.second).isEqualTo(false)
+        assertThat(sTaskPair1.second).isEqualTo(true)
 
         val sTaskPair2 = mainRepo.addTask(
             "sub task 4", "descr 4",
             ownerGoalId, hTaskPair1.first, 0 + 1, 0
         )
-        assertThat(sTaskPair2.second).isEqualTo(false)
+        assertThat(sTaskPair2.second).isEqualTo(true)
 
         val ssTaskPair1 = mainRepo.addTask(
             "sub task 5", "descr 5",
             ownerGoalId, sTaskPair1.first, 0 + 1 + 1, 0
         )
-        assertThat(ssTaskPair1.second).isEqualTo(false)
+        assertThat(ssTaskPair1.second).isEqualTo(true)
 
         val ssTaskPair2 = mainRepo.addTask(
             "sub task 6", "descr 6",
             ownerGoalId, sTaskPair1.first, 0 + 1 + 1, 0
         )
-        assertThat(ssTaskPair2.second).isEqualTo(false)
+        assertThat(ssTaskPair2.second).isEqualTo(true)
 
-        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        suspend fun getAll() : ArrayList<TaskData> {
+            val zeroth = mainRepo.getAllByOwnerId(ownerGoalId)
+            val first = mainRepo.getAllByTaskOwnerId(hTaskPair1.first)
+            val second = mainRepo.getAllByTaskOwnerId(sTaskPair1.first)
+            val arr = ArrayList<TaskData>()
+            arr.addAll(zeroth)
+            arr.addAll(first)
+            arr.addAll(second)
+            return arr
+        }
+
+        taskList = getAll()
         assertThat(taskList.map{ it.taskProgress }).containsExactly(
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0
         )
@@ -399,7 +427,7 @@ class TaskRepositoryTests {
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal).isNotNull()
         assertThat(goal!!.goalProgress).isEqualTo(0.0)
-        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        taskList = getAll()
         assertThat(taskList.map{ it.taskProgress }).containsExactly(
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0
         )
@@ -407,14 +435,14 @@ class TaskRepositoryTests {
         goal = goalRepo.getOneById(ownerGoalId)
         assertThat(goal).isNotNull()
         assertThat(goal!!.goalProgress).isEqualTo(0.0)
-        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        taskList = getAll()
         assertThat(taskList.map{ it.taskProgress }).containsExactly(
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0
         )
 
 
         mainRepo.markTaskCompletion(hTaskPair2.first, false)
-        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        taskList = getAll()
         assertThat(taskList.map{ it.taskProgress }).containsExactly(
             0.0, 1.0, 0.0, 0.0, 0.0, 0.0
         )
@@ -423,7 +451,7 @@ class TaskRepositoryTests {
         assertThat(goal!!.goalProgress).isEqualTo(0.5)
 
         mainRepo.markTaskCompletion(ssTaskPair2.first, false)
-        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        taskList = getAll()
         assertThat(taskList.map{ it.taskProgress }).containsExactly(
             0.25, 1.0, 0.5, 0.0, 0.0, 1.0
         )
@@ -432,7 +460,7 @@ class TaskRepositoryTests {
         assertThat(goal!!.goalProgress).isEqualTo((0.25 + 1.0)/2)
 
         mainRepo.markTaskCompletion(sTaskPair2.first, false)
-        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        taskList = getAll()
         assertThat(taskList.map{ it.taskProgress }).containsExactly(
             0.75, 1.0, 0.5, 1.0, 0.0, 1.0
         )
@@ -448,7 +476,7 @@ class TaskRepositoryTests {
         assertThat(taskList[4].taskId).isEqualTo(ssTaskPair1.first)
         assertThat(taskList[4].taskProgress).isEqualTo(0.0)
         mainRepo.deleteById(ssTaskPair1.first)
-        taskList = mainRepo.getAllByOwnerId(ownerGoalId)
+        taskList = getAll()
         assertThat(taskList.map{ it.taskProgress }).containsExactly(
             1.0, 1.0, 1.0, 1.0, 1.0
         )

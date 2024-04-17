@@ -45,8 +45,8 @@ import org.cezkor.towardsgoalsapp.habits.questioning.HabitQuestioningContract
 import org.cezkor.towardsgoalsapp.habits.questioning.HabitQuestioningLauncher
 import org.cezkor.towardsgoalsapp.main.App
 import org.cezkor.towardsgoalsapp.habits.params.HabitStatsFragment
-import org.cezkor.towardsgoalsapp.main.RefreshTypes
-import org.cezkor.towardsgoalsapp.main.ShouldRefreshUIBroadcastReceiver
+import org.cezkor.towardsgoalsapp.etc.RefreshTypes
+import org.cezkor.towardsgoalsapp.etc.ShouldRefreshUIBroadcastReceiver
 import org.cezkor.towardsgoalsapp.reminders.ReminderService
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking

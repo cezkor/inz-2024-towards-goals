@@ -1,5 +1,6 @@
 package org.cezkor.towardsgoalsapp.stats
 
+import org.cezkor.towardsgoalsapp.Constants
 import org.cezkor.towardsgoalsapp.database.HabitParameter
 import org.cezkor.towardsgoalsapp.database.repositories.HabitParamsRepository
 import org.cezkor.towardsgoalsapp.database.repositories.StatsDataRepository
@@ -21,7 +22,7 @@ class StatsShowing {
                 val toRemove = HashSet<HabitParameter>()
                 for (hp in params) {
                     val paramValuesCount = habitParamsRepo.getParamValueCountOf(hp.paramId)
-                    if (paramValuesCount == null || paramValuesCount < org.cezkor.towardsgoalsapp.Constants.MINIMUM_SAMPLE)
+                    if (paramValuesCount == null || paramValuesCount < Constants.MINIMUM_SAMPLE)
                         toRemove.add(hp)
                 }
                 params.removeAll(toRemove)
@@ -37,8 +38,7 @@ class StatsShowing {
             habitId: Long
         ) : Boolean {
             val habitStats = statsDataRepo.getAllHabitStatsDataByHabit(habitId)
-            if (habitStats.size < 1) return false
-            return true
+            return habitStats.size >= 1
         }
 
         suspend fun canShowTaskGeneralStats(
@@ -46,8 +46,7 @@ class StatsShowing {
             goalId: Long
         ) : Boolean {
             val taskStats = statsDataRepo.getAllMarkableTaskStatsDataByGoal(goalId)
-            if (taskStats.size < 1) return false
-            return true
+            return taskStats.size >= 1
         }
 
     }

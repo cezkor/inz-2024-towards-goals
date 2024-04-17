@@ -32,6 +32,7 @@ import org.cezkor.towardsgoalsapp.goals.GoalSynopsisesViewModel
 import org.cezkor.towardsgoalsapp.goals.GoalSynopsisesViewModelFactory
 import org.cezkor.towardsgoalsapp.reminders.ReminderService
 import kotlinx.coroutines.launch
+import org.cezkor.towardsgoalsapp.etc.ShouldRefreshUIBroadcastReceiver
 
 class MainActivity : AppCompatActivity() {
 

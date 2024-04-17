@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatterBuilder
 import java.time.format.FormatStyle
 import java.util.Locale
 
-class EpochFormatter : ValueFormatter() {
+class EpochFormatter(private val language: String) : ValueFormatter() {
 
     // because float type has low precision, ideally values from chart
     // should be small numbers
@@ -26,7 +26,7 @@ class EpochFormatter : ValueFormatter() {
 
     // this method assumes value is seconds provided by Instant's .epochSecond()
     override fun getFormattedValue(value: Float): String {
-        val locale = Locale(LocaleList.getDefault().get(0).language)
+        val locale = Locale(language)
         val formatter = formatterBuilder.toFormatter(locale)
         val valueToLong = value.toLong() + pushForwardBySeconds
         val localDateTime = LocalDateTime.ofEpochSecond(valueToLong, 0, ZoneOffset.UTC)

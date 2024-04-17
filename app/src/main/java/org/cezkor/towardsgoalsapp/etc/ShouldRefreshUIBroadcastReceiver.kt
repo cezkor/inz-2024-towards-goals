@@ -1,4 +1,4 @@
-package org.cezkor.towardsgoalsapp.main
+package org.cezkor.towardsgoalsapp.etc
 
 import android.content.BroadcastReceiver
 import android.content.Context

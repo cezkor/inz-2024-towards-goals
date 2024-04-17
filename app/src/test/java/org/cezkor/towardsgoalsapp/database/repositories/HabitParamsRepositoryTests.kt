@@ -1,15 +1,13 @@
-package org.cezkor.towardsgoalsapp.database
+package org.cezkor.towardsgoalsapp.database.repositories
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.lifecycle.MutableLiveData
 import app.cash.sqldelight.driver.jdbc.sqlite.JdbcSqliteDriver
 import org.cezkor.towardsgoalsapp.database.HabitParameter
 import org.cezkor.towardsgoalsapp.database.TGDatabase
-import org.cezkor.towardsgoalsapp.database.repositories.GoalRepository
-import org.cezkor.towardsgoalsapp.database.repositories.HabitParamsRepository
-import org.cezkor.towardsgoalsapp.database.repositories.HabitRepository
 import com.google.common.truth.Truth.*
 import kotlinx.coroutines.runBlocking
+import org.cezkor.towardsgoalsapp.database.DatabaseObjectFactory
 import org.junit.Rule
 import org.junit.Test
 import java.time.Instant

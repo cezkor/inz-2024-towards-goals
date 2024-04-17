@@ -2,6 +2,7 @@ package org.cezkor.towardsgoalsapp.habits.params
 
 import android.app.AlertDialog
 import android.os.Bundle
+import android.os.LocaleList
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -41,7 +42,7 @@ import org.cezkor.towardsgoalsapp.stats.models.PredictionExtras
 import org.cezkor.towardsgoalsapp.stats.models.PredictionExtrasWithConfidenceIntervals
 import org.cezkor.towardsgoalsapp.stats.models.PredictionType
 import org.cezkor.towardsgoalsapp.stats.models.WithExtraData
-import org.cezkor.towardsgoalsapp.stats.questions.UnitFormatter
+import org.cezkor.towardsgoalsapp.stats.UnitFormatter
 import com.github.mikephil.charting.charts.CombinedChart
 import com.github.mikephil.charting.charts.ScatterChart
 import com.github.mikephil.charting.components.Legend
@@ -125,7 +126,7 @@ class HabitParamsStatsViewModel(private val dbo: TGDatabase, private val habitId
             val dur = Duration.between(lastMarked, now).toDays()
             val daysDiff = if (dur > 0) dur else 0
             currentDayNumber = lastHDC + daysDiff
-            shiftPredictionLabel = HabitLogic.checkIfHabitIsMarkable(this.habitLastMarkedOn)
+            shiftPredictionLabel = ! HabitLogic.checkIfHabitIsMarkable(this.habitLastMarkedOn)
         }
 
         currentParamId = params[0].paramId
@@ -287,7 +288,7 @@ class HabitParamsStatsFragment : Fragment() {
             xAxis.labelRotationAngle = -90f
 
             val xValueFormatter = DaysValueFormatter(translation)
-            val yValueFormatter = UnitFormatter()
+            val yValueFormatter = UnitFormatter(LocaleList.getDefault().get(0).language)
             xAxis.valueFormatter = xValueFormatter
             xAxis.setDrawLabels(true)
 
@@ -541,7 +542,7 @@ class HabitParamsStatsFragment : Fragment() {
 
                     // setting formatter values for calculating labels
                     xValueFormatter.current = viewModel.currentDayNumber.toFloat()
-                    xValueFormatter.treatNowAsNextDay = viewModel.shiftPredictionLabel
+                    xValueFormatter.nowIsPreviousDay = viewModel.shiftPredictionLabel
                     val lookOutXBy = 3
                     // extend yAxis range by 10 to the log_10 of range of Y values
                     val r = abs(maxY - minY)

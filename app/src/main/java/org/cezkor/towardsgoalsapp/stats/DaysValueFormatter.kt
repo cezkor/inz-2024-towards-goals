@@ -7,10 +7,10 @@ import com.github.mikephil.charting.formatter.ValueFormatter
 class DaysValueFormatter(private val translation: Translation) : ValueFormatter() {
 
     var current: Float = 0f
-    var treatNowAsNextDay: Boolean = false
+    var nowIsPreviousDay: Boolean = false
 
     override fun getFormattedValue(value: Float): String {
-        val v = (current - value).toInt() - 1 + (if (treatNowAsNextDay) -1 else 0)
+        val v = (current - value).toInt() + (if (nowIsPreviousDay) -1 else 0)
         return when (v) {
             1 -> translation.getString(R.string.stats_one_day_ago)
             0 -> translation.getString(R.string.stats_today)

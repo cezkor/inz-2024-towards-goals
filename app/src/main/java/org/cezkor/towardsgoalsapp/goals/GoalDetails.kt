@@ -56,8 +56,8 @@ import org.cezkor.towardsgoalsapp.etc.errors.ErrorHandling
 import org.cezkor.towardsgoalsapp.habits.HabitInfoContract
 import org.cezkor.towardsgoalsapp.habits.HabitInfoLauncher
 import org.cezkor.towardsgoalsapp.main.App
-import org.cezkor.towardsgoalsapp.main.RefreshTypes
-import org.cezkor.towardsgoalsapp.main.ShouldRefreshUIBroadcastReceiver
+import org.cezkor.towardsgoalsapp.etc.RefreshTypes
+import org.cezkor.towardsgoalsapp.etc.ShouldRefreshUIBroadcastReceiver
 import org.cezkor.towardsgoalsapp.reminders.ReminderService
 import org.cezkor.towardsgoalsapp.tasks.details.MultipleTaskFragment
 import org.cezkor.towardsgoalsapp.tasks.details.TaskInfoContract

@@ -37,6 +37,8 @@ class PomodoroState(
     suspend fun getTotalTime() : Long = mutex.withLock { totalTimeInSeconds }
     suspend fun isBreak() : Boolean = mutex.withLock { isBreak }
 
+    suspend fun isBreakLong() : Boolean = mutex.withLock { isBreakLong }
+
     suspend fun getTimeOfCurrentState() : Long = mutex.withLock { timeOfCurrentStateInSeconds }
 
     private var isBreakLong: Boolean = if (breakCount > 0) ((breakCount % 4).toInt() == 0) else false

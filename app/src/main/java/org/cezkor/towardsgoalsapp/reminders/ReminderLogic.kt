@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 
-class ReminderLogic {
+class ReminderLogic private constructor(){
 
     companion object {
 
@@ -19,9 +19,11 @@ class ReminderLogic {
                 if (o2 == null) return 1
                 val byRemindOn = o1.remindOn.compareTo(o2.remindOn)
                 if (byRemindOn != 0) return byRemindOn
-                if (o1.ownerType == org.cezkor.towardsgoalsapp.OwnerType.TYPE_TASK && o2.ownerType == org.cezkor.towardsgoalsapp.OwnerType.TYPE_HABIT)
+                if (o1.ownerType == org.cezkor.towardsgoalsapp.OwnerType.TYPE_TASK &&
+                    o2.ownerType == org.cezkor.towardsgoalsapp.OwnerType.TYPE_HABIT)
                     return 1
-                if (o2.ownerType == org.cezkor.towardsgoalsapp.OwnerType.TYPE_TASK && o1.ownerType == org.cezkor.towardsgoalsapp.OwnerType.TYPE_HABIT)
+                if (o2.ownerType == org.cezkor.towardsgoalsapp.OwnerType.TYPE_TASK &&
+                    o1.ownerType == org.cezkor.towardsgoalsapp.OwnerType.TYPE_HABIT)
                     return -1
                 return 0
             }

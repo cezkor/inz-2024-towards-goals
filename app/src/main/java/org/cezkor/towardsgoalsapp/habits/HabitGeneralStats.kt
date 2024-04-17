@@ -1,6 +1,7 @@
 package org.cezkor.towardsgoalsapp.habits
 
 import android.os.Bundle
+import android.os.LocaleList
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -182,7 +183,7 @@ class HabitGeneralStatsFragment : Fragment() {
         xAxis.granularity = Duration.ofDays(1).seconds.toFloat()
         xAxis.labelRotationAngle = -90f
         xAxis.setAvoidFirstLastClipping(false)
-        val valueFormatter = EpochFormatter()
+        val valueFormatter = EpochFormatter(LocaleList.getDefault().get(0).language)
         xAxis.valueFormatter = valueFormatter
         xAxis.setDrawLabels(true)
 
