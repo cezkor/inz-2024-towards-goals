@@ -63,6 +63,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.cezkor.towardsgoalsapp.habits.HabitLogic
+import org.cezkor.towardsgoalsapp.stats.models.WithExtraNamedData
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -440,7 +441,7 @@ class HabitParamsStatsFragment : Fragment() {
                     }
 
                     // prepare button showing dialog with graph of extra data if applicable
-                    if (predictionExtras != null && predictionExtras is WithExtraData) {
+                    if (predictionExtras != null && predictionExtras is WithExtraNamedData) {
                         showExtraDataButton.isEnabled = true
                         showExtraDataButton.setOnClickListener {
                             val builder: AlertDialog.Builder = AlertDialog.Builder(requireActivity())
@@ -682,7 +683,11 @@ class HabitParamsStatsFragment : Fragment() {
                 showExtraDataButton.isEnabled = false
                 val settings = it.modelSettings.values.toCollection(ArrayList())
 
-                modelSettingsRecyclerView.adapter = ModelSettingsAdapter(settings).apply {
+                modelSettingsRecyclerView.adapter = ModelSettingsAdapter(
+                    settings,
+                    lifecycleScope,
+                    chartMutex
+                ).apply {
                     stateRestorationPolicy = RecyclerView.Adapter
                         .StateRestorationPolicy.PREVENT_WHEN_EMPTY
                     this.setOnSettingChanged { recreateChartAndDetailsContent() }

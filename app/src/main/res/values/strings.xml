@@ -67,4 +67,8 @@
     <string name="habits_mark_2">Mark</string>
     <string name="habits_name_of">Full name of habit</string>
     <string name="goals_name">Goal</string>
+    <string name="tasks_done_well">Done well</string>
+    <string name="tasks_done_not_well">Done not well</string>
+    <string name="tasks_marked_done_well">Marked done well</string>
+    <string name="tasks_marked_done_not_well">Marked done not well</string>
 </resources>

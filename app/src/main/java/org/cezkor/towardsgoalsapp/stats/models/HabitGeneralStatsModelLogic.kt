@@ -41,11 +41,13 @@ class HabitGeneralStatsTextAndExtraData(
 
 class HabitGeneralStatsModelLogic(
     translation: Translation
-) : ModelLogic<Pair<ArrayList<Entry>, ArrayList<Entry>>>(translation) {
+) : ModelLogic<Entry>(translation), WithExtraData {
                    // doneWell, doneNotWell
 
     private var trueData: ArrayList<HabitStatsData>? = null
     private var remappedData: ArrayList<Pair<Pair<Boolean, Boolean>, Instant>> = ArrayList()
+    private var extraData: ArrayList<Entry> = ArrayList()
+
     companion object {
         const val PERIOD = 0
 
@@ -87,8 +89,12 @@ class HabitGeneralStatsModelLogic(
         return Duration.ofSeconds(Instant.now().epochSecond - lowest)
     }
 
+    override fun getExtraData(): ArrayList<Entry> {
+        return extraData
+    }
+
     override suspend fun calculateModelData()
-    : Pair<ArrayList<Pair<ArrayList<Entry>, ArrayList<Entry>>>, StatsOfData> =
+    : Pair<ArrayList<Entry>, StatsOfData> =
     calculateMutex.withLock {
         val showDataFrom = getPeriod() ?: getLowestTimeInData()
         val end = Instant.now()
@@ -117,21 +123,14 @@ class HabitGeneralStatsModelLogic(
         )
 
         val begToSeconds = beg.epochSecond
-        // this array will contain only one element
-        val ar : ArrayList<Pair<ArrayList<Entry>, ArrayList<Entry>>> = arrayListOf()
-        // values are shifted by lowest period (beginning) so to keep values of x small
-        ar.add(
-            Pair(
-                markedWell.map { p -> Entry(
-                    (p.second.epochSecond - begToSeconds).toFloat(),
-                    ONE
-                ) }.toCollection(ArrayList()),
-                markedNotWell.map { p -> Entry(
-                    (p.second.epochSecond - begToSeconds).toFloat(),
-                    ONE
-                ) }.toCollection(ArrayList())
-            )
-        )
-        return Pair(ar, sod)
+        val arToReturn = markedWell.map { p -> Entry(
+            (p.second.epochSecond - begToSeconds).toFloat(),
+            ONE
+        ) }.toCollection(ArrayList())
+        extraData = markedNotWell.map { p -> Entry(
+            (p.second.epochSecond - begToSeconds).toFloat(),
+            ONE
+        ) }.toCollection(ArrayList())
+        return Pair(arToReturn, sod)
     }
 }

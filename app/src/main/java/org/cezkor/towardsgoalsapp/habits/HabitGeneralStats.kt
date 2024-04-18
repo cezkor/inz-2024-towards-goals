@@ -205,13 +205,10 @@ class HabitGeneralStatsFragment : Fragment() {
             if (withObject !is Boolean) // if it is a boolean, then it means it is not data
                 viewModel.model!!.setData(withObject)
             val modelData = viewModel.model!!.calculateModelData()
-            if (modelData.first.size != 1) return
-            val dataSets = modelData.first.first()
-
-            if (dataSets.first.isEmpty() && dataSets.second.isEmpty()) return
+            val secondModelData = viewModel.model!!.getExtraData()
 
             // https://github.com/PhilJay/MPAndroidChart/issues/718#issuecomment-112823075
-            val wData = dataSets.first.map { e -> BarEntry(e.x, e.y) }.sortedWith { e1, e2 ->
+            val wData = modelData.first.map { e -> BarEntry(e.x, e.y) }.sortedWith { e1, e2 ->
                 (e1.x - e2.x).toInt()
             }
             val wellDataSet = BarDataSet(
@@ -221,7 +218,7 @@ class HabitGeneralStatsFragment : Fragment() {
             wellDataSet.color = wellColor
             wellDataSet.setDrawValues(false)
 
-            val nwData = dataSets.second.map { e -> BarEntry(e.x, e.y) }.sortedWith { e1, e2 ->
+            val nwData = secondModelData.map { e -> BarEntry(e.x, e.y) }.sortedWith { e1, e2 ->
                 (e1.x - e2.x).toInt()
             }
             val notWellDataSet = BarDataSet(

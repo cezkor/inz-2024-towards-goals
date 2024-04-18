@@ -67,7 +67,7 @@ class OneVariableLinearRegressionModel(translation: Translation): ModelLogicWith
         val ar = ArrayList<Entry>()
         val extras = RegressionResults(0.0, 0.0, 0.0)
         try {
-            val samples = data.sliceArray(IntRange(beginAt, expectedSize - 1))
+            val samples = data.sliceArray(IntRange(beginAt, data.size - 1))
             regression.clear()
             regression.addData(samples)
             val results = regression.regress()
@@ -108,7 +108,7 @@ class OneVariableLinearRegressionModel(translation: Translation): ModelLogicWith
         val ar = ArrayList<Entry>()
         var stats = GeneralStats(0.0, 0.0,0.0,0.0,0.0)
         try {
-            val sample = data.sliceArray(IntRange(beginAt, expectedSize - 1))
+            val sample = data.sliceArray(IntRange(beginAt, data.size - 1))
             stats = GeneralStats.fromDoubleData(sample.map { t -> t[1] }.toDoubleArray())
             ar.addAll(sample
                 .map { dar -> Entry(dar[0].toFloat() + X_BIAS_FLOAT , dar[1].toFloat()) })

@@ -29,11 +29,12 @@ class MarkableTasksGeneralStatsTextAndExtraData(
 
 class MarkableTasksGeneralStatsModelLogic(
     translation: Translation
-) : ModelLogic<Pair<ArrayList<Entry>, ArrayList<Entry>>>(translation) {
-                   // doneWell, doneNotWell
+) : ModelLogic<Entry>(translation), WithExtraData {
+
 
     private var trueData: ArrayList<MarkableTaskStatsData>? = null
     private var remappedData: ArrayList<Pair<Pair<Boolean, Long>, Instant>> = ArrayList()
+    private var extraData: ArrayList<Entry> = ArrayList()
     companion object {
         const val PERIOD = 0
 
@@ -80,8 +81,12 @@ class MarkableTasksGeneralStatsModelLogic(
         return v.toFloat()
     }
 
+    override fun getExtraData(): ArrayList<Entry> {
+        return extraData
+    }
+
     override suspend fun calculateModelData()
-    : Pair<ArrayList<Pair<ArrayList<Entry>, ArrayList<Entry>>>, StatsOfData> =
+    : Pair<ArrayList<Entry>, StatsOfData> =
     calculateMutex.withLock {
         val showDataFrom = getPeriod() ?: getLowestTimeInData()
         val end = Instant.now()
@@ -116,14 +121,8 @@ class MarkableTasksGeneralStatsModelLogic(
             (p.second.epochSecond - begToSeconds).toFloat(),
             remapPriority(p.first.second) + 1f
         ) }.toCollection(ArrayList())
-        // this array will contain only one element
-        val ar : ArrayList<Pair<ArrayList<Entry>, ArrayList<Entry>>> = arrayListOf()
-        ar.add(
-            Pair(
-                remappedMarkedNotFailed,
-                remappedMarkedFailed
-            )
-        )
-        return Pair(ar, sod)
+        extraData = remappedMarkedFailed
+
+        return Pair(remappedMarkedNotFailed, sod)
     }
 }

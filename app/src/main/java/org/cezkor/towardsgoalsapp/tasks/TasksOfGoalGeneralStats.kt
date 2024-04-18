@@ -218,29 +218,28 @@ class TasksOfGoalGeneralStatsFragment : Fragment() {
             if (withObject !is Boolean)
                 viewModel.model!!.setData(withObject)
             val modelData = viewModel.model!!.calculateModelData()
-            if (modelData.first.size != 1) return
-            val dataSets = modelData.first.first()
+            val secondModelData = viewModel.model!!.getExtraData()
 
-            if (dataSets.first.isEmpty() && dataSets.second.isEmpty()) return
+            if (modelData.first.isEmpty() && secondModelData.isEmpty()) return
 
             // https://github.com/PhilJay/MPAndroidChart/issues/718#issuecomment-112823075
-            val wData = dataSets.first.sortedWith { e1, e2 ->
+            val wData = modelData.first.sortedWith { e1, e2 ->
                 (e1.x - e2.x).toInt()
             }
             val wellDataSet = ScatterDataSet(
                 wData,
-                requireContext().getString(R.string.habits_marked_done)
+                requireContext().getString(R.string.tasks_marked_done_well)
             )
             wellDataSet.color = wellColor
             wellDataSet.setDrawValues(false)
             wellDataSet.setScatterShape(ScatterChart.ScatterShape.X)
 
-            val nwData = dataSets.second.sortedWith { e1, e2 ->
+            val nwData = secondModelData.sortedWith { e1, e2 ->
                 (e1.x - e2.x).toInt()
             }
             val notWellDataSet = ScatterDataSet(
                 nwData,
-                requireContext().getString(R.string.habits_marked_done_not_well)
+                requireContext().getString(R.string.tasks_marked_done_not_well)
             )
             notWellDataSet.color = notWellColor
             notWellDataSet.setDrawValues(false)

@@ -14,6 +14,10 @@ import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ViewHolder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.cezkor.towardsgoalsapp.R
 import org.cezkor.towardsgoalsapp.stats.models.BooleanModelSetting
 import org.cezkor.towardsgoalsapp.stats.models.ModelSettingWithChoices
@@ -30,7 +34,9 @@ class NonScrollableLayoutManager(context: Context?) :
 }
 
 class ModelSettingsAdapter(
-    private val settingsSet: ArrayList<ModelSetting>
+    private val settingsSet: ArrayList<ModelSetting>,
+    private val coroutineScope: CoroutineScope,
+    private val settingsMutex: Mutex
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -138,13 +144,17 @@ class ModelSettingsAdapter(
                     position: Int,
                     id: Long
                 ) {
-                    Log.i(LOG_TAG, "before setting choice change: ${setting.choice}")
-                    setting.setChoice(position)
-                    Log.i(LOG_TAG, "after setting choice change: ${setting.choice}")
                     if (init)
                         init = false
                     else
-                        onSettingChanged?.invoke()
+                        coroutineScope.launch {
+                            settingsMutex.withLock {
+                            Log.i(LOG_TAG, "before setting choice change: ${setting.choice}")
+                            setting.setChoice(position)
+                            Log.i(LOG_TAG, "after setting choice change: ${setting.choice}")
+                            }
+                            onSettingChanged?.invoke()
+                        }
                 }
 
                 override fun onNothingSelected(parent: AdapterView<*>?) {
@@ -174,8 +184,10 @@ class ModelSettingsAdapter(
             nameEditText.text = setting.settingName
 
             checkBox.setOnCheckedChangeListener { _, checked ->
-                setting.setValue(checked)
-                onSettingChanged?.invoke()
+                coroutineScope.launch {
+                    settingsMutex.withLock { setting.setValue(checked) }
+                    onSettingChanged?.invoke()
+                }
             }
 
         }

@@ -39,7 +39,9 @@ abstract class PredictionExtrasWithConfidenceIntervals(
 
 interface WithExtraData {
     fun getExtraData() : ArrayList<Entry>
+}
 
+interface WithExtraNamedData : WithExtraData {
     fun getExtraText() : String
 
     fun getTitle() : String

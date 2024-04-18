@@ -440,7 +440,6 @@ class TaskRepositoryTests {
             0.0, 0.0, 0.0, 0.0, 0.0, 0.0
         )
 
-
         mainRepo.markTaskCompletion(hTaskPair2.first, false)
         taskList = getAll()
         assertThat(taskList.map{ it.taskProgress }).containsExactly(

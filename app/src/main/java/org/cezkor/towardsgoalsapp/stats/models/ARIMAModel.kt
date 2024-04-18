@@ -122,7 +122,7 @@ class ARIMAModelPredictionExtras(
     val confidenceLevel: Double,
     private val cIntervals: ArrayList<Pair<Entry, Entry>>,
     private val extraData: ArrayList<Entry>
-): PredictionExtrasWithConfidenceIntervals(cIntervals), WithExtraData {
+): PredictionExtrasWithConfidenceIntervals(cIntervals), WithExtraNamedData {
 
     companion object {
         const val SAMPLE_SIZE_TO_BE_ACCURATE = 100
