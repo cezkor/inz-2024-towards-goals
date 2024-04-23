@@ -4,7 +4,7 @@ import org.cezkor.towardsgoalsapp.database.HabitParameterValue
 import com.github.signaflo.timeseries.TimePeriod
 import com.github.signaflo.timeseries.TimeSeries
 
-class DataAdapter {
+class DataConversion private constructor(){
 
     companion object {
 
@@ -32,8 +32,8 @@ class DataAdapter {
         }
 
         fun fromHabitParameterValueArrayToOrderedSignalfloTimeSeries(
-            array: ArrayList<HabitParameterValue>, fillMissingWithAverage : Boolean = false) :
-            TimeSeries{
+            array: ArrayList<HabitParameterValue>, fillMissingWithAverage : Boolean = false)
+            : TimeSeries {
 
             val period = TimePeriod.oneDay()
             var orderedMappedArray: List<Pair<Long, Double>>
@@ -62,14 +62,14 @@ class DataAdapter {
                     val current = orderedMappedArray[i]
                     val next = orderedMappedArray[nextIdx]
                     // if there is a gap between observed parameter values of more than one day
-                    if (current.first - next.first > 1) {
+                    if ( (next.first - current.first) > 1) {
                         // fill it with the average value in the days in between
                         val differ = next.first - current.first - 1
                         for (x in 1..differ)
-                            toAdd.add(Pair(current.first, average))
+                            toAdd.add(Pair(current.first + x, average))
                     }
                 }
-                orderedMappedArray + orderedMappedArray + toAdd
+                orderedMappedArray = orderedMappedArray + toAdd
                 orderedMappedArray = orderedMappedArray.sortedBy { p -> p.first }
             }
             val dArray = orderedMappedArray.map { p -> p.second }.toDoubleArray()

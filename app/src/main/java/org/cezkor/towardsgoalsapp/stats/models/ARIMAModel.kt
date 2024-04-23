@@ -149,16 +149,16 @@ class ARIMAModelPredictionExtras(
 class OneVariableARIMAModel(translation: Translation): ModelLogicWithPrediction<Entry>(translation) {
 
     companion object {
-        private const val FILL_MISSING_WITH_AVERAGE = 0
-        private const val I_RANK = 1
-        private const val SEASONALITY = 2
-        private const val AR_RANK = 3
-        private const val MA_RANK = 4
-        private const val INCLUDE_CONSTANT_IF_POSSIBLE = 5
-        private const val SAMPLE_SIZE = 6
-        private const val PREDICT_SIZE = 7
+        const val FILL_MISSING_WITH_AVERAGE = 0
+        const val I_RANK = 1
+        const val SEASONALITY = 2
+        const val AR_RANK = 3
+        const val MA_RANK = 4
+        const val INCLUDE_CONSTANT_IF_POSSIBLE = 5
+        const val SAMPLE_SIZE = 6
+        const val PREDICT_SIZE = 7
 
-        private const val ALPHA = 0.05
+        const val ALPHA = 0.05
     }
 
     private var seriesOfData: TimeSeries = TimeSeries.from(0.0)
@@ -221,7 +221,7 @@ class OneVariableARIMAModel(translation: Translation): ModelLogicWithPrediction<
             else trueData.subList(beginAt, trueData.size).toCollection(ArrayList())
 
             this.seriesOfData =
-                DataAdapter.fromHabitParameterValueArrayToOrderedSignalfloTimeSeries(
+                DataConversion.fromHabitParameterValueArrayToOrderedSignalfloTimeSeries(
                     samples, fill
                 )
 

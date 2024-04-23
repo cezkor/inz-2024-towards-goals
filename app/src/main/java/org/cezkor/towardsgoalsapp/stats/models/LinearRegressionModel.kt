@@ -30,14 +30,14 @@ class RegressionResults(
 class OneVariableLinearRegressionModel(translation: Translation): ModelLogicWithPrediction<Entry>(translation) {
 
     companion object {
-        private const val SAMPLE_SIZE = 0
-        private const val PREDICT_SIZE = 1
+        const val SAMPLE_SIZE = 0
+        const val PREDICT_SIZE = 1
     }
 
     private var data: Array<DoubleArray> = arrayOf()
 
     init {
-        // SampleSize, by default 14
+        // SampleSize, by default 20
         modelSettings[SAMPLE_SIZE] = SampleSize(translation).apply { this.setChoice(1) }
         modelSettings[PREDICT_SIZE] = PredictSize(translation)
     }
@@ -123,7 +123,7 @@ class OneVariableLinearRegressionModel(translation: Translation): ModelLogicWith
         if (dataArrayOfOtherKind is ArrayList<*>) {
             if (dataArrayOfOtherKind.firstOrNull() is HabitParameterValue?) {
                 this.data =
-                    DataAdapter.fromHabitParameterValueArrayTo2DDoubleArray(
+                    DataConversion.fromHabitParameterValueArrayTo2DDoubleArray(
                         dataArrayOfOtherKind as ArrayList<HabitParameterValue>
                     )
             }

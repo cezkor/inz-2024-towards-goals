@@ -86,7 +86,7 @@ class HabitGeneralStatsModelLogic(
     private fun getLowestTimeInData() : Duration {
         val lowest = if (remappedData.isEmpty()) ONE_DAY
                      else remappedData.minBy { p -> p.second }.second.epochSecond
-        return Duration.ofSeconds(Instant.now().epochSecond - lowest)
+        return Duration.ofSeconds(Instant.now().epochSecond - lowest + 3600L)
     }
 
     override fun getExtraData(): ArrayList<Entry> {

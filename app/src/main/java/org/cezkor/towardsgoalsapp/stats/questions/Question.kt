@@ -9,8 +9,8 @@ open class Question<AT>(
         protected set
 
     open fun answerWith(value: AT?, fillWithDefault: Boolean = true) {
-        if (value == null && fillWithDefault) answer = defaultValue
-        answer = value
+        answer = if (value == null && fillWithDefault) defaultValue
+        else value
     }
 
 }

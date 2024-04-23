@@ -93,7 +93,7 @@ abstract class ModelSettingWithChoices<T>(translation: Translation, defaultChoic
         protected set
 
     open fun setChoice(choiceIdx: Int) {
-        if (choiceIdx == -1 || choiceIdx > choices.size) return
+        if (choiceIdx < 0 || choiceIdx > choices.size) return
         choice = choices[choiceIdx]
         value = choice
         this.choiceIdx = choiceIdx
