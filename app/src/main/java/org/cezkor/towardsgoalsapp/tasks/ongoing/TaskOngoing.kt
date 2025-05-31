@@ -46,6 +46,7 @@ import org.cezkor.towardsgoalsapp.tasks.ongoing.TaskOngoingViewModel.Companion.W
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.withLock
+import org.cezkor.towardsgoalsapp.Constants
 import java.lang.NullPointerException
 import java.time.Instant
 import java.time.format.DateTimeParseException
@@ -333,7 +334,7 @@ class TaskOngoing : AppCompatActivity() {
         serviceRun = true
         val serviceIntent = TaskDoingTimingService.createIntent(
             this@TaskOngoing,
-            getString(R.string.tasks_time_is_up),
+            getString(R.string.tasks_pomodoro_timer),
             taskId,
             org.cezkor.towardsgoalsapp.Constants.ADDITIONAL_TIME.toLong()
         )
